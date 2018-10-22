@@ -1,0 +1,4 @@
+build/
+build-clang/
+.DS_Store
+hdr/version.hpp
