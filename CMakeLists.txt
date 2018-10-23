@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.4)
 
 project (nethuns)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion -fsanitize=address -fsanitize=undefined")
 
 
 include_directories(src)
