@@ -36,8 +36,11 @@ struct tpacket_socket
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;
 
-    unsigned int    rx_block_idx;
-    unsigned int    tx_block_idx;
+    uint64_t        rx_block_idx;
+    uint64_t        rx_block_idx_rls;
+
+    uint64_t        tx_block_idx;
+    uint64_t        tx_block_idx_rsl;
 
     unsigned int    rx_frame_idx;
     unsigned int    tx_frame_idx;
@@ -57,7 +60,7 @@ struct block_desc
 	struct tpacket_hdr_v1 hdr;
 };
 
-
-typedef struct block_desc     *  nethuns_block_t;
 typedef struct tpacket_socket *  nethuns_socket_t;
-typedef struct tpacket3_hdr   *  nethuns_pkthdr_t;
+
+typedef struct block_desc        nethuns_block_t;
+typedef struct tpacket3_hdr      nethuns_pkthdr_t;

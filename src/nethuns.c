@@ -1,4 +1,5 @@
 #include "internals/tpacketv3.h"
+#include "nethuns.h"
 
 #include <linux/version.h>
 #include <sys/ioctl.h>
@@ -142,41 +143,71 @@ int nethuns_close(nethuns_socket_t s)
 }
 
 
-unsigned
-int nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, unsigned char **pkt)
+static inline
+nethuns_block_t *
+__nethuns_block(nethuns_socket_t s, uint64_t id)
 {
-    size_t id = s->rx_block_idx % s->rx_ring.req.tp_block_nr;
-    nethuns_block_t pb = (nethuns_block_t) s->rx_ring.rd[id].iov_base;
-
-    if (unlikely(s->rx_frame_idx == pb->hdr.num_pkts))
-    {
-        pb->hdr.block_status = TP_STATUS_KERNEL;
-
-        poll(&s->pfd, 1, -1);
-        if ((pb->hdr.block_status & TP_STATUS_USER) == 0)
-            return 0;
-
-        printf("block received!\n");
-
-        s->rx_frame_idx = 1;
-        s->ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
-    }
-    else {
-        s->rx_frame_idx++;
-    }
-
-    printf("packet received! %d\n", s->rx_frame_idx);
-
-    *pkthdr = s->ppd;
-    *pkt    = (uint8_t *)(s->ppd) + s->ppd->tp_mac;
-
-	s->ppd = (struct tpacket3_hdr *) ((uint8_t *) s->ppd + s->ppd->tp_next_offset);
-
-	return s->rx_block_idx;
+    return (nethuns_block_t *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
 }
 
 
-int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t pkt, unsigned int block_id, unsigned int consumer)
+uint64_t
+nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
+{
+    nethuns_block_t * pb = __nethuns_block(s, s->rx_block_idx);
+
+    if ((pb->hdr.block_status & TP_STATUS_USER) == 0)
+    {
+        poll(&s->pfd, 1, -1);
+        s->rx_frame_idx = 0;
+        return 0;
+    }
+
+    if (likely(s->rx_frame_idx < pb->hdr.num_pkts))
+    {
+        if (s->rx_frame_idx++ == 0)
+        {
+            s->ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
+        }
+
+        *pkthdr = s->ppd;
+        *pkt    = (uint8_t *)(s->ppd) + s->ppd->tp_mac;
+        return s->rx_block_idx;
+    }
+
+    nethuns_flush(s);
+
+    if ((s->rx_block_idx - s-> rx_block_idx_rls) < (s->rx_ring.req.tp_block_nr - 1))
+    {
+        pb = __nethuns_block(s, s->rx_block_idx++);
+        s->rx_frame_idx = 0;
+    }
+    return 0;
+}
+
+
+int
+nethuns_flush(nethuns_socket_t s)
+{
+    uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
+    unsigned int i;
+
+    for(i = 0; i < s->sync.number; i++)
+        cur = min(cur, s->sync.id[i].value);
+
+    for(; rid < cur; ++rid)
+    {
+        nethuns_block_t *pb = __nethuns_block(s, rid);
+        pb->hdr.block_status = TP_STATUS_KERNEL;
+    }
+
+    s->rx_block_idx_rls = rid;
+    return 0;
+}
+
+
+int
+nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer)
 {
     __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELEASE);
     (void)pkt;
@@ -192,7 +223,6 @@ int nethuns_set_consumers(nethuns_socket_t s, unsigned int numb)
     s->sync.number = numb;
     return 0;
 }
-
 
 
 

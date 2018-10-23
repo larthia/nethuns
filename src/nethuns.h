@@ -3,13 +3,16 @@
 
 #include "internals/tpacketv3.h"
 
-nethuns_socket_t nethuns_open(size_t blocksize, size_t numblocks, size_t packetsize);
+nethuns_socket_t nethuns_open(unsigned int blocksize, unsigned int numblocks, unsigned int packetsize);
 
 int nethuns_bind(nethuns_socket_t s, const char *dev);
 
-unsigned int nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **pkt);
+uint64_t
+nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt);
 
-int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t ptk, unsigned int blockid, unsigned int consumer);
+int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *ptkhdr, uint64_t blockid, unsigned int consumer);
+
+int nethuns_flush(nethuns_socket_t s);
 
 int nethuns_set_consumers(nethuns_socket_t s, unsigned int numb);
 
