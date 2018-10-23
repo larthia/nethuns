@@ -38,6 +38,12 @@ void meter()
 int
 main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        std::cerr << "usage: " << argv[0] << " dev" << std::endl;
+        return 0;
+    }
+
     std::thread(meter).detach();
 
     nethuns_socket_t s = nethuns_open( 4        /* number of blocks */
@@ -45,7 +51,7 @@ main(int argc, char *argv[])
                                      , 2048     /* max packet size */
                                      );
 
-    if (nethuns_bind(s, "eth0") < 0)
+    if (nethuns_bind(s, argv[1]) < 0)
     {
         return -1;
     }

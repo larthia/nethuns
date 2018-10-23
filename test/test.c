@@ -17,12 +17,20 @@ void dump_packet(nethuns_pkthdr_t *hdr, unsigned char *frame)
 int
 main(int argc, char *argv[])
 {
-    nethuns_socket_t s = nethuns_open( 4        /* number of blocks */
-                                     , 65536    /* packets per block */
-                                     , 2048     /* max packet size */
-                                     );
+    nethuns_socket_t s;
 
-    if (nethuns_bind(s, "eth0") < 0)
+    if (argc < 2)
+    {
+        fprintf(stderr,"usage: %s dev\n", argv[0]);
+        return 0;
+    }
+
+    s = nethuns_open( 4        /* number of blocks */
+                    , 65536    /* packets per block */
+                    , 2048     /* max packet size */
+                    );
+
+    if (nethuns_bind(s, argv[1]) < 0)
     {
         return -1;
     }
