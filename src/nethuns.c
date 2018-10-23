@@ -158,8 +158,8 @@ nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 
     if ((pb->hdr.block_status & TP_STATUS_USER) == 0)
     {
+        nethuns_flush(s);
         poll(&s->pfd, 1, -1);
-        s->rx_frame_idx = 0;
         return 0;
     }
 
@@ -179,7 +179,7 @@ nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 
     if ((s->rx_block_idx - s-> rx_block_idx_rls) < (s->rx_ring.req.tp_block_nr - 1))
     {
-        pb = __nethuns_block(s, s->rx_block_idx++);
+        s->rx_block_idx++;
         s->rx_frame_idx = 0;
     }
     return 0;
@@ -215,14 +215,12 @@ nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, un
 }
 
 
-int nethuns_set_consumers(nethuns_socket_t s, unsigned int numb)
+int nethuns_set_consumer(nethuns_socket_t s, unsigned int numb)
 {
     if (numb >= sizeof(s->sync.id)/sizeof(s->sync.id[0]))
         return -1;
-
     s->sync.number = numb;
     return 0;
 }
-
 
 

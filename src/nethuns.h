@@ -14,9 +14,10 @@ int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *ptkhdr, uint64_t block
 
 int nethuns_flush(nethuns_socket_t s);
 
-int nethuns_set_consumers(nethuns_socket_t s, unsigned int numb);
+int nethuns_set_consumer(nethuns_socket_t s, unsigned int numb);
 
 int nethuns_fd(nethuns_socket_t s);
+
 
 int nethuns_close(nethuns_socket_t);
 

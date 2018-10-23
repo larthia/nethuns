@@ -135,6 +135,7 @@ static void display(struct tpacket3_hdr *ppd)
 	printf("rxhash: 0x%x\n", ppd->hv1.tp_rxhash);
 }
 
+
 static void walk_block(struct block_desc *pbd, const int block_num)
 {
 	int num_pkts = pbd->h1.num_pkts, i;

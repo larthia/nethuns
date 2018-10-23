@@ -14,7 +14,7 @@ main(int argc, char *argv[])
     unsigned char *frame;
     nethuns_pkthdr_t *pkthdr;
 
-    nethuns_set_consumers(s, 1);
+    nethuns_set_consumer(s, 1);
 
     for(;;)
     {
