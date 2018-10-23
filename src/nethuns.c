@@ -156,14 +156,14 @@ nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 {
     nethuns_block_t * pb = __nethuns_block(s, s->rx_block_idx);
 
-    if ((pb->hdr.block_status & TP_STATUS_USER) == 0)
+    if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0))
     {
         nethuns_flush(s);
         poll(&s->pfd, 1, -1);
         return 0;
     }
 
-    if (likely(s->rx_frame_idx < pb->hdr.num_pkts))
+    if (s->rx_frame_idx < pb->hdr.num_pkts)
     {
         if (s->rx_frame_idx++ == 0)
         {
@@ -193,7 +193,7 @@ nethuns_flush(nethuns_socket_t s)
     unsigned int i;
 
     for(i = 0; i < s->sync.number; i++)
-        cur = min(cur, s->sync.id[i].value);
+        cur = min(cur, __atomic_load_n(&s->sync.id[i].value, __ATOMIC_RELAXED));
 
     for(; rid < cur; ++rid)
     {
@@ -209,7 +209,7 @@ nethuns_flush(nethuns_socket_t s)
 int
 nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer)
 {
-    __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELEASE);
+    __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELAXED);
     (void)pkt;
     return 0;
 }
