@@ -21,14 +21,11 @@
 #include "synapse.h"
 
 
-
-
 struct ring_v3
 {
     struct iovec *rd;
     uint8_t *map;
     struct tpacket_req3 req;
-    struct nethuns_synapse sync;
 };
 
 
@@ -39,13 +36,17 @@ struct tpacket_socket
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;
 
-    uint64_t        rx_block_idx;
-    uint64_t        tx_block_idx;
+    unsigned int    rx_block_idx;
+    unsigned int    tx_block_idx;
 
-    int             rx_frame_idx;
-    int             tx_frame_idx;
+    unsigned int    rx_frame_idx;
+    unsigned int    tx_frame_idx;
 
     struct pollfd   pfd;
+
+    struct tpacket3_hdr *ppd;
+
+    struct nethuns_synapse sync;
 };
 
 
@@ -58,5 +59,5 @@ struct block_desc
 
 
 typedef struct block_desc     *  nethuns_block_t;
-typedef struct tpacket3_hdr   *  nethuns_pkthdr_t;
 typedef struct tpacket_socket *  nethuns_socket_t;
+typedef struct tpacket3_hdr   *  nethuns_pkthdr_t;

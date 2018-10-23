@@ -21,7 +21,7 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
         return NULL;
     }
 
-    sock = malloc(sizeof(nethuns_socket_t));
+    sock = malloc(sizeof(struct tpacket_socket));
     memset(sock, 0, sizeof(*sock));
 
     sock->rx_ring.req.tp_block_size     = numpackets * packetsize;
@@ -89,6 +89,10 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
 	sock->pfd.events = POLLIN | POLLERR;
 	sock->pfd.revents = 0;
 
+    /* set a single consumer by default */
+
+    sock->sync.number = 1;
+
     return sock;
 }
 
@@ -138,33 +142,57 @@ int nethuns_close(nethuns_socket_t s)
 }
 
 
-int nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t pkthdr, unsigned char **pkt)
+unsigned
+int nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, unsigned char **pkt)
 {
     size_t id = s->rx_block_idx % s->rx_ring.req.tp_block_nr;
-    nethuns_block_t pb;
+    nethuns_block_t pb = (nethuns_block_t) s->rx_ring.rd[id].iov_base;
 
-    if (unlikely(s->rx_frame_idx == 0))
+    if (unlikely(s->rx_frame_idx == pb->hdr.num_pkts))
     {
-        pb = (nethuns_block_t) s->rx_ring.rd[id].iov_base;
+        pb->hdr.block_status = TP_STATUS_KERNEL;
+
         poll(&s->pfd, 1, -1);
         if ((pb->hdr.block_status & TP_STATUS_USER) == 0)
             return 0;
+
+        printf("block received!\n");
+
+        s->rx_frame_idx = 1;
+        s->ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
+    }
+    else {
+        s->rx_frame_idx++;
     }
 
+    printf("packet received! %d\n", s->rx_frame_idx);
 
-    return 1;
+    *pkthdr = s->ppd;
+    *pkt    = (uint8_t *)(s->ppd) + s->ppd->tp_mac;
+
+	s->ppd = (struct tpacket3_hdr *) ((uint8_t *) s->ppd + s->ppd->tp_next_offset);
+
+	return s->rx_block_idx;
 }
 
 
-int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t pkt)
+int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t pkt, unsigned int block_id, unsigned int consumer)
 {
-    // size_t id = s->rx_block_idx % s->rx_ring.req.tp_block_nr;
-    // nethuns_block_t *pb = (nethuns_block_t *) s->rx_ring.rd[id].iov_base;
-	// pb->hdr.block_status = TP_STATUS_KERNEL;
-    // (void)pkt;
-    //
-
+    __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELEASE);
+    (void)pkt;
     return 0;
 }
+
+
+int nethuns_set_consumers(nethuns_socket_t s, unsigned int numb)
+{
+    if (numb >= sizeof(s->sync.id)/sizeof(s->sync.id[0]))
+        return -1;
+
+    s->sync.number = numb;
+    return 0;
+}
+
+
 
 

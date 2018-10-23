@@ -14,12 +14,16 @@ main(int argc, char *argv[])
     unsigned char *frame;
     nethuns_pkthdr_t pkthdr;
 
+    nethuns_set_consumers(s, 1);
+
     for(;;)
     {
-        if (nethuns_recv(s, &pkthdr, &frame))
+        unsigned int block;
+
+        if ((block = nethuns_recv(s, &pkthdr, &frame)))
         {
-            printf("packet!\n");
-            nethuns_release(s, pkthdr);
+            printf("packet (block:%d)!\n", block);
+            nethuns_release(s, pkthdr, block, 0);
         }
 	}
 

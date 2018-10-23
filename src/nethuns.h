@@ -7,9 +7,11 @@ nethuns_socket_t nethuns_open(size_t blocksize, size_t numblocks, size_t packets
 
 int nethuns_bind(nethuns_socket_t s, const char *dev);
 
-int nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **pkt);
+unsigned int nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **pkt);
 
-int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t ptk);
+int nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t ptk, unsigned int blockid, unsigned int consumer);
+
+int nethuns_set_consumers(nethuns_socket_t s, unsigned int numb);
 
 int nethuns_fd(nethuns_socket_t s);
 

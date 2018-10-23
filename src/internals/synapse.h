@@ -17,12 +17,12 @@
 
 struct nethuns_synapse
 {
-    size_t nconsumer;
+    unsigned int number;
 
     struct _id
     {
-        size_t value;
+        unsigned int value;
     } __cachedline_aligned;
 
-    struct _id id[1024];
+    struct _id id[256];
 };
