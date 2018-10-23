@@ -143,14 +143,6 @@ int nethuns_close(nethuns_socket_t s)
 }
 
 
-static inline
-nethuns_block_t *
-__nethuns_block(nethuns_socket_t s, uint64_t id)
-{
-    return (nethuns_block_t *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
-}
-
-
 uint64_t
 nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 {
@@ -185,7 +177,6 @@ nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
     return 0;
 }
 
-
 int
 nethuns_flush(nethuns_socket_t s)
 {
@@ -202,15 +193,6 @@ nethuns_flush(nethuns_socket_t s)
     }
 
     s->rx_block_idx_rls = rid;
-    return 0;
-}
-
-
-int
-nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer)
-{
-    __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELAXED);
-    (void)pkt;
     return 0;
 }
 
