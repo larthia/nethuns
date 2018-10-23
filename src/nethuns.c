@@ -177,6 +177,7 @@ nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
     return 0;
 }
 
+
 int
 nethuns_flush(nethuns_socket_t s)
 {
