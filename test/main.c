@@ -32,6 +32,7 @@ main(int argc, char *argv[])
 
     nethuns_set_consumer(s, 1);
 
+
     for(;;)
     {
         uint64_t block;
@@ -41,8 +42,6 @@ main(int argc, char *argv[])
             dump_packet(pkthdr, frame);
             nethuns_release(s, pkthdr, block, 0);
         }
-
-        // usleep(100000);
     }
 
     nethuns_close(s);
