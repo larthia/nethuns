@@ -164,6 +164,8 @@ nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 
         *pkthdr = s->ppd;
         *pkt    = (uint8_t *)(s->ppd) + s->ppd->tp_mac;
+		s->ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->ppd + s->ppd->tp_next_offset);
+
         return s->rx_block_idx;
     }
 
