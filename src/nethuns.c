@@ -92,6 +92,11 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
 		sock->tx_ring.rd[i].iov_len  = sock->tx_ring.req.tp_block_size;
 	}
 
+    /* QDISC bypass */
+
+    int one = 1;
+    setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
+
 
     sock->fd = fd;
     sock->rx_block_idx = 0;
