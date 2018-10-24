@@ -27,7 +27,8 @@ add_executable(pcap-meter      test/meter-pcap.cpp)
 add_executable(nethuns-forward    test/forward.cpp)
 add_executable(nethuns-forward-mt test/forward-mt.cpp)
 
-add_executable(pcap-forward    test/forward-pcap.cpp)
+add_executable(pcap-forward      test/forward-pcap.cpp)
+add_executable(pcap-forward-mt   test/forward-pcap-mt.cpp)
 
 add_executable(nethuns-meter-mt test/meter-mt.cpp)
 add_executable(pcap-meter-mt    test/meter-pcap-mt.cpp)
@@ -39,7 +40,8 @@ target_link_libraries(nethuns-send    nethuns -pthread)
 
 target_link_libraries(nethuns-forward    nethuns -pthread)
 target_link_libraries(nethuns-forward-mt nethuns -pthread)
-target_link_libraries(pcap-forward    -lpcap  -pthread)
+target_link_libraries(pcap-forward      -lpcap  -pthread)
+target_link_libraries(pcap-forward-mt   -lpcap  -pthread)
 
 
 target_link_libraries(nethuns-meter     nethuns -pthread)
