@@ -45,9 +45,11 @@ struct tpacket_socket
     unsigned int    rx_frame_idx;
     unsigned int    tx_frame_idx;
 
-    struct pollfd   pfd;
+    struct pollfd   rx_pfd;
+    struct pollfd   tx_pfd;
 
-    struct tpacket3_hdr *ppd;
+    struct tpacket3_hdr *rx_ppd;
+    struct tpacket3_hdr *tx_ppd;
 
     struct nethuns_synapse sync;
 };
@@ -73,9 +75,16 @@ extern "C" {
 
 static inline
 nethuns_block_t *
-__nethuns_block(nethuns_socket_t s, uint64_t id)
+__nethuns_block_rx(nethuns_socket_t s, uint64_t id)
 {
     return (nethuns_block_t *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
+}
+
+static inline
+nethuns_block_t *
+__nethuns_block_tx(nethuns_socket_t s, uint64_t id)
+{
+    return (nethuns_block_t *) s->tx_ring.rd[id % s->tx_ring.req.tp_block_nr].iov_base;
 }
 
 
@@ -86,6 +95,9 @@ nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, un
     (void)pkt;
     return 0;
 }
+
+
+
 
 
 #ifdef __cplusplus

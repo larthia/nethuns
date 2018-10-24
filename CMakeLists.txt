@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 2.4)
 
 project (nethuns)
 
-# set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion -fsanitize=address -fsanitize=undefined")
-set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
+#set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion -fsanitize=address -fsanitize=undefined")
+set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
 
 
 include_directories(src)
@@ -18,12 +18,16 @@ add_library(nethuns SHARED src/nethuns.c)
 link_directories(${nethuns_BINARY_DIR})
 
 
-add_executable(nethuns-test  test/test.c)
-add_executable(nethuns-meter test/meter.cpp)
+add_executable(nethuns-test    test/test.c)
+add_executable(nethuns-meter   test/meter.cpp)
+add_executable(nethuns-forward test/forward.cpp)
+add_executable(nethuns-send    test/send.cpp)
 
 
-target_link_libraries(nethuns-test  nethuns)
-target_link_libraries(nethuns-meter nethuns -pthread)
+target_link_libraries(nethuns-test    nethuns)
+target_link_libraries(nethuns-send    nethuns -pthread)
+target_link_libraries(nethuns-meter   nethuns -pthread)
+target_link_libraries(nethuns-forward nethuns -pthread)
 
 
 install_targets(/lib nethuns)

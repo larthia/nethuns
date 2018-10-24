@@ -4,6 +4,8 @@
 #include <linux/version.h>
 #include <sys/ioctl.h>
 #include <poll.h>
+#include <errno.h>
+
 
 nethuns_socket_t
 nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packetsize)
@@ -18,7 +20,7 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
 
     err = setsockopt(fd, SOL_PACKET, PACKET_VERSION, &v, sizeof(v));
     if (err < 0) {
-        perror("nethuns: setsockopt PACKET_VERSION");
+        perror("nethuns: setsockopt PACKET_VERSION v3");
         return NULL;
     }
 
@@ -30,6 +32,7 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
     sock->rx_ring.req.tp_block_nr       = numblocks;
     sock->rx_ring.req.tp_frame_nr       = numblocks * numpackets;
     sock->rx_ring.req.tp_retire_blk_tov = 60;
+    sock->rx_ring.req.tp_sizeof_priv    = 0;
     sock->rx_ring.req.tp_feature_req_word = TP_FT_REQ_FILL_RXHASH;
 
     err = setsockopt(fd, SOL_PACKET, PACKET_RX_RING, &sock->rx_ring.req, sizeof(sock->rx_ring.req));
@@ -38,22 +41,6 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
         free(sock);
         return NULL;
     }
-
-    sock->rx_ring.map = mmap(NULL, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_LOCKED, fd, 0);
-    if (sock->rx_ring.map == MAP_FAILED) {
-        perror("nethuns: mmap");
-        free(sock);
-        return NULL;
-    }
-
-    sock->rx_ring.rd = malloc(sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
-
-	for (i = 0; i < sock->rx_ring.req.tp_block_nr; ++i) {
-		sock->rx_ring.rd[i].iov_base = sock->rx_ring.map + (i * sock->rx_ring.req.tp_block_size);
-		sock->rx_ring.rd[i].iov_len  = sock->rx_ring.req.tp_block_size;
-	}
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 
     sock->tx_ring.req.tp_block_size     = numpackets * packetsize;
     sock->tx_ring.req.tp_frame_size     = packetsize;
@@ -69,16 +56,42 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
         return NULL;
     }
 
-    sock->tx_ring.map = mmap(NULL, sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_LOCKED, fd, 0);
-    if (sock->tx_ring.map == MAP_FAILED) {
+    /* map memory */
+
+    sock->rx_ring.map = mmap( NULL
+                            , (sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr) +
+                              (sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr)
+                            , PROT_READ | PROT_WRITE, MAP_SHARED | MAP_LOCKED | MAP_POPULATE, fd, 0);
+
+    if (sock->rx_ring.map == MAP_FAILED) {
         perror("nethuns: mmap");
-	    munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr);
-	    close(fd);
         free(sock);
         return NULL;
     }
 
-#endif
+    sock->tx_ring.map = sock->rx_ring.map + (sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr);
+
+
+    /* setup Rx ring... */
+
+    sock->rx_ring.rd = malloc(sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
+    memset(sock->rx_ring.rd, 0, sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
+
+	for (i = 0; i < sock->rx_ring.req.tp_block_nr; ++i) {
+		sock->rx_ring.rd[i].iov_base = sock->rx_ring.map + (i * sock->rx_ring.req.tp_block_size);
+		sock->rx_ring.rd[i].iov_len  = sock->rx_ring.req.tp_block_size;
+	}
+
+    /* setup Tx ring... */
+
+    sock->tx_ring.rd = malloc(sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
+    memset(sock->tx_ring.rd, 0, sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
+
+	for (i = 0; i < sock->tx_ring.req.tp_block_nr; ++i) {
+		sock->tx_ring.rd[i].iov_base = sock->tx_ring.map + (i * sock->tx_ring.req.tp_block_size);
+		sock->tx_ring.rd[i].iov_len  = sock->tx_ring.req.tp_block_size;
+	}
+
 
     sock->fd = fd;
     sock->rx_block_idx = 0;
@@ -86,9 +99,15 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
     sock->rx_frame_idx = 0;
     sock->tx_frame_idx = 0;
 
-	sock->pfd.fd = fd;
-	sock->pfd.events = POLLIN | POLLERR;
-	sock->pfd.revents = 0;
+
+    sock->rx_pfd.fd = fd;
+    sock->rx_pfd.events = POLLIN | POLLERR;
+    sock->rx_pfd.revents = 0;
+
+
+    sock->tx_pfd.fd = fd;
+    sock->tx_pfd.events = POLLOUT | POLLERR;
+    sock->tx_pfd.revents = 0;
 
     /* set a single consumer by default */
 
@@ -143,45 +162,8 @@ int nethuns_close(nethuns_socket_t s)
 }
 
 
-uint64_t
-nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
-{
-    nethuns_block_t * pb = __nethuns_block(s, s->rx_block_idx);
-
-    if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0))
-    {
-        nethuns_flush(s);
-        poll(&s->pfd, 1, -1);
-        return 0;
-    }
-
-    if (s->rx_frame_idx < pb->hdr.num_pkts)
-    {
-        if (s->rx_frame_idx++ == 0)
-        {
-            s->ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
-        }
-
-        *pkthdr = s->ppd;
-        *pkt    = (uint8_t *)(s->ppd) + s->ppd->tp_mac;
-		s->ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->ppd + s->ppd->tp_next_offset);
-
-        return s->rx_block_idx;
-    }
-
-    nethuns_flush(s);
-
-    if ((s->rx_block_idx - s-> rx_block_idx_rls) < (s->rx_ring.req.tp_block_nr - 1))
-    {
-        s->rx_block_idx++;
-        s->rx_frame_idx = 0;
-    }
-    return 0;
-}
-
-
 int
-nethuns_flush(nethuns_socket_t s)
+nethuns_blocks_release(nethuns_socket_t s)
 {
     uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
     unsigned int i;
@@ -191,12 +173,108 @@ nethuns_flush(nethuns_socket_t s)
 
     for(; rid < cur; ++rid)
     {
-        nethuns_block_t *pb = __nethuns_block(s, rid);
+        nethuns_block_t *pb = __nethuns_block_rx(s, rid);
         pb->hdr.block_status = TP_STATUS_KERNEL;
     }
 
     s->rx_block_idx_rls = rid;
     return 0;
+}
+
+
+uint64_t
+nethuns_recv(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
+{
+    nethuns_block_t * pb;
+
+    pb = __nethuns_block_rx(s, s->rx_block_idx);
+
+    if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0))
+    {
+        nethuns_blocks_release(s);
+        poll(&s->rx_pfd, 1, -1);
+        return 0;
+    }
+
+    if (s->rx_frame_idx < pb->hdr.num_pkts)
+    {
+        if (unlikely(s->rx_frame_idx++ == 0))
+        {
+            s->rx_ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
+        }
+
+        *pkthdr    = s->rx_ppd;
+        *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
+		s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+
+        return s->rx_block_idx;
+    }
+
+    nethuns_blocks_release(s);
+
+    if ((s->rx_block_idx - s-> rx_block_idx_rls) < (s->rx_ring.req.tp_block_nr - 1))
+    {
+        s->rx_block_idx++;
+        s->rx_frame_idx = 0;
+    }
+
+    return 0;
+}
+
+
+int
+nethuns_flush(nethuns_socket_t s)
+{
+    if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
+        perror("nethuns: flush");
+        return -1;
+    }
+
+    return 0;
+}
+
+
+int
+nethuns_send(nethuns_socket_t s, uint8_t *packet, unsigned int len)
+{
+    const size_t numpackets = s->tx_ring.req.tp_block_size/s->tx_ring.req.tp_frame_size;
+
+    uint8_t *pbase;
+
+    if (s->tx_frame_idx == numpackets)
+    {
+        int ret = nethuns_flush(s);
+        if (ret == -1) {
+            perror("nethuns: flush");
+            return -1;
+        }
+
+        s->tx_block_idx++;
+        s->tx_frame_idx = 0;
+    }
+
+    pbase = (uint8_t *)__nethuns_block_tx(s, s->tx_block_idx);
+
+    struct tpacket3_hdr * tx = (struct tpacket3_hdr *)(pbase + s->tx_frame_idx * s->tx_ring.req.tp_frame_size);
+
+    if (unlikely(tx->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING)))
+    {
+        poll(&s->tx_pfd, 1, 1);
+        return 0;
+    }
+
+    tx->tp_snaplen     = len;
+    tx->tp_len         = len;
+    tx->tp_next_offset = 0;
+
+    memcpy((uint8_t *)tx + TPACKET3_HDRLEN - sizeof(struct sockaddr_ll), packet, len);
+
+    tx->tp_status = TP_STATUS_SEND_REQUEST;
+
+    __sync_synchronize();
+
+    s->tx_frame_idx++;
+    return 1;
 }
 
 
