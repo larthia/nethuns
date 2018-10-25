@@ -30,7 +30,7 @@ struct pcap_pkt
 };
 
 
-boost::lockfree::spsc_queue<pcap_pkt> queue (8192);
+boost::lockfree::spsc_queue<pcap_pkt> queue (131072);
 
 
 int consumer(std::string dev)

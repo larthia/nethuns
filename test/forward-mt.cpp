@@ -32,7 +32,7 @@ struct nethuns_pkt
 };
 
 
-boost::lockfree::spsc_queue<nethuns_pkt> queue (8192);
+boost::lockfree::spsc_queue<nethuns_pkt> queue (131072);
 
 
 int consumer(std::string dev)
