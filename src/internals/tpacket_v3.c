@@ -5,7 +5,6 @@
 #include <poll.h>
 #include <errno.h>
 
-#define _GNU_SOURCE
 #include <string.h>
 
 nethuns_socket_t
@@ -183,7 +182,7 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t s)
 
     for(; rid < cur; ++rid)
     {
-        nethuns_block_t *pb = __nethuns_block_rx_tpacket_v3(s, rid);
+        struct block_descr_v3 *pb = __nethuns_block_rx_tpacket_v3(s, rid);
         pb->hdr.block_status = TP_STATUS_KERNEL;
     }
 
@@ -193,9 +192,9 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t s)
 
 
 uint64_t
-nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
+nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **pkt)
 {
-    nethuns_block_t * pb;
+    struct block_descr_v3 * pb;
 
     pb = __nethuns_block_rx_tpacket_v3(s, s->rx_block_idx);
 

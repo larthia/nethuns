@@ -20,6 +20,8 @@
 
 #include "synapse.h"
 
+#include "../packet.h"
+
 
 struct ring_v3
 {
@@ -55,17 +57,12 @@ struct tpacket_v3_socket
 };
 
 
-struct block_desc_v3
+struct block_descr_v3
 {
 	uint32_t version;
 	uint32_t offset_to_priv;
 	struct tpacket_hdr_v1 hdr;
 };
-
-
-typedef struct tpacket_v3_socket *  nethuns_socket_t;
-typedef struct block_desc_v3        nethuns_block_t;
-typedef struct tpacket3_hdr         nethuns_pkthdr_t;
 
 
 #ifdef __cplusplus
@@ -74,28 +71,28 @@ extern "C" {
 
 
 static inline
-nethuns_block_t *
+struct block_descr_v3 *
 __nethuns_block_rx_tpacket_v3(nethuns_socket_t s, uint64_t id)
 {
-    return (nethuns_block_t *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
+    return (struct block_descr_v3 *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
 }
 
 static inline
-nethuns_block_t *
+struct block_descr_v3 *
 __nethuns_block_tx_tpacket_v3(nethuns_socket_t s, uint64_t id)
 {
-    return (nethuns_block_t *) s->tx_ring.rd[id % s->tx_ring.req.tp_block_nr].iov_base;
+    return (struct block_descr_v3 *) s->tx_ring.rd[id % s->tx_ring.req.tp_block_nr].iov_base;
 }
 
 
 static inline int
-nethuns_release_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer)
+nethuns_release_tpacket_v3(nethuns_socket_t s, const uint8_t *payload, nethuns_pkthdr_t hdr, uint64_t blockid, unsigned int consumer)
 {
-    __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELAXED);
-    (void)pkt;
+    __atomic_store_n(&s->sync.id[consumer].value, blockid, __ATOMIC_RELAXED);
+    (void)payload;
+    (void)hdr;
     return 0;
 }
-
 
 
 #ifdef __cplusplus

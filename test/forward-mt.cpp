@@ -23,16 +23,8 @@ void meter()
 }
 
 
-struct nethuns_pkt
-{
-    nethuns_socket_t  sock;
-    nethuns_pkthdr_t  *pkthdr;
-    uint64_t          block;
 
-};
-
-
-boost::lockfree::spsc_queue<nethuns_pkt> queue (131072);
+boost::lockfree::spsc_queue<struct nethuns_packet> queue (131072);
 
 
 int consumer(std::string dev)
@@ -50,7 +42,7 @@ int consumer(std::string dev)
 
     for(;;)
     {
-        nethuns_pkt pkt;
+        struct nethuns_packet pkt;
 
         if (queue.pop(pkt)) {
             total++;
@@ -58,7 +50,7 @@ int consumer(std::string dev)
             while (!nethuns_send(out, (uint8_t *)pkt.pkthdr + pkt.pkthdr->tp_mac, pkt.pkthdr->tp_len))
             { };
 
-            nethuns_release(pkt.sock, pkt.pkthdr, pkt.block, 0);
+            nethuns_release(out, pkt.payload, pkt.pkthdr, pkt.block, 0);
         }
     }
 
@@ -89,8 +81,8 @@ main(int argc, char *argv[])
         return -1;
     }
 
-    unsigned char *frame;
-    nethuns_pkthdr_t *pkthdr;
+    const unsigned char *frame;
+    nethuns_pkthdr_t pkthdr;
 
     nethuns_set_consumer(s, 1);
 
@@ -100,7 +92,7 @@ main(int argc, char *argv[])
 
         if ((block = nethuns_recv(s, &pkthdr, &frame)))
         {
-            nethuns_pkt p { s, pkthdr, block };
+            struct nethuns_packet p { frame, pkthdr, s, block };
 
             while (!queue.push(p))
             { };

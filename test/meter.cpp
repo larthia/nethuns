@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iostream>
 
-void dump_packet(nethuns_pkthdr_t *hdr, unsigned char *frame)
+void dump_packet(nethuns_pkthdr_t hdr, unsigned char *frame)
 {
     int i = 0;
 
@@ -47,17 +47,20 @@ main(int argc, char *argv[])
     std::thread(meter).detach();
 
     nethuns_socket_t s = nethuns_open( 4        /* number of blocks */
-                                     , 65536    /* packets per block */
+                                     , 8192     /* packets per block */
                                      , 2048     /* max packet size */
                                      );
+
+    if (s == nullptr)
+        throw std::runtime_error("nethuns: failed to open socket!");
 
     if (nethuns_bind(s, argv[1]) < 0)
     {
         return -1;
     }
 
-    unsigned char *frame;
-    nethuns_pkthdr_t *pkthdr;
+    const unsigned char *frame;
+    nethuns_pkthdr_t pkthdr;
 
     nethuns_set_consumer(s, 1);
 
@@ -68,7 +71,7 @@ main(int argc, char *argv[])
         if ((block = nethuns_recv(s, &pkthdr, &frame)))
         {
             total++;
-            nethuns_release(s, pkthdr, block, 0);
+            nethuns_release(s, frame, pkthdr, block, 0);
         }
     }
 
