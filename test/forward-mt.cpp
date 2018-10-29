@@ -29,10 +29,15 @@ boost::lockfree::spsc_queue<struct nethuns_packet> queue (131072);
 
 int consumer(std::string dev)
 {
-    nethuns_socket_t out = nethuns_open( 4        /* number of blocks */
-                                       , 4        /* packets per block */
-                                       , 2048     /* max packet size */
-                                       );
+    struct nethuns_socket_options opt =
+    {
+        .numblocks  = 4
+    ,   .numpackets = 4
+    ,   .packetsize = 2048
+    ,   .rxhash     = false
+    };
+
+    nethuns_socket_t out = nethuns_open(&opt);
 
     if (nethuns_bind(out, dev.c_str()) < 0)
     {
@@ -71,10 +76,15 @@ main(int argc, char *argv[])
 
     std::thread(consumer, std::string{argv[2]}).detach();
 
-    nethuns_socket_t s = nethuns_open( 4        /* number of blocks */
-                                     , 65536    /* packets per block */
-                                     , 2048     /* max packet size */
-                                     );
+    struct nethuns_socket_options opt =
+    {
+        .numblocks  = 4
+    ,   .numpackets = 65536
+    ,   .packetsize = 2048
+    ,   .rxhash     = false
+    };
+
+    nethuns_socket_t s = nethuns_open(&opt);
 
     if (nethuns_bind(s, argv[1]) < 0)
     {

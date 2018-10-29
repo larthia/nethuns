@@ -54,10 +54,15 @@ main(int argc, char *argv[])
 
     std::thread(consumer).detach();
 
-    nethuns_socket_t s = nethuns_open( 4        /* number of blocks */
-                                     , 65536    /* packets per block */
-                                     , 2048     /* max packet size */
-                                     );
+    struct nethuns_socket_options opt =
+    {
+        .numblocks  = 4
+    ,   .numpackets = 65536
+    ,   .packetsize = 2048
+    ,   .rxhash     = false
+    };
+
+    nethuns_socket_t s = nethuns_open(&opt);
 
     if (nethuns_bind(s, argv[1]) < 0)
     {

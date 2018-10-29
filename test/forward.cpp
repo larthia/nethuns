@@ -46,15 +46,17 @@ main(int argc, char *argv[])
 
     std::thread(meter).detach();
 
-    nethuns_socket_t in = nethuns_open( 4        /* number of blocks */
-                                      , 65536    /* packets per block */
-                                      , 2048     /* max packet size */
-                                      );
+    struct nethuns_socket_options opt =
+    {
+        .numblocks  = 4
+    ,   .numpackets = 65536
+    ,   .packetsize = 2048
+    ,   .rxhash     = true
+    };
 
-    nethuns_socket_t out = nethuns_open( 4        /* number of blocks */
-                                       , 4        /* packets per block */
-                                       , 2048     /* max packet size */
-                                          );
+    nethuns_socket_t in = nethuns_open(&opt);
+
+    nethuns_socket_t out = nethuns_open(&opt);
 
 
     if (nethuns_bind(in, argv[1]) < 0)
