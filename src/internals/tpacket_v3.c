@@ -5,6 +5,8 @@
 #include <poll.h>
 #include <errno.h>
 
+#define _GNU_SOURCE
+#include <string.h>
 
 nethuns_socket_t
 nethuns_open_tpacket_v3(unsigned int numblocks, unsigned int numpackets, unsigned int packetsize)
@@ -292,6 +294,101 @@ int nethuns_set_consumer_tpacket_v3(nethuns_socket_t s, unsigned int numb)
         return -1;
     s->sync.number = numb;
     return 0;
+}
+
+
+
+static inline
+int __fanout_code(int strategy, int defrag, int rollover)
+{
+	if (defrag)   strategy |= PACKET_FANOUT_FLAG_DEFRAG;
+	if (rollover) strategy |= PACKET_FANOUT_FLAG_ROLLOVER;
+	return strategy;
+}
+
+
+static int
+__parse_fanout(const char *str)
+{
+	int defrag = 0, rollover = 0;
+
+	if (!str) return -1;
+
+	/* parse options */
+
+    if (strcasestr(str, "|defrag"))
+		defrag = 1;
+
+    if (strcasestr(str, "|rollover"))
+		rollover = 1;
+
+	/* parse strategy */
+
+#define _(x)  x, (sizeof(x)-1)
+
+#ifdef PACKET_FANOUT_DATA
+	if (strncasecmp(str, _("data")) == 0)
+		return __fanout_code(PACKET_FANOUT_DATA, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_HASH
+	if (strncasecmp(str, _("hash")) == 0)
+		return __fanout_code(PACKET_FANOUT_HASH, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_LB
+	if (strncasecmp(str, _("lb")) == 0)
+		return __fanout_code(PACKET_FANOUT_LB, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_CPU
+	if (strncasecmp(str, _("cpu")) == 0)
+		return __fanout_code(PACKET_FANOUT_CPU, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_ROLLOVER
+	if (strncasecmp(str, _("rollover")) == 0)
+	        return __fanout_code(PACKET_FANOUT_ROLLOVER, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_RND
+	if (strncasecmp(str, _("rnd")) == 0)
+	        return __fanout_code(PACKET_FANOUT_RND, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_QM
+	if (strncasecmp(str, _("qm")) == 0)
+	        return __fanout_code(PACKET_FANOUT_QM, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_CBPF
+	if (strncasecmp(str, _("cbpf")) == 0)
+	        return __fanout_code(PACKET_FANOUT_CBPF, defrag, rollover);
+#endif
+#ifdef PACKET_FANOUT_EBPF
+	if (strncasecmp(str, _("ebpf")) == 0)
+		return __fanout_code(PACKET_FANOUT_EBPF, defrag, rollover);
+#endif
+#undef _
+
+	return -1;
+}
+
+
+int
+nethuns_fanout_tpacket_v3(nethuns_socket_t s, int group, const char *fanout)
+{
+	int fanout_code, fanout_arg;
+	int err;
+
+	fanout_code = __parse_fanout(fanout);
+	if (fanout_code < 0) {
+	    perror("nethuns: parse_fanout error!");
+        return -1;
+	}
+
+	fanout_arg = group | (fanout_code << 16);
+
+	err = setsockopt(s->fd, SOL_PACKET, PACKET_FANOUT, &fanout_arg, sizeof(fanout_arg));
+	if (err) {
+		perror("nethuns: fanout");
+		return -1;
+	}
+
+	return 0;
 }
 
 

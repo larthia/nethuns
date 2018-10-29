@@ -25,8 +25,11 @@ extern "C" {
 
     int nethuns_close(nethuns_socket_t);
 
+    int nethuns_fanout(nethuns_socket_t s, int group, const char *fanout);
+
     static inline int
     nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer);
+
 
 #ifdef __cplusplus
 }
