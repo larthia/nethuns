@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-    nethuns_socket_t nethuns_open(unsigned int blocksize, unsigned int numblocks, unsigned int packetsize);
+    nethuns_socket_t nethuns_open(struct nethuns_socket_options *opt);
 
     int nethuns_bind(nethuns_socket_t s, const char *dev);
 

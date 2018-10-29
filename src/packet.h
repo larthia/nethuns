@@ -2,6 +2,7 @@
 
 #include "internals/packet.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 
 struct nethuns_packet
@@ -12,3 +13,10 @@ struct nethuns_packet
     uint64_t           block;
 };
 
+struct nethuns_socket_options
+{
+    unsigned int    numblocks;
+    unsigned int    numpackets;
+    unsigned int    packetsize;
+    bool            rxhash;
+};

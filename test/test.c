@@ -5,7 +5,7 @@ void dump_packet(nethuns_pkthdr_t hdr, const unsigned char *frame)
 {
     int i = 0;
 
-    printf("%u:%u snap:%u len:%u | ", nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr), nethuns_snaplen(hdr), nethuns_len(hdr));
+    printf("%u:%u snap:%u len:%u rxhash:0x%x| ", nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr), nethuns_snaplen(hdr), nethuns_len(hdr), nethuns_rxhash(hdr));
     for(; i < 14; i++)
     {
         printf("%02x ", frame[i]);
@@ -25,10 +25,15 @@ main(int argc, char *argv[])
         return 0;
     }
 
-    s = nethuns_open( 4        /* number of blocks */
-                    , 65536    /* packets per block */
-                    , 2048     /* max packet size */
-                    );
+    struct nethuns_socket_options opt =
+    {
+        .numblocks  = 4
+    ,   .numpackets = 65536
+    ,   .packetsize = 2048
+    ,   .rxhash     = true
+    };
+
+    s = nethuns_open(&opt);
 
     if (nethuns_bind(s, argv[1]) < 0)
     {

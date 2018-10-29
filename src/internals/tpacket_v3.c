@@ -8,7 +8,7 @@
 #include <string.h>
 
 nethuns_socket_t
-nethuns_open_tpacket_v3(unsigned int numblocks, unsigned int numpackets, unsigned int packetsize)
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 {
     nethuns_socket_t sock;
     int fd, err, v = TPACKET_V3;
@@ -28,13 +28,13 @@ nethuns_open_tpacket_v3(unsigned int numblocks, unsigned int numpackets, unsigne
     sock = malloc(sizeof(struct tpacket_v3_socket));
     memset(sock, 0, sizeof(*sock));
 
-    sock->rx_ring.req.tp_block_size     = numpackets * packetsize;
-    sock->rx_ring.req.tp_frame_size     = packetsize;
-    sock->rx_ring.req.tp_block_nr       = numblocks;
-    sock->rx_ring.req.tp_frame_nr       = numblocks * numpackets;
+    sock->rx_ring.req.tp_block_size     = opt->numpackets * opt->packetsize;
+    sock->rx_ring.req.tp_frame_size     = opt->packetsize;
+    sock->rx_ring.req.tp_block_nr       = opt->numblocks;
+    sock->rx_ring.req.tp_frame_nr       = opt->numblocks * opt->numpackets;
     sock->rx_ring.req.tp_retire_blk_tov = 60;
     sock->rx_ring.req.tp_sizeof_priv    = 0;
-    sock->rx_ring.req.tp_feature_req_word = TP_FT_REQ_FILL_RXHASH;
+    sock->rx_ring.req.tp_feature_req_word = opt->rxhash ? TP_FT_REQ_FILL_RXHASH : 0;
 
     err = setsockopt(fd, SOL_PACKET, PACKET_RX_RING, &sock->rx_ring.req, sizeof(sock->rx_ring.req));
     if (err < 0) {
@@ -44,10 +44,10 @@ nethuns_open_tpacket_v3(unsigned int numblocks, unsigned int numpackets, unsigne
         return NULL;
     }
 
-    sock->tx_ring.req.tp_block_size     = numpackets * packetsize;
-    sock->tx_ring.req.tp_frame_size     = packetsize;
-    sock->tx_ring.req.tp_block_nr       = numblocks;
-    sock->tx_ring.req.tp_frame_nr       = numblocks * numpackets;
+    sock->tx_ring.req.tp_block_size     = opt->numpackets * opt->packetsize;
+    sock->tx_ring.req.tp_frame_size     = opt->packetsize;
+    sock->tx_ring.req.tp_block_nr       = opt->numblocks;
+    sock->tx_ring.req.tp_frame_nr       = opt->numblocks * opt->numpackets;
 
     err = setsockopt(fd, SOL_PACKET, PACKET_TX_RING, &sock->tx_ring.req, sizeof(sock->tx_ring.req));
     if (err < 0) {
