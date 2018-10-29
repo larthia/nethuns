@@ -95,6 +95,44 @@ nethuns_release_tpacket_v3(nethuns_socket_t s, const uint8_t *payload, nethuns_p
 }
 
 
+static inline uint32_t
+nethuns_tstamp_sec_tpacket_v3(nethuns_pkthdr_t hdr)
+{
+    return hdr->tp_sec;
+}
+
+
+static inline uint32_t
+nethuns_tstamp_nsec_tpacket_v3(nethuns_pkthdr_t hdr)
+{
+    return hdr->tp_nsec;
+}
+
+static inline uint32_t
+nethuns_snaplen_tpacket_v3(nethuns_pkthdr_t hdr)
+{
+    return hdr->tp_snaplen;
+}
+
+static inline uint32_t
+nethuns_len_tpacket_v3(nethuns_pkthdr_t hdr)
+{
+    return hdr->tp_len;
+}
+
+static inline uint32_t
+nethuns_rxhash_tpacket_v3(nethuns_pkthdr_t hdr)
+{
+    return hdr->hv1.tp_rxhash;
+}
+
+static inline uint32_t
+nethuns_vlan_tci_tpacket_v3(nethuns_pkthdr_t hdr)
+{
+    return hdr->hv1.tp_vlan_tci;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

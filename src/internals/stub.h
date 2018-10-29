@@ -15,6 +15,13 @@
 #define nethuns_release(...)        nethuns_release_tpacket_v3(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_tpacket_v3(__VA_ARGS__)
 
+#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_tpacket_v3(__VA_ARGS__)
+#define nethuns_snaplen(...)        nethuns_snaplen_tpacket_v3(__VA_ARGS__)
+#define nethuns_len(...)            nethuns_len_tpacket_v3(__VA_ARGS__)
+#define nethuns_rxhash(...)         nethuns_rxhash_tpacket_v3(__VA_ARGS__)
+#define nethuns_vlan_tci(...)       nethuns_vlan_tci_tpacket_v3(__VA_ARGS__)
+
 #else
 
 #error "Nethuns: socket type not specified!"

@@ -31,6 +31,13 @@ extern "C" {
     nethuns_release(nethuns_socket_t s, const uint8_t *payload, nethuns_pkthdr_t hdr, uint64_t blockid, unsigned int consumer);
 
 
+    static inline uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t hdr);
+    static inline uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t hdr);
+    static inline uint32_t nethuns_snaplen(nethuns_pkthdr_t hdr);
+    static inline uint32_t nethuns_len(nethuns_pkthdr_t hdr);
+    static inline uint32_t nethuns_rxhash(nethuns_pkthdr_t hdr);
+    static inline uint32_t nethuns_vlan_tci(nethuns_pkthdr_t hdr);
+
 #ifdef __cplusplus
 }
 #endif
