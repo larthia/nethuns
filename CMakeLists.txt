@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.4)
 
 project (nethuns)
 
+add_definitions(-DNETHUNS_USE_TPACKET_V3)
+
+
 #set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion -fsanitize=address -fsanitize=undefined")
 set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
@@ -9,13 +12,18 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-point
 
 include_directories(src)
 
+
 add_definitions(-D_GNU_SOURCE)
 
-add_library(nethuns_static STATIC src/nethuns.c)
-add_library(nethuns SHARED src/nethuns.c)
+set(NETHUNS_SRC src/internals/tpacket_v3.c)
+
+
+add_library(nethuns_static STATIC ${NETHUNS_SRC})
+add_library(nethuns SHARED ${NETHUNS_SRC})
 
 
 link_directories(${nethuns_BINARY_DIR})
+
 
 add_executable(nethuns-test    test/test.c)
 add_executable(nethuns-send    test/send.cpp)

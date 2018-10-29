@@ -29,7 +29,7 @@ struct ring_v3
 };
 
 
-struct tpacket_socket
+struct tpacket_v3_socket
 {
     int fd;
 
@@ -55,17 +55,17 @@ struct tpacket_socket
 };
 
 
-struct block_desc
+struct block_desc_v3
 {
 	uint32_t version;
 	uint32_t offset_to_priv;
 	struct tpacket_hdr_v1 hdr;
 };
 
-typedef struct tpacket_socket *  nethuns_socket_t;
 
-typedef struct block_desc        nethuns_block_t;
-typedef struct tpacket3_hdr      nethuns_pkthdr_t;
+typedef struct tpacket_v3_socket *  nethuns_socket_t;
+typedef struct block_desc_v3        nethuns_block_t;
+typedef struct tpacket3_hdr         nethuns_pkthdr_t;
 
 
 #ifdef __cplusplus
@@ -75,28 +75,26 @@ extern "C" {
 
 static inline
 nethuns_block_t *
-__nethuns_block_rx(nethuns_socket_t s, uint64_t id)
+__nethuns_block_rx_tpacket_v3(nethuns_socket_t s, uint64_t id)
 {
     return (nethuns_block_t *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
 }
 
 static inline
 nethuns_block_t *
-__nethuns_block_tx(nethuns_socket_t s, uint64_t id)
+__nethuns_block_tx_tpacket_v3(nethuns_socket_t s, uint64_t id)
 {
     return (nethuns_block_t *) s->tx_ring.rd[id % s->tx_ring.req.tp_block_nr].iov_base;
 }
 
 
 static inline int
-nethuns_release(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer)
+nethuns_release_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkt, uint64_t block_id, unsigned int consumer)
 {
     __atomic_store_n(&s->sync.id[consumer].value, block_id, __ATOMIC_RELAXED);
     (void)pkt;
     return 0;
 }
-
-
 
 
 

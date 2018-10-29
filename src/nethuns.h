@@ -1,6 +1,6 @@
 #pragma once
 
-#include "internals/tpacketv3.h"
+#include "internals/stub.h"
 
 #ifdef __cplusplus
 extern "C" {
