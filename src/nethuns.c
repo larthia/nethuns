@@ -21,6 +21,7 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
     err = setsockopt(fd, SOL_PACKET, PACKET_VERSION, &v, sizeof(v));
     if (err < 0) {
         perror("nethuns: setsockopt PACKET_VERSION v3");
+        close(fd);
         return NULL;
     }
 
@@ -39,6 +40,7 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
     if (err < 0) {
         perror("nethuns: setsockopt RX_RING");
         free(sock);
+        close(fd);
         return NULL;
     }
 
@@ -50,9 +52,8 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
     err = setsockopt(fd, SOL_PACKET, PACKET_TX_RING, &sock->tx_ring.req, sizeof(sock->tx_ring.req));
     if (err < 0) {
         perror("nethuns: setsockopt TX_RING");
-	    munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr);
-	    close(fd);
         free(sock);
+	    close(fd);
         return NULL;
     }
 
@@ -66,11 +67,11 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
     if (sock->rx_ring.map == MAP_FAILED) {
         perror("nethuns: mmap");
         free(sock);
+        close(fd);
         return NULL;
     }
 
     sock->tx_ring.map = sock->rx_ring.map + (sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr);
-
 
     /* setup Rx ring... */
 
@@ -122,6 +123,21 @@ nethuns_open(unsigned int numblocks, unsigned int numpackets, unsigned int packe
 }
 
 
+int nethuns_close(nethuns_socket_t s)
+{
+    if (s)
+    {
+	    free(s->tx_ring.rd);
+	    free(s->rx_ring.rd);
+	    munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
+	                           s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
+        close(s->fd);
+        free(s);
+    }
+    return 0;
+}
+
+
 int nethuns_bind(nethuns_socket_t s, const char *dev)
 {
     struct sockaddr_ll addr;
@@ -153,18 +169,6 @@ int nethuns_fd(nethuns_socket_t s)
     return s->fd;
 }
 
-
-int nethuns_close(nethuns_socket_t s)
-{
-    if (s)
-    {
-	    munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr);
-	    munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr);
-        close(s->fd);
-        free(s);
-    }
-    return 0;
-}
 
 
 int
