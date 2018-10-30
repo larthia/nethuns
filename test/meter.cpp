@@ -48,8 +48,8 @@ main(int argc, char *argv[])
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 8192
+        .numblocks  = 64
+    ,   .numpackets = 2048
     ,   .packetsize = 2048
     ,   .rxhash     = false
     };
@@ -69,6 +69,7 @@ main(int argc, char *argv[])
 
     nethuns_set_consumer(s, 1);
 
+    uint64_t total2 = 0;
     for(;;)
     {
         uint64_t block;
@@ -76,6 +77,14 @@ main(int argc, char *argv[])
         if ((block = nethuns_recv(s, &pkthdr, &frame)))
         {
             total++;
+            total2++;
+
+            if (total2 == 10000000)
+            {
+                total2 = 0;
+                nethuns_dump_rings(s);
+            }
+
             nethuns_release(s, frame, pkthdr, block, 0);
         }
     }
