@@ -51,7 +51,7 @@ main(int argc, char *argv[])
         .numblocks  = 4
     ,   .numpackets = 65536
     ,   .packetsize = 2048
-    ,   .rxhash     = true
+    ,   .rxhash     = false
     };
 
     nethuns_socket_t in = nethuns_open(&opt);

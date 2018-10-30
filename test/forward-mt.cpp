@@ -31,8 +31,8 @@ int consumer(std::string dev)
 {
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 4
+        .numblocks  = 8
+    ,   .numpackets = 65536
     ,   .packetsize = 2048
     ,   .rxhash     = false
     };
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
+        .numblocks  = 8
     ,   .numpackets = 65536
     ,   .packetsize = 2048
     ,   .rxhash     = false
