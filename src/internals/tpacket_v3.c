@@ -220,7 +220,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **
 
         *pkthdr    = s->rx_ppd;
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
-	s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+		s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
         return s->rx_block_idx;
     }
@@ -259,9 +259,8 @@ nethuns_send_tpacket_v3(nethuns_socket_t s, uint8_t *packet, unsigned int len)
 
     if (s->tx_frame_idx == numpackets)
     {
-        int ret = nethuns_flush_tpacket_v3(s);
-        if (ret == -1) {
-            // perror("nethuns: flush");
+        if (nethuns_flush_tpacket_v3(s) < 0)
+        {
             return -1;
         }
 
