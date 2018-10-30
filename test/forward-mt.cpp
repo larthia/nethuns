@@ -8,7 +8,8 @@
 #include <iostream>
 
 
-std::atomic_long total;
+std::atomic_long total_rcv;
+std::atomic_long total_fwd;
 
 void meter()
 {
@@ -17,8 +18,9 @@ void meter()
     {
         now += std::chrono::seconds(1);
         std::this_thread::sleep_until(now);
-        auto x = total.exchange(0);
-        std::cout << "pkt/sec: " << x << std::endl;
+        auto r = total_rcv.exchange(0);
+        auto f = total_fwd.exchange(0);
+        std::cout << "pkt/sec: " << r << " fwd/sec: " << f << std::endl;
     }
 }
 
@@ -31,7 +33,7 @@ int consumer(std::string dev)
 {
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 8
+        .numblocks  = 4
     ,   .numpackets = 65536
     ,   .packetsize = 2048
     ,   .rxhash     = false
@@ -50,12 +52,13 @@ int consumer(std::string dev)
         struct nethuns_packet pkt;
 
         if (queue.pop(pkt)) {
-            total++;
+            total_fwd++;
 
-            while (!nethuns_send(out, (uint8_t *)pkt.pkthdr + pkt.pkthdr->tp_mac, pkt.pkthdr->tp_len))
-            { };
+            while (!nethuns_send(out, (uint8_t *)pkt.payload, pkt.pkthdr->tp_len))
+            {
+            };
 
-            nethuns_release(out, pkt.payload, pkt.pkthdr, pkt.block, 0);
+            nethuns_release(pkt.socket, pkt.payload, pkt.pkthdr, pkt.block, 0);
         }
     }
 
@@ -78,7 +81,7 @@ main(int argc, char *argv[])
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 8
+        .numblocks  = 4
     ,   .numpackets = 65536
     ,   .packetsize = 2048
     ,   .rxhash     = false
@@ -102,6 +105,7 @@ main(int argc, char *argv[])
 
         if ((block = nethuns_recv(s, &pkthdr, &frame)))
         {
+            total_rcv++;
             struct nethuns_packet p { frame, pkthdr, s, block };
 
             while (!queue.push(p))
