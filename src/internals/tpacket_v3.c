@@ -100,8 +100,15 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 
 
     sock->fd = fd;
-    sock->rx_block_idx = 0;
-    sock->tx_block_idx = 0;
+
+    sock->rx_block_idx_rls = 0;
+    sock->rx_block_idx 	   = 0;
+    sock->rx_block_mod     = 0;
+
+    sock->tx_block_idx_rls = 0;
+    sock->tx_block_idx     = 0;
+    sock->tx_block_mod     = 0;
+
     sock->rx_frame_idx = 0;
     sock->tx_frame_idx = 0;
 
@@ -182,7 +189,7 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t s)
 
     for(; rid < cur; ++rid)
     {
-        struct block_descr_v3 *pb = __nethuns_block_rx_tpacket_v3(s, rid);
+        struct block_descr_v3 *pb = __nethuns_block_mod_tpacket_v3(&s->rx_ring, rid);
         pb->hdr.block_status = TP_STATUS_KERNEL;
     }
 
@@ -196,7 +203,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **
 {
     struct block_descr_v3 * pb;
 
-    pb = __nethuns_block_rx_tpacket_v3(s, s->rx_block_idx);
+    pb = __nethuns_block_tpacket_v3(&s->rx_ring, s->rx_block_mod);
 
     if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0))
     {
@@ -205,7 +212,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **
         return 0;
     }
 
-    if (s->rx_frame_idx < pb->hdr.num_pkts)
+    if (likely(s->rx_frame_idx < pb->hdr.num_pkts))
     {
         if (unlikely(s->rx_frame_idx++ == 0))
         {
@@ -224,6 +231,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **
     if ((s->rx_block_idx - s-> rx_block_idx_rls) < (s->rx_ring.req.tp_block_nr - 1))
     {
         s->rx_block_idx++;
+        s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;
         s->rx_frame_idx = 0;
     }
 
@@ -254,15 +262,16 @@ nethuns_send_tpacket_v3(nethuns_socket_t s, uint8_t *packet, unsigned int len)
     {
         int ret = nethuns_flush_tpacket_v3(s);
         if (ret == -1) {
-            perror("nethuns: flush");
+            // perror("nethuns: flush");
             return -1;
         }
 
         s->tx_block_idx++;
+        s->tx_block_mod = (s->tx_block_mod + 1) % s->tx_ring.req.tp_block_nr;
         s->tx_frame_idx = 0;
     }
 
-    pbase = (uint8_t *)__nethuns_block_tx_tpacket_v3(s, s->tx_block_idx);
+    pbase = (uint8_t *)__nethuns_block_tpacket_v3(&s->tx_ring, s->tx_block_mod);
 
     struct tpacket3_hdr * tx = (struct tpacket3_hdr *)(pbase + s->tx_frame_idx * s->tx_ring.req.tp_frame_size);
 

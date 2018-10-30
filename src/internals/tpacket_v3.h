@@ -38,11 +38,13 @@ struct tpacket_v3_socket
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;
 
+    uint64_t        rx_block_mod;
     uint64_t        rx_block_idx;
     uint64_t        rx_block_idx_rls;
 
+    uint64_t        tx_block_mod;
     uint64_t        tx_block_idx;
-    uint64_t        tx_block_idx_rsl;
+    uint64_t        tx_block_idx_rls;
 
     unsigned int    rx_frame_idx;
     unsigned int    tx_frame_idx;
@@ -72,16 +74,17 @@ extern "C" {
 
 static inline
 struct block_descr_v3 *
-__nethuns_block_rx_tpacket_v3(nethuns_socket_t s, uint64_t id)
+__nethuns_block_mod_tpacket_v3(struct ring_v3 *ring, uint64_t id)
 {
-    return (struct block_descr_v3 *) s->rx_ring.rd[id % s->rx_ring.req.tp_block_nr].iov_base;
+    return (struct block_descr_v3 *) ring->rd[id % ring->req.tp_block_nr].iov_base;
 }
+
 
 static inline
 struct block_descr_v3 *
-__nethuns_block_tx_tpacket_v3(nethuns_socket_t s, uint64_t id)
+__nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 {
-    return (struct block_descr_v3 *) s->tx_ring.rd[id % s->tx_ring.req.tp_block_nr].iov_base;
+    return (struct block_descr_v3 *) ring->rd[id_mod].iov_base;
 }
 
 
