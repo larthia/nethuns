@@ -391,3 +391,26 @@ nethuns_fanout_tpacket_v3(nethuns_socket_t s, int group, const char *fanout)
 }
 
 
+void
+__dump_ring(struct ring_v3 *ring, const char *label)
+{
+	fprintf(stderr, "%s {", label);
+	unsigned int n;
+	for(n = 0; n < ring->req.tp_block_nr; ++n)
+	{
+    		struct block_descr_v3 * pb;
+    		pb = __nethuns_block_tpacket_v3(ring, n);
+		fprintf(stderr, "%x[%u] ", pb->hdr.block_status
+					 , pb->hdr.num_pkts);
+	}
+	fprintf(stderr, "} ");
+}
+
+void
+nethuns_dump_rings_tpacket_v3(nethuns_socket_t s)
+{
+	__dump_ring(&s->rx_ring, "rx");
+	__dump_ring(&s->tx_ring, "tx");
+	fprintf(stderr, "\n");
+}
+

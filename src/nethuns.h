@@ -27,9 +27,10 @@ extern "C" {
 
     int nethuns_fanout(nethuns_socket_t s, int group, const char *fanout);
 
+	void nethuns_dump_rings(nethuns_socket_t s);
+
     static inline int
     nethuns_release(nethuns_socket_t s, const uint8_t *payload, nethuns_pkthdr_t hdr, uint64_t blockid, unsigned int consumer);
-
 
     static inline uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t hdr);
     static inline uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t hdr);
