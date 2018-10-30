@@ -53,7 +53,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
     if (err < 0) {
         perror("nethuns: setsockopt TX_RING");
         free(sock);
-	    close(fd);
+        close(fd);
         return NULL;
     }
 
@@ -102,7 +102,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
     sock->fd = fd;
 
     sock->rx_block_idx_rls = 0;
-    sock->rx_block_idx 	   = 0;
+    sock->rx_block_idx	   = 0;
     sock->rx_block_mod     = 0;
 
     sock->tx_block_idx_rls = 0;
@@ -116,7 +116,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
     sock->rx_pfd.fd = fd;
     sock->rx_pfd.events = POLLIN | POLLERR;
     sock->rx_pfd.revents = 0;
-
 
     sock->tx_pfd.fd = fd;
     sock->tx_pfd.events = POLLOUT | POLLERR;
@@ -134,10 +133,10 @@ int nethuns_close_tpacket_v3(nethuns_socket_t s)
 {
     if (s)
     {
-	    free(s->tx_ring.rd);
-	    free(s->rx_ring.rd);
-	    munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
-	                           s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
+	free(s->tx_ring.rd);
+	free(s->rx_ring.rd);
+	munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
+						   s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
         close(s->fd);
         free(s);
     }
@@ -221,7 +220,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **
 
         *pkthdr    = s->rx_ppd;
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
-		s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+	s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
         return s->rx_block_idx;
     }
@@ -352,19 +351,19 @@ __parse_fanout(const char *str)
 #endif
 #ifdef PACKET_FANOUT_ROLLOVER
 	if (strncasecmp(str, _("rollover")) == 0)
-	        return __fanout_code(PACKET_FANOUT_ROLLOVER, defrag, rollover);
+			return __fanout_code(PACKET_FANOUT_ROLLOVER, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_RND
 	if (strncasecmp(str, _("rnd")) == 0)
-	        return __fanout_code(PACKET_FANOUT_RND, defrag, rollover);
+			return __fanout_code(PACKET_FANOUT_RND, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_QM
 	if (strncasecmp(str, _("qm")) == 0)
-	        return __fanout_code(PACKET_FANOUT_QM, defrag, rollover);
+			return __fanout_code(PACKET_FANOUT_QM, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_CBPF
 	if (strncasecmp(str, _("cbpf")) == 0)
-	        return __fanout_code(PACKET_FANOUT_CBPF, defrag, rollover);
+			return __fanout_code(PACKET_FANOUT_CBPF, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_EBPF
 	if (strncasecmp(str, _("ebpf")) == 0)
@@ -407,8 +406,8 @@ __dump_ring(struct ring_v3 *ring, const char *label)
 	unsigned int n;
 	for(n = 0; n < ring->req.tp_block_nr; ++n)
 	{
-    		struct block_descr_v3 * pb;
-    		pb = __nethuns_block_tpacket_v3(ring, n);
+		struct block_descr_v3 * pb;
+		pb = __nethuns_block_tpacket_v3(ring, n);
 		fprintf(stderr, "%x[%u] ", pb->hdr.block_status
 					 , pb->hdr.num_pkts);
 	}
