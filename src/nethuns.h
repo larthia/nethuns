@@ -36,12 +36,19 @@ extern "C" {
     uint64_t nethuns_pcap_read(nethuns_pcap_t * p, nethuns_pkthdr_t **pkthdr, uint8_t **pkt);
     int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t *pkthdr, uint8_t const *packet, unsigned int len);
 
-    static inline uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t *hdr);
-    static inline uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t *hdr);
-    static inline uint32_t nethuns_snaplen(nethuns_pkthdr_t *hdr);
-    static inline uint32_t nethuns_len(nethuns_pkthdr_t *hdr);
-    static inline uint32_t nethuns_rxhash(nethuns_pkthdr_t *hdr);
-    static inline uint32_t nethuns_vlan_tci(nethuns_pkthdr_t *hdr);
+
+    //
+    // BOOL nethuns_valid_id(uint64_t)
+    //
+    // TYPE nethuns_tstamp_sec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_nsec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_snaplen(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_len(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_rxhash(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_vlan_tci(nethuns_pkthdr_t *hdr)
+    //
+
+#define nethuns_valid_id(n) (n != 0 && n != (uint64_t)-1)
 
 #define nethuns_release(s, pkt_id, consumer_id) \
     { \

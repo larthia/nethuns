@@ -40,7 +40,7 @@ struct nethuns_pcap_pkthdr
 typedef struct nethuns_pcap_socket nethuns_pcap_t;
 
 
-struct nethuns_pcap_slot
+struct nethuns_pcap_rx_slot
 {
     bool                    inuse;
 #ifdef NETHUNS_USE_TPACKET_V3
@@ -55,11 +55,10 @@ struct nethuns_pcap_socket
     struct nethuns_synapse          sync;
     struct nethuns_socket_options   opt;
 
-    FILE *                          file;
-    int                             mode;
-    uint32_t                        snaplen;
-    unsigned int                    idx_p;
-    unsigned int                    idx_c;
-    struct nethuns_pcap_slot        *rx_ring;
+    FILE *         file;
+    int            mode;
+    uint32_t       snaplen;
+    unsigned int   idx;
+    void          *rx_ring;
 };
 

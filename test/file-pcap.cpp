@@ -26,10 +26,27 @@ try
         ,   .rxhash     = true
         };
 
-        p = nethuns_pcap_open(&opt, "read.pcap", 0);
+        p = nethuns_pcap_open(&opt, argv[2], 0);
         if (!p) {
             throw std::runtime_error("nethuns_pcap_open (read)!");
         }
+
+
+        unsigned char *frame;
+        nethuns_pkthdr_t * pkthdr;
+
+        uint64_t pkt_id;
+
+        do
+        {
+            pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
+
+            if (nethuns_valid_id(pkt_id))
+            {
+                std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
+            }
+        }
+        while (nethuns_valid_id(pkt_id));
 
         nethuns_pcap_close(p);
 

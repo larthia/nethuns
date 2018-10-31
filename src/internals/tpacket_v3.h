@@ -88,42 +88,12 @@ __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 }
 
 
-static inline uint32_t
-nethuns_tstamp_sec_tpacket_v3(nethuns_pkthdr_t *hdr)
-{
-    return hdr->tp_sec;
-}
-
-
-static inline uint32_t
-nethuns_tstamp_nsec_tpacket_v3(nethuns_pkthdr_t *hdr)
-{
-    return hdr->tp_nsec;
-}
-
-static inline uint32_t
-nethuns_snaplen_tpacket_v3(nethuns_pkthdr_t *hdr)
-{
-    return hdr->tp_snaplen;
-}
-
-static inline uint32_t
-nethuns_len_tpacket_v3(nethuns_pkthdr_t *hdr)
-{
-    return hdr->tp_len;
-}
-
-static inline uint32_t
-nethuns_rxhash_tpacket_v3(nethuns_pkthdr_t *hdr)
-{
-    return hdr->hv1.tp_rxhash;
-}
-
-static inline uint32_t
-nethuns_vlan_tci_tpacket_v3(nethuns_pkthdr_t *hdr)
-{
-    return hdr->hv1.tp_vlan_tci;
-}
+#define nethuns_tstamp_sec_tpacket_v3(hdr)      (hdr->tp_sec)
+#define nethuns_tstamp_nsec_tpacket_v3(hdr)     (hdr->tp_nsec)
+#define nethuns_snaplen_tpacket_v3(hdr)         (hdr->tp_snaplen)
+#define nethuns_len_tpacket_v3(hdr)             (hdr->tp_len)
+#define nethuns_rxhash_tpacket_v3(hdr)          (hdr->hv1.tp_rxhash)
+#define nethuns_vlan_tci_tpacket_v3(hdr)        (hdr->hv1.tp_vlan_tci)
 
 
 #ifdef __cplusplus

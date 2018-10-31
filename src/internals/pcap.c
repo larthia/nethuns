@@ -21,7 +21,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 {
     struct nethuns_pcap_socket *pcap;
     FILE *f;
-    void *ring;
+    struct  nethuns_pcap_rx_slot *ring = NULL;
     uint32_t snaplen;
 
     if (!mode)
@@ -49,6 +49,14 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {
             perror("nethuns_pcap_open: magic pcap_file_header mismatch!");
+            fclose(f);
+            return NULL;
+        }
+
+        ring = calloc(1, opt->numblocks * opt->numpackets * opt->packetsize);
+        if (!ring)
+        {
+            perror("nethuns_pcap_open: failed to allocate ring");
             fclose(f);
             return NULL;
         }
@@ -82,14 +90,6 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         fflush(f);
     }
 
-    ring = calloc(1, opt->numblocks * opt->numpackets * (opt->packetsize + sizeof(struct nethuns_pcap_pkthdr)));
-    if (!ring)
-    {
-        perror("nethuns_pcap_open: failed to allocate ring");
-        fclose(f);
-        return NULL;
-    }
-
     pcap = malloc(sizeof(struct nethuns_pcap_socket));
     if (!pcap)
     {
@@ -103,8 +103,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     pcap->file      = f;
     pcap->mode      = mode;
     pcap->snaplen   = snaplen;
-    pcap->idx_p     = 0;
-    pcap->idx_c     = 0;
+    pcap->idx       = 0;
     pcap->rx_ring   = ring;
     return pcap;
 }
@@ -121,9 +120,60 @@ nethuns_pcap_close(nethuns_pcap_t *p)
 
 
 uint64_t
-nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
+nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payload)
 {
-    return 0;
+    unsigned int caplen = p->opt.packetsize - (unsigned int)sizeof(struct nethuns_pcap_rx_slot);
+    unsigned int bytes, n;
+
+    unsigned long idx = p->idx % (p->opt.numblocks * p->opt.numpackets);
+
+    struct nethuns_pcap_pkthdr header;
+
+    struct nethuns_pcap_rx_slot * slot = (struct nethuns_pcap_rx_slot *)((char *)p->rx_ring + idx * p->opt.packetsize);
+
+    if (slot->inuse)
+    {
+        return 0;
+    }
+
+    if ((n = fread(&header, sizeof(header), 1, p->file)) != 1)
+    {
+        if (n)
+            perror("nethuns_pcap_read: could not read packet hdr!");
+        return  (uint64_t)-1;
+    }
+
+    bytes = MIN(caplen, header.caplen);
+
+    if (fread(slot->packet, 1, bytes, p->file) != bytes)
+    {
+        perror("nethuns_pcap_read: could not read packet!");
+        return (uint64_t)-1;
+    }
+
+    nethuns_tstamp_sec ((&slot->pkthdr)) = header.ts.tv_sec;
+    nethuns_tstamp_nsec((&slot->pkthdr)) = header.ts.tv_usec * 1000;
+    nethuns_len        ((&slot->pkthdr)) = header.len;
+    nethuns_snaplen    ((&slot->pkthdr)) = bytes;
+
+    if (header.caplen > caplen)
+    {
+        long skip = header.caplen - caplen;
+        if (fseek(p->file, skip, SEEK_CUR) < 0)
+        {
+            perror("nethuns_pcap_read: could not skip bytes!");
+            return (uint64_t)-1;
+        }
+    }
+
+    slot->inuse = 1;
+
+    *pkthdr  = &slot->pkthdr;
+    *payload =  slot->packet;
+
+    p->idx++;
+
+    return p->idx;
 }
 
 
