@@ -19,7 +19,6 @@
 #include <linux/ip.h>
 
 #include "synapse.h"
-
 #include "../packet.h"
 
 
@@ -33,7 +32,10 @@ struct ring_v3
 
 struct tpacket_v3_socket
 {
+    struct nethuns_synapse sync;
     int fd;
+
+    struct nethuns_socket_options opt;
 
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;
@@ -54,8 +56,6 @@ struct tpacket_v3_socket
 
     struct tpacket3_hdr *rx_ppd;
     struct tpacket3_hdr *tx_ppd;
-
-    struct nethuns_synapse sync;
 };
 
 

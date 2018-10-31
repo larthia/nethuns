@@ -36,6 +36,7 @@ int consumer(std::string dev)
         .numblocks  = 4
     ,   .numpackets = 65536
     ,   .packetsize = 2048
+    ,   .timeout    = 0
     ,   .rxhash     = false
     };
 
@@ -84,6 +85,7 @@ main(int argc, char *argv[])
         .numblocks  = 4
     ,   .numpackets = 65536
     ,   .packetsize = 2048
+    ,   .timeout    = 0
     ,   .rxhash     = false
     };
 

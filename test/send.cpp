@@ -48,6 +48,7 @@ main(int argc, char *argv[])
         .numblocks  = 8
     ,   .numpackets = 8
     ,   .packetsize = 2048
+    ,   .timeout    = 0
     ,   .rxhash     = false
     };
 
