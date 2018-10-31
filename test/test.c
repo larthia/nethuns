@@ -1,7 +1,7 @@
 #include <nethuns.h>
 #include <stdio.h>
 
-void dump_packet(nethuns_pkthdr_t hdr, const unsigned char *frame)
+void dump_packet(nethuns_pkthdr_t *hdr, const unsigned char *frame)
 {
     int i = 0;
 
@@ -17,7 +17,7 @@ void dump_packet(nethuns_pkthdr_t hdr, const unsigned char *frame)
 int
 main(int argc, char *argv[])
 {
-    nethuns_socket_t s;
+    nethuns_socket_t *s;
 
     if (argc < 2)
     {
@@ -41,7 +41,7 @@ main(int argc, char *argv[])
     }
 
     const unsigned char *frame;
-    nethuns_pkthdr_t pkthdr;
+    nethuns_pkthdr_t *pkthdr;
 
     nethuns_set_consumer(s, 1);
 

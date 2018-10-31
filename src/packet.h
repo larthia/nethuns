@@ -8,8 +8,8 @@
 struct nethuns_packet
 {
     uint8_t const     *payload;
-    nethuns_pkthdr_t   pkthdr;
-    nethuns_socket_t   socket;
+    nethuns_pkthdr_t  *pkthdr;
+    nethuns_socket_t  *socket;
     uint64_t           id;
 };
 

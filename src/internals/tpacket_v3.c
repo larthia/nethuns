@@ -7,10 +7,10 @@
 
 #include <string.h>
 
-nethuns_socket_t
+nethuns_socket_t *
 nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 {
-    nethuns_socket_t sock;
+    nethuns_socket_t * sock;
     int fd, err, v = TPACKET_V3;
     unsigned int i;
 
@@ -129,7 +129,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 }
 
 
-int nethuns_close_tpacket_v3(nethuns_socket_t s)
+int nethuns_close_tpacket_v3(nethuns_socket_t *s)
 {
     if (s)
     {
@@ -144,7 +144,7 @@ int nethuns_close_tpacket_v3(nethuns_socket_t s)
 }
 
 
-int nethuns_bind_tpacket_v3(nethuns_socket_t s, const char *dev)
+int nethuns_bind_tpacket_v3(nethuns_socket_t *s, const char *dev)
 {
     struct sockaddr_ll addr;
     int err;
@@ -170,7 +170,7 @@ int nethuns_bind_tpacket_v3(nethuns_socket_t s, const char *dev)
 }
 
 
-int nethuns_fd_tpacket_v3(nethuns_socket_t s)
+int nethuns_fd_tpacket_v3(nethuns_socket_t *s)
 {
     return s->fd;
 }
@@ -178,7 +178,7 @@ int nethuns_fd_tpacket_v3(nethuns_socket_t s)
 
 
 int
-__nethuns_blocks_release_tpacket_v3(nethuns_socket_t s)
+__nethuns_blocks_release_tpacket_v3(nethuns_socket_t *s)
 {
     uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
     unsigned int i;
@@ -198,7 +198,7 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t s)
 
 
 uint64_t
-nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **pkt)
+nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 {
     struct block_descr_v3 * pb;
 
@@ -238,8 +238,8 @@ nethuns_recv_tpacket_v3(nethuns_socket_t s, nethuns_pkthdr_t *pkthdr, uint8_t **
 }
 
 
-int
-nethuns_flush_tpacket_v3(nethuns_socket_t s)
+static inline int
+__nethuns_flush_tpacket_v3(nethuns_socket_t *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
         perror("nethuns: flush");
@@ -251,7 +251,14 @@ nethuns_flush_tpacket_v3(nethuns_socket_t s)
 
 
 int
-nethuns_send_tpacket_v3(nethuns_socket_t s, uint8_t *packet, unsigned int len)
+nethuns_flush_tpacket_v3(nethuns_socket_t *s)
+{
+    return __nethuns_flush_tpacket_v3(s);
+}
+
+
+int
+nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t *packet, unsigned int len)
 {
     const size_t numpackets = s->tx_ring.req.tp_block_size/s->tx_ring.req.tp_frame_size;
 
@@ -294,7 +301,7 @@ nethuns_send_tpacket_v3(nethuns_socket_t s, uint8_t *packet, unsigned int len)
 }
 
 
-int nethuns_set_consumer_tpacket_v3(nethuns_socket_t s, unsigned int numb)
+int nethuns_set_consumer_tpacket_v3(nethuns_socket_t *s, unsigned int numb)
 {
     if (numb >= sizeof(s->sync.id)/sizeof(s->sync.id[0]))
         return -1;
@@ -375,7 +382,7 @@ __parse_fanout(const char *str)
 
 
 int
-nethuns_fanout_tpacket_v3(nethuns_socket_t s, int group, const char *fanout)
+nethuns_fanout_tpacket_v3(nethuns_socket_t *s, int group, const char *fanout)
 {
 	int fanout_code, fanout_arg;
 	int err;
@@ -414,7 +421,7 @@ __dump_ring(struct ring_v3 *ring, const char *label)
 }
 
 void
-nethuns_dump_rings_tpacket_v3(nethuns_socket_t s)
+nethuns_dump_rings_tpacket_v3(nethuns_socket_t *s)
 {
 	__dump_ring(&s->rx_ring, "rx");
 	__dump_ring(&s->tx_ring, "tx");
@@ -423,7 +430,7 @@ nethuns_dump_rings_tpacket_v3(nethuns_socket_t s)
 
 
 int
-nethuns_get_stats_tpacket_v3(nethuns_socket_t s, struct nethuns_stats *stats)
+nethuns_get_stats_tpacket_v3(nethuns_socket_t *s, struct nethuns_stats *stats)
 {
     struct tpacket_stats_v3 _stats;
     socklen_t len;

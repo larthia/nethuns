@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifndef likely
 #define likely(x) __builtin_expect((x),1)

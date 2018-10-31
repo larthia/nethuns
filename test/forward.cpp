@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iostream>
 
-void dump_packet(nethuns_pkthdr_t hdr, const unsigned char *frame)
+void dump_packet(nethuns_pkthdr_t *hdr, const unsigned char *frame)
 {
     int i = 0;
 
@@ -46,17 +46,25 @@ main(int argc, char *argv[])
 
     std::thread(meter).detach();
 
-    struct nethuns_socket_options opt =
+    struct nethuns_socket_options in_opt =
     {
         .numblocks  = 4
-    ,   .numpackets = 65536
+    ,   .numpackets = 2048
     ,   .packetsize = 2048
     ,   .rxhash     = false
     };
 
-    nethuns_socket_t in = nethuns_open(&opt);
+    struct nethuns_socket_options out_opt =
+    {
+        .numblocks  = 4
+    ,   .numpackets = 2048
+    ,   .packetsize = 2048
+    ,   .rxhash     = false
+    };
 
-    nethuns_socket_t out = nethuns_open(&opt);
+    nethuns_socket_t *in = nethuns_open(&in_opt);
+
+    nethuns_socket_t *out = nethuns_open(&out_opt);
 
 
     if (nethuns_bind(in, argv[1]) < 0)
@@ -70,7 +78,7 @@ main(int argc, char *argv[])
     }
 
     const unsigned char *frame;
-    nethuns_pkthdr_t pkthdr;
+    nethuns_pkthdr_t *pkthdr;
 
     nethuns_set_consumer(in, 1);
 

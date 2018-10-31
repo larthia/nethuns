@@ -51,7 +51,7 @@ main(int argc, char *argv[])
     ,   .rxhash     = false
     };
 
-    nethuns_socket_t out = nethuns_open(&opt);
+    nethuns_socket_t *out = nethuns_open(&opt);
 
 
     if (nethuns_bind(out, argv[1]) < 0)
