@@ -9,33 +9,11 @@
 
 #include "pcap.h"
 
-/*
- * Standard libpcap format.
- */
-#define TCPDUMP_MAGIC		0xa1b2c3d4
-
-/*
- * Alexey Kuznetzov's modified libpcap format.
- */
+#define TCPDUMP_MAGIC		    0xa1b2c3d4
 #define KUZNETZOV_TCPDUMP_MAGIC	0xa1b2cd34
-
-/*
- * Reserved for Francisco Mesquita <francisco.mesquita@radiomovel.pt>
- * for another modified format.
- */
 #define FMESQUITA_TCPDUMP_MAGIC	0xa1b234cd
-
-/*
- * Navtel Communcations' format, with nanosecond timestamps,
- * as per a request from Dumas Hwang <dumas.hwang@navtelcom.com>.
- */
 #define NAVTEL_TCPDUMP_MAGIC	0xa12b3c4d
-
-/*
- * Normal libpcap format, except for seconds/nanoseconds timestamps,
- * as per a request by Ulf Lamping <ulf.lamping@web.de>
- */
-#define NSEC_TCPDUMP_MAGIC	0xa1b23c4d
+#define NSEC_TCPDUMP_MAGIC	    0xa1b23c4d
 
 
 nethuns_pcap_t *
@@ -101,7 +79,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             return NULL;
         }
 
-        fflush (f);
+        fflush(f);
     }
 
     ring = calloc(1, opt->numblocks * opt->numpackets * (opt->packetsize + sizeof(struct nethuns_pcap_pkthdr)));
@@ -150,18 +128,18 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
 
 
 int
-nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t *pkthdr, uint8_t *packet, unsigned int len)
+nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t *pkthdr, uint8_t const *packet, unsigned int len)
 {
-    struct nethuns_pcap_pkthdr header =
-    {
-        .ts     = { nethuns_tstamp_sec(pkthdr), nethuns_tstamp_nsec(pkthdr)/1000 }
-    ,   .caplen = nethuns_snaplen(pkthdr)
-    ,   .len    = nethuns_len(pkthdr)
-    };
+    struct nethuns_pcap_pkthdr header;
+
+    header.ts.tv_sec  = nethuns_tstamp_sec(pkthdr);
+    header.ts.tv_usec = nethuns_tstamp_nsec(pkthdr)/1000;
+    header.caplen     = (uint32_t) MIN(len, nethuns_snaplen(pkthdr));
+    header.len        = (uint32_t) nethuns_len(pkthdr);
 
     fwrite(&header, sizeof(header), 1, s->file);
-    fwrite(packet , 1, len, s->file);
-
+    fwrite(packet, 1, header.caplen, s->file);
+    fflush(s->file);
     return 0;
 }
 

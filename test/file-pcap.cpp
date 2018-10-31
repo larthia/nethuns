@@ -7,13 +7,13 @@ int
 main(int argc, char *argv[])
 try
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        fprintf(stderr,"usage: %s [in|out]\n", argv[0]);
+        fprintf(stderr,"usage: %s [read file|write ifname]\n", argv[0]);
         return 0;
     }
 
-    if (strcmp(argv[1], "in") == 0)
+    if (strcmp(argv[1], "read") == 0)
     {
         nethuns_pcap_t *p;
 
@@ -34,25 +34,51 @@ try
         nethuns_pcap_close(p);
 
     }
-    else if (strcmp(argv[1], "out") == 0)
+    else if (strcmp(argv[1], "write") == 0)
     {
         nethuns_pcap_t *out;
 
         struct nethuns_socket_options opt =
         {
-            .numblocks  = 1
+            .numblocks  = 2
         ,   .numpackets = 1024
         ,   .packetsize = 2048
-        ,   .timeout    = 1
+        ,   .timeout    = 0
         ,   .rxhash     = true
         };
 
-        out = nethuns_pcap_open(&opt, "write.pcap", 1);
+        out = nethuns_pcap_open(&opt, (std::string{argv[2]} + ".pcap").c_str(), 1);
         if (!out) {
             throw std::runtime_error("nethuns_pcap_open (write)!");
         }
 
+        nethuns_socket_t * in;
+
+        in = nethuns_open(&opt);
+
+        if (nethuns_bind(in, argv[2]) < 0)
+            throw std::runtime_error("nethuns: bind");
+
+        nethuns_set_consumer(in, 1);
+
+        for(int i = 0; i < 10;)
+        {
+            const unsigned char *frame;
+            nethuns_pkthdr_t * pkthdr;
+
+            uint64_t pkt_id;
+            if ((pkt_id = nethuns_recv(in, &pkthdr, &frame)))
+            {
+                std::cerr << "WRITE: #" << i << " packet!" << std::endl;
+                nethuns_pcap_write(out, pkthdr, frame, nethuns_len(pkthdr));
+
+                nethuns_release(in, pkt_id, 0);
+                i++;
+            }
+        }
+
         nethuns_pcap_close(out);
+        nethuns_close(in);
     }
     else
     {
