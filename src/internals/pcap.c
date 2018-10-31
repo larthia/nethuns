@@ -103,8 +103,11 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     pcap->file      = f;
     pcap->mode      = mode;
     pcap->snaplen   = snaplen;
-    pcap->idx       = 0;
     pcap->rx_ring   = ring;
+    pcap->idx       = 0;
+    pcap->idx_rls   = 0;
+
+    pcap->base.sync.number = 1;
     return pcap;
 }
 
@@ -119,11 +122,34 @@ nethuns_pcap_close(nethuns_pcap_t *p)
 }
 
 
+static int
+__nethus_pcap_packets_release(nethuns_pcap_t *p)
+{
+    uint64_t rid = p->idx_rls, cur = UINT64_MAX;
+    unsigned int i;
+
+    for(i = 0; i < p->base.sync.number; i++)
+        cur = MIN(cur, __atomic_load_n(&p->base.sync.id[i].value, __ATOMIC_ACQUIRE));
+
+    for(; rid < cur; ++rid)
+    {
+        struct nethuns_pcap_rx_slot * slot = (struct nethuns_pcap_rx_slot *)
+                ((char *)p->rx_ring + (rid % (p->opt.numblocks * p->opt.numpackets)) * p->opt.packetsize);
+
+        slot->inuse = 0;
+    }
+
+    p->idx_rls = rid;
+    return 0;
+}
+
+
 uint64_t
 nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payload)
 {
     unsigned int caplen = p->opt.packetsize - (unsigned int)sizeof(struct nethuns_pcap_rx_slot);
-    unsigned int bytes, n;
+    unsigned int bytes;
+    size_t n;
 
     unsigned long idx = p->idx % (p->opt.numblocks * p->opt.numpackets);
 
@@ -133,6 +159,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
 
     if (slot->inuse)
     {
+        __nethus_pcap_packets_release(p);
         return 0;
     }
 

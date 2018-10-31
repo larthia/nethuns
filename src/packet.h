@@ -30,3 +30,10 @@ struct nethuns_stats
     uint64_t     drops;
     uint64_t     freeze;
 };
+
+
+
+struct nethuns_socket_base
+{
+    struct nethuns_synapse sync;
+};

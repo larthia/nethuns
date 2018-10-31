@@ -49,10 +49,12 @@ extern "C" {
     //
 
 #define nethuns_valid_id(n) (n != 0 && n != (uint64_t)-1)
+#define nethuns_err_id(n) (n == (uint64_t)-1)
+
 
 #define nethuns_release(s, pkt_id, consumer_id) \
     { \
-        __atomic_store_n(&s->sync.id[consumer_id].value, (pkt_id-1), __ATOMIC_RELEASE); \
+        __atomic_store_n(&((struct nethuns_socket_base *)s)->sync.id[consumer_id].value, (pkt_id-1), __ATOMIC_RELEASE); \
     }
 
 #ifdef __cplusplus

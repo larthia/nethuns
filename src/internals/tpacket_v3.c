@@ -123,7 +123,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 
     /* set a single consumer by default */
 
-    sock->sync.number = 1;
+    sock->base.sync.number = 1;
 
     sock->opt = *opt;
     return sock;
@@ -178,14 +178,14 @@ int nethuns_fd_tpacket_v3(nethuns_socket_t *s)
 
 
 
-int
+static int
 __nethuns_blocks_release_tpacket_v3(nethuns_socket_t *s)
 {
     uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
     unsigned int i;
 
-    for(i = 0; i < s->sync.number; i++)
-        cur = MIN(cur, __atomic_load_n(&s->sync.id[i].value, __ATOMIC_ACQUIRE));
+    for(i = 0; i < s->base.sync.number; i++)
+        cur = MIN(cur, __atomic_load_n(&s->base.sync.id[i].value, __ATOMIC_ACQUIRE));
 
     for(; rid < cur; ++rid)
     {
@@ -308,9 +308,9 @@ nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t *packet, unsigned int len)
 
 int nethuns_set_consumer_tpacket_v3(nethuns_socket_t *s, unsigned int numb)
 {
-    if (numb >= sizeof(s->sync.id)/sizeof(s->sync.id[0]))
+    if (numb >= sizeof(s->base.sync.id)/sizeof(s->base.sync.id[0]))
         return -1;
-    s->sync.number = numb;
+    s->base.sync.number = numb;
     return 0;
 }
 

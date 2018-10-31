@@ -32,8 +32,7 @@ struct ring_v3
 
 struct tpacket_v3_socket
 {
-    struct nethuns_synapse sync;
-    int fd;
+    struct nethuns_socket_base base;
 
     struct nethuns_socket_options opt;
 
@@ -50,6 +49,8 @@ struct tpacket_v3_socket
 
     unsigned int    rx_frame_idx;
     unsigned int    tx_frame_idx;
+
+    int             fd;
 
     struct pollfd   rx_pfd;
     struct pollfd   tx_pfd;

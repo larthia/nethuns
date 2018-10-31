@@ -45,8 +45,10 @@ try
             {
                 std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
+
+            nethuns_release(p, pkt_id, 0);
         }
-        while (nethuns_valid_id(pkt_id));
+        while (!nethuns_err_id(pkt_id));
 
         nethuns_pcap_close(p);
 
