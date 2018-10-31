@@ -223,7 +223,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t 
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
 		s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-        return s->rx_block_idx;
+        return s->rx_block_idx + 1;
     }
 
     __nethuns_blocks_release_tpacket_v3(s);

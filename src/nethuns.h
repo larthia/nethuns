@@ -45,7 +45,7 @@ extern "C" {
 
 #define nethuns_release(s, pkt_id, consumer_id) \
     { \
-        __atomic_store_n(&s->sync.id[consumer_id].value, pkt_id, __ATOMIC_RELEASE); \
+        __atomic_store_n(&s->sync.id[consumer_id].value, (pkt_id-1), __ATOMIC_RELEASE); \
     }
 
 #ifdef __cplusplus
