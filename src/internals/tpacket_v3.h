@@ -88,16 +88,6 @@ __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 }
 
 
-static inline int
-nethuns_release_tpacket_v3(nethuns_socket_t s, const uint8_t *payload, nethuns_pkthdr_t hdr, uint64_t blockid, unsigned int consumer)
-{
-    __atomic_store_n(&s->sync.id[consumer].value, blockid, __ATOMIC_RELAXED);
-    (void)payload;
-    (void)hdr;
-    return 0;
-}
-
-
 static inline uint32_t
 nethuns_tstamp_sec_tpacket_v3(nethuns_pkthdr_t hdr)
 {

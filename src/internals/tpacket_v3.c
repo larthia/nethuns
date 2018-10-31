@@ -184,7 +184,7 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t s)
     unsigned int i;
 
     for(i = 0; i < s->sync.number; i++)
-        cur = MIN(cur, __atomic_load_n(&s->sync.id[i].value, __ATOMIC_RELAXED));
+        cur = MIN(cur, __atomic_load_n(&s->sync.id[i].value, __ATOMIC_ACQUIRE));
 
     for(; rid < cur; ++rid)
     {

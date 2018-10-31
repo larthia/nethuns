@@ -31,15 +31,19 @@ extern "C" {
 
 	int nethuns_get_stats(nethuns_socket_t s, struct nethuns_stats *);
 
-    static inline int
-    nethuns_release(nethuns_socket_t s, const uint8_t *payload, nethuns_pkthdr_t hdr, uint64_t blockid, unsigned int consumer);
-
     static inline uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t hdr);
     static inline uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t hdr);
     static inline uint32_t nethuns_snaplen(nethuns_pkthdr_t hdr);
     static inline uint32_t nethuns_len(nethuns_pkthdr_t hdr);
     static inline uint32_t nethuns_rxhash(nethuns_pkthdr_t hdr);
     static inline uint32_t nethuns_vlan_tci(nethuns_pkthdr_t hdr);
+
+    static inline void
+    nethuns_release(nethuns_socket_t s, uint64_t pkt_id, unsigned int consumer_id)
+    {
+        __atomic_store_n(&s->sync.id[consumer_id].value, pkt_id, __ATOMIC_RELEASE);
+    }
+
 
 #ifdef __cplusplus
 }

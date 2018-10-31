@@ -76,16 +76,16 @@ main(int argc, char *argv[])
 
     for(;;)
     {
-        uint64_t block;
+        uint64_t pkt_id;
 
-        if ((block = nethuns_recv(in, &pkthdr, &frame)))
+        if ((pkt_id = nethuns_recv(in, &pkthdr, &frame)))
         {
             total++;
 
             while (!nethuns_send(out, frame, pkthdr->tp_len))
             { };
 
-            nethuns_release(in, frame, pkthdr, block, 0);
+            nethuns_release(in, pkt_id, 0);
         }
     }
 

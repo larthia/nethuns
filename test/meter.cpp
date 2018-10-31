@@ -72,9 +72,9 @@ main(int argc, char *argv[])
     uint64_t total2 = 0;
     for(;;)
     {
-        uint64_t block;
+        uint64_t pkt_id;
 
-        if ((block = nethuns_recv(s, &pkthdr, &frame)))
+        if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
             total++;
             total2++;
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
                 nethuns_dump_rings(s);
             }
 
-            nethuns_release(s, frame, pkthdr, block, 0);
+            nethuns_release(s, pkt_id, 0);
         }
     }
 

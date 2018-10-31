@@ -35,7 +35,7 @@ int consumer()
 
         if (queue.pop(pkt)) {
             total++;
-            nethuns_release(pkt.socket, pkt.payload, pkt.pkthdr, pkt.block, 0);
+            nethuns_release(pkt.socket, pkt.id, 0);
         }
     }
 }
@@ -76,11 +76,11 @@ main(int argc, char *argv[])
 
     for(;;)
     {
-        uint64_t block;
+        uint64_t id;
 
-        if ((block = nethuns_recv(s, &pkthdr, &frame)))
+        if ((id = nethuns_recv(s, &pkthdr, &frame)))
         {
-            struct nethuns_packet p { frame, pkthdr, s, block };
+            struct nethuns_packet p { frame, pkthdr, s, id };
 
             while (!queue.push(p))
             { };

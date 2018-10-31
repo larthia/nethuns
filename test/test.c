@@ -48,12 +48,12 @@ main(int argc, char *argv[])
 
     for(;;)
     {
-        uint64_t block;
+        uint64_t pkt_id;
 
-        if ((block = nethuns_recv(s, &pkthdr, &frame)))
+        if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
             dump_packet(pkthdr, frame);
-            nethuns_release(s, frame, pkthdr, block, 0);
+            nethuns_release(s, pkt_id, 0);
         }
     }
 
