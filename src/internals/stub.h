@@ -1,5 +1,7 @@
 #pragma once
 
+#include "internals/pcap.h"
+
 #ifdef NETHUNS_USE_TPACKET_V3
 
 #include "internals/tpacket_v3.h"

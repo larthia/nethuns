@@ -31,6 +31,10 @@ extern "C" {
 
 	int nethuns_get_stats(nethuns_socket_t * s, struct nethuns_stats *);
 
+    nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode);
+    int nethuns_pcap_close(nethuns_pcap_t * p);
+    uint64_t nethuns_pcap_read(nethuns_pcap_t * p, nethuns_pkthdr_t **pkthdr, uint8_t **pkt);
+    int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t *pkthdr, uint8_t *packet, unsigned int len);
 
     static inline uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t *hdr);
     static inline uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t *hdr);
