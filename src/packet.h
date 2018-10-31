@@ -13,10 +13,19 @@ struct nethuns_packet
     uint64_t           block;
 };
 
+
 struct nethuns_socket_options
 {
     unsigned int    numblocks;
     unsigned int    numpackets;
     unsigned int    packetsize;
     bool            rxhash;
+};
+
+
+struct nethuns_stats
+{
+    uint64_t     packets;
+    uint64_t     drops;
+    uint64_t     freeze;
 };

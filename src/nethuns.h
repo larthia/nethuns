@@ -29,6 +29,8 @@ extern "C" {
 
 	void nethuns_dump_rings(nethuns_socket_t s);
 
+	int nethuns_get_stats(nethuns_socket_t s, struct nethuns_stats *);
+
     static inline int
     nethuns_release(nethuns_socket_t s, const uint8_t *payload, nethuns_pkthdr_t hdr, uint64_t blockid, unsigned int consumer);
 

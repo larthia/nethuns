@@ -421,3 +421,20 @@ nethuns_dump_rings_tpacket_v3(nethuns_socket_t s)
 	fprintf(stderr, "\n");
 }
 
+
+int
+nethuns_get_stats_tpacket_v3(nethuns_socket_t s, struct nethuns_stats *stats)
+{
+    struct tpacket_stats_v3 _stats;
+    socklen_t len;
+    if (getsockopt(s->fd, SOL_PACKET, PACKET_STATISTICS, &_stats, &len) < 0)
+    {
+        perror("nethuns: stats");
+        return -1;
+    }
+
+    stats->packets = _stats.tp_packets;
+    stats->drops   = _stats.tp_drops;
+    stats->freeze  = _stats.tp_freeze_q_cnt;
+    return 0;
+}
