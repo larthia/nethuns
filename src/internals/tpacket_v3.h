@@ -19,7 +19,7 @@
 #include <linux/ip.h>
 
 #include "synapse.h"
-#include "../packet.h"
+#include "../types.h"
 
 
 struct ring_v3

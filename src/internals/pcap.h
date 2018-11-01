@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 #include "synapse.h"
-#include "../packet.h"
+#include "../types.h"
 
 
 struct nethuns_pcap_file_header

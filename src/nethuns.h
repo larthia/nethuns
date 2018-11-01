@@ -1,7 +1,7 @@
 #pragma once
 
 #include "internals/stub.h"
-#include "packet.h"
+#include "types.h"
 
 
 #ifdef __cplusplus

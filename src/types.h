@@ -1,16 +1,13 @@
 #pragma once
 
-#include "internals/packet.h"
+#include "internals/types.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 
-struct nethuns_packet
+struct nethuns_socket_base
 {
-    uint8_t const     *payload;
-    nethuns_pkthdr_t  *pkthdr;
-    nethuns_socket_t  *socket;
-    uint64_t           id;
+    struct nethuns_synapse sync;
 };
 
 
@@ -32,8 +29,14 @@ struct nethuns_stats
 };
 
 
-
-struct nethuns_socket_base
+struct nethuns_packet
 {
-    struct nethuns_synapse sync;
+    uint8_t const     *payload;
+    nethuns_pkthdr_t  *pkthdr;
+    nethuns_socket_t  *socket;
+    uint64_t           id;
 };
+
+
+
+
