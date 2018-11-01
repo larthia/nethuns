@@ -26,11 +26,12 @@ try
         ,   .rxhash     = true
         };
 
-        p = nethuns_pcap_open(&opt, argv[2], 0);
-        if (!p) {
-            throw std::runtime_error("nethuns_pcap_open (read)!");
+        char errbuf[NETHUNS_ERRBUF_SIZE];
+        p = nethuns_pcap_open(&opt, argv[2], 0, errbuf);
+        if (!p)
+        {
+            throw std::runtime_error(errbuf);
         }
-
 
         unsigned char *frame;
         nethuns_pkthdr_t * pkthdr;
@@ -66,17 +67,25 @@ try
         ,   .rxhash     = true
         };
 
-        out = nethuns_pcap_open(&opt, (std::string{argv[2]} + ".pcap").c_str(), 1);
+        char errbuf[NETHUNS_ERRBUF_SIZE];
+
+        out = nethuns_pcap_open(&opt, (std::string{argv[2]} + ".pcap").c_str(), 1, errbuf);
         if (!out) {
-            throw std::runtime_error("nethuns_pcap_open (write)!");
+            throw std::runtime_error(errbuf);
         }
 
         nethuns_socket_t * in;
 
-        in = nethuns_open(&opt);
+        in = nethuns_open(&opt, errbuf);
+        if (!in)
+        {
+            throw std::runtime_error(errbuf);
+        }
 
         if (nethuns_bind(in, argv[2]) < 0)
-            throw std::runtime_error("nethuns: bind");
+        {
+            throw std::runtime_error(nethuns_error(in));
+        }
 
         nethuns_set_consumer(in, 1);
 

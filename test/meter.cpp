@@ -44,8 +44,6 @@ main(int argc, char *argv[])
         return 0;
     }
 
-    std::thread(meter).detach();
-
     struct nethuns_socket_options opt =
     {
         .numblocks  = 64
@@ -55,15 +53,19 @@ main(int argc, char *argv[])
     ,   .rxhash     = false
     };
 
-    nethuns_socket_t *s = nethuns_open(&opt);
-
+    char errbuf[NETHUNS_ERRBUF_SIZE];
+    nethuns_socket_t *s = nethuns_open(&opt, errbuf);
     if (s == nullptr)
-        throw std::runtime_error("nethuns: failed to open socket!");
+    {
+        throw std::runtime_error(errbuf);
+    }
 
     if (nethuns_bind(s, argv[1]) < 0)
     {
-        return -1;
+        throw std::runtime_error(nethuns_error(s));
     }
+
+    std::thread(meter).detach();
 
     const unsigned char *frame;
     nethuns_pkthdr_t *pkthdr;

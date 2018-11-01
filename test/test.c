@@ -33,10 +33,18 @@ main(int argc, char *argv[])
     ,   .rxhash     = true
     };
 
-    s = nethuns_open(&opt);
+    char errbuf[NETHUNS_ERRBUF_SIZE];
+
+    s = nethuns_open(&opt, errbuf);
+    if (!s)
+    {
+        fprintf(stderr, "%s\n", errbuf);
+        return -1;
+    }
 
     if (nethuns_bind(s, argv[1]) < 0)
     {
+        fprintf(stderr, "%s\n", nethuns_error(s));
         return -1;
     }
 
@@ -44,7 +52,6 @@ main(int argc, char *argv[])
     nethuns_pkthdr_t *pkthdr;
 
     nethuns_set_consumer(s, 1);
-
 
     for(;;)
     {

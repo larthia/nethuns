@@ -52,12 +52,17 @@ main(int argc, char *argv[])
     ,   .rxhash     = false
     };
 
-    nethuns_socket_t *out = nethuns_open(&opt);
+    char errbuf[NETHUNS_ERRBUF_SIZE];
 
+    nethuns_socket_t *out = nethuns_open(&opt, errbuf);
+    if (!out)
+    {
+        throw std::runtime_error(errbuf);
+    }
 
     if (nethuns_bind(out, argv[1]) < 0)
     {
-        return -1;
+        throw std::runtime_error(nethuns_error(out));
     }
 
 
@@ -73,7 +78,6 @@ main(int argc, char *argv[])
     }
 
     nethuns_flush(out);
-
     nethuns_close(out);
 
     return 0;

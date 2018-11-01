@@ -64,19 +64,28 @@ main(int argc, char *argv[])
     ,   .rxhash     = false
     };
 
-    nethuns_socket_t *in = nethuns_open(&in_opt);
+    char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    nethuns_socket_t *out = nethuns_open(&out_opt);
+    nethuns_socket_t *in = nethuns_open(&in_opt, errbuf);
+    if (!in)
+    {
+        throw std::runtime_error(errbuf);
+    }
 
+    nethuns_socket_t *out = nethuns_open(&out_opt, errbuf);
+    if (!out)
+    {
+        throw std::runtime_error(errbuf);
+    }
 
     if (nethuns_bind(in, argv[1]) < 0)
     {
-        return -1;
+        throw std::runtime_error(nethuns_error(in));
     }
 
     if (nethuns_bind(out, argv[2]) < 0)
     {
-        return -1;
+        throw std::runtime_error(nethuns_error(out));
     }
 
     const unsigned char *frame;

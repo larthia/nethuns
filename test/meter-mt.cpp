@@ -63,11 +63,17 @@ main(int argc, char *argv[])
     ,   .rxhash     = false
     };
 
-    nethuns_socket_t * s = nethuns_open(&opt);
+    char errbuf[NETHUNS_ERRBUF_SIZE];
+
+    nethuns_socket_t * s = nethuns_open(&opt, errbuf);
+    if (!s)
+    {
+        throw std::runtime_error(errbuf);
+    }
 
     if (nethuns_bind(s, argv[1]) < 0)
     {
-        return -1;
+        throw std::runtime_error(nethuns_error(s));
     }
 
     const unsigned char *frame;
