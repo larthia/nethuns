@@ -54,8 +54,6 @@ struct nethuns_pcap_socket
 {
     struct nethuns_socket_base      base;
 
-    struct nethuns_socket_options   opt;
-
     FILE *         file;
     int            mode;
     uint32_t       snaplen;

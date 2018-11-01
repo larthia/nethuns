@@ -126,7 +126,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     sock->base.sync.number = 1;
 
-    sock->opt = *opt;
+    sock->base.opt = *opt;
     return sock;
 }
 
@@ -276,7 +276,7 @@ nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t const *packet, unsigned int
         s->tx_block_mod = (s->tx_block_mod + 1) % s->tx_ring.req.tp_block_nr;
         s->tx_frame_idx = 0;
     }
-    else if (s->opt.timeout == 0)
+    else if (s->base.opt.timeout == 0)
     {
         nethuns_flush_tpacket_v3(s);
     }

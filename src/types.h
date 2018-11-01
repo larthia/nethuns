@@ -9,13 +9,6 @@
 #define NETHUNS_ERRBUF_SIZE     512
 
 
-struct nethuns_socket_base
-{
-    struct nethuns_synapse sync;
-    char  errbuf[NETHUNS_ERRBUF_SIZE];
-};
-
-
 struct nethuns_socket_options
 {
     unsigned int    numblocks;
@@ -23,6 +16,14 @@ struct nethuns_socket_options
     unsigned int    packetsize;
     unsigned int    timeout;
     bool            rxhash;
+};
+
+
+struct nethuns_socket_base
+{
+    struct nethuns_synapse        sync;
+    struct nethuns_socket_options opt;
+    char   errbuf[NETHUNS_ERRBUF_SIZE];
 };
 
 

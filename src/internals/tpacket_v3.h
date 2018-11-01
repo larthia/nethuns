@@ -34,8 +34,6 @@ struct tpacket_v3_socket
 {
     struct nethuns_socket_base base;
 
-    struct nethuns_socket_options opt;
-
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;
 
