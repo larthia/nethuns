@@ -25,6 +25,7 @@ void meter()
 
 int
 main(int argc, char *argv[])
+try
 {
     static unsigned char payload[34] =
     {
@@ -81,5 +82,10 @@ main(int argc, char *argv[])
     nethuns_close(out);
 
     return 0;
+}
+catch(std::exception &e)
+{
+    std::cerr << e.what() << std::endl;
+    return 1;
 }
 

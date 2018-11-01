@@ -24,6 +24,7 @@ void meter()
 
 int
 main(int argc, char *argv[])
+try
 {
     char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -57,5 +58,10 @@ main(int argc, char *argv[])
     pcap_close(in);
     pcap_close(out);
     return 0;
+}
+catch(std::exception &e)
+{
+    std::cerr << e.what() << std::endl;
+    return 1;
 }
 

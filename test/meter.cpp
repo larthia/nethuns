@@ -37,6 +37,7 @@ void meter()
 
 int
 main(int argc, char *argv[])
+try
 {
     if (argc < 2)
     {
@@ -94,5 +95,10 @@ main(int argc, char *argv[])
 
     nethuns_close(s);
     return 0;
+}
+catch(std::exception &e)
+{
+    std::cerr << e.what() << std::endl;
+    return 1;
 }
 
