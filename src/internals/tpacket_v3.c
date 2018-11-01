@@ -98,8 +98,11 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     /* QDISC bypass */
 
-    int one = 1;
-    setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
+    if (opt->tx_qdisc_bypass)
+    {
+        int one = 1;
+        setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
+    }
 
     sock->fd = fd;
 

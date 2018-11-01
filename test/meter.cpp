@@ -47,11 +47,12 @@ try
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 64
-    ,   .numpackets = 2048
-    ,   .packetsize = 2048
-    ,   .timeout    = 0
-    ,   .rxhash     = false
+        .numblocks       = 64
+    ,   .numpackets      = 2048
+    ,   .packetsize      = 2048
+    ,   .timeout         = 0
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = true
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

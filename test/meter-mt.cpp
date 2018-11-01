@@ -57,14 +57,15 @@ try
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 65536
-    ,   .packetsize = 2048
-    ,   .timeout    = 0
-    ,   .rxhash     = false
+        .numblocks       = 4
+    ,   .numpackets      = 65536
+    ,   .packetsize      = 2048
+    ,   .timeout         = 0
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = false
     };
 
-    char errbuf[NETHUNS_ERRBUF_SIZE];
+     char errbuf[NETHUNS_ERRBUF_SIZE];
 
     nethuns_socket_t * s = nethuns_open(&opt, errbuf);
     if (!s)

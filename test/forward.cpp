@@ -49,20 +49,22 @@ try
 
     struct nethuns_socket_options in_opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 2048
-    ,   .packetsize = 2048
-    ,   .timeout    = 0
-    ,   .rxhash     = false
+        .numblocks       = 4
+    ,   .numpackets      = 2048
+    ,   .packetsize      = 2048
+    ,   .timeout         = 0
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = true
     };
 
     struct nethuns_socket_options out_opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 2048
-    ,   .packetsize = 2048
-    ,   .timeout    = 0
-    ,   .rxhash     = false
+        .numblocks       = 4
+    ,   .numpackets      = 2048
+    ,   .packetsize      = 2048
+    ,   .timeout         = 0
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = true
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

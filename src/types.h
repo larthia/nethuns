@@ -16,6 +16,7 @@ struct nethuns_socket_options
     unsigned int    packetsize;
     unsigned int    timeout;
     bool            rxhash;
+    bool            tx_qdisc_bypass;
 };
 
 

@@ -19,11 +19,12 @@ try
 
         struct nethuns_socket_options opt =
         {
-            .numblocks  = 1
-        ,   .numpackets = 1024
-        ,   .packetsize = 2048
-        ,   .timeout    = 0
-        ,   .rxhash     = true
+            .numblocks       = 1
+        ,   .numpackets      = 1024
+        ,   .packetsize      = 2048
+        ,   .timeout         = 0
+        ,   .rxhash          = true
+        ,   .tx_qdisc_bypass = true
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -60,11 +61,12 @@ try
 
         struct nethuns_socket_options opt =
         {
-            .numblocks  = 2
-        ,   .numpackets = 1024
-        ,   .packetsize = 2048
-        ,   .timeout    = 0
-        ,   .rxhash     = true
+            .numblocks       = 2
+        ,   .numpackets      = 1024
+        ,   .packetsize      = 2048
+        ,   .timeout         = 0
+        ,   .rxhash          = true
+        ,   .tx_qdisc_bypass = true
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];

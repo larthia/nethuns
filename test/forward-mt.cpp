@@ -33,11 +33,12 @@ int consumer(std::string dev)
 {
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 65536
-    ,   .packetsize = 2048
-    ,   .timeout    = 0
-    ,   .rxhash     = false
+        .numblocks       = 4
+    ,   .numpackets      = 65536
+    ,   .packetsize      = 2048
+    ,   .timeout         = 0
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = true
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -89,11 +90,12 @@ try
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 65536
-    ,   .packetsize = 2048
-    ,   .timeout    = 0
-    ,   .rxhash     = false
+        .numblocks       = 4
+    ,   .numpackets      = 65536
+    ,   .packetsize      = 2048
+    ,   .timeout         = 0
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = true
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
