@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include "../nethuns.h"
 #include "internals/stub.h"
 
 #include "pcap.h"
@@ -17,7 +18,7 @@
 
 
 nethuns_pcap_t *
-nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode)
+nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf)
 {
     struct nethuns_pcap_socket *pcap;
     FILE *f;
@@ -28,14 +29,14 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     {
         f = fopen(filename, "r");
         if (!f) {
-            perror("nethuns_pcap_open");
+            nethuns_perror(errbuf, "pcap_open");
             return NULL;
         }
 
         struct nethuns_pcap_file_header fh;
         if (fread(&fh, sizeof(fh), 1, f) != 1)
         {
-            perror("nethuns_pcap_open: could not read pcap_file_header");
+            nethuns_perror(errbuf, "pcap_open: could not read pcap_file_header");
             fclose(f);
             return NULL;
         }
@@ -48,7 +49,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             fh.magic != NAVTEL_TCPDUMP_MAGIC &&
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {
-            perror("nethuns_pcap_open: magic pcap_file_header mismatch!");
+            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header mismatch!");
             fclose(f);
             return NULL;
         }
@@ -56,7 +57,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         ring = calloc(1, opt->numblocks * opt->numpackets * opt->packetsize);
         if (!ring)
         {
-            perror("nethuns_pcap_open: failed to allocate ring");
+            nethuns_perror(errbuf, "pcap_open: failed to allocate ring");
             fclose(f);
             return NULL;
         }
@@ -65,7 +66,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     {
         f = fopen(filename, "w");
         if (!f) {
-            perror("nethuns_pcap_open");
+            nethuns_perror(errbuf, "pcap_open");
             return NULL;
         }
 
@@ -82,7 +83,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 
         if (fwrite (&header, sizeof(header), 1, f) != 1)
         {
-            perror("nethuns_pcap_open: could not write to pcap file!");
+            nethuns_perror(errbuf, "pcap_open: could not write to pcap file!");
             fclose(f);
             return NULL;
         }
@@ -93,7 +94,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     pcap = malloc(sizeof(struct nethuns_pcap_socket));
     if (!pcap)
     {
-        perror("nethuns_pcap_open: could not allocate socket");
+        nethuns_perror(errbuf, "pcap_open: could not allocate socket");
         fclose(f);
         free(ring);
         return NULL;
@@ -166,7 +167,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
     if ((n = fread(&header, sizeof(header), 1, p->file)) != 1)
     {
         if (n)
-            perror("nethuns_pcap_read: could not read packet hdr!");
+            nethuns_perror(p->base.errbuf, "pcap_read: could not read packet hdr!");
         return  (uint64_t)-1;
     }
 
@@ -174,7 +175,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
 
     if (fread(slot->packet, 1, bytes, p->file) != bytes)
     {
-        perror("nethuns_pcap_read: could not read packet!");
+        nethuns_perror(p->base.errbuf, "pcap_read: could not read packet!");
         return (uint64_t)-1;
     }
 
@@ -188,7 +189,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
         long skip = header.caplen - caplen;
         if (fseek(p->file, skip, SEEK_CUR) < 0)
         {
-            perror("nethuns_pcap_read: could not skip bytes!");
+            nethuns_perror(p->base.errbuf, "pcap_read: could not skip bytes!");
             return (uint64_t)-1;
         }
     }

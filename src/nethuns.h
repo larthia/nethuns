@@ -3,12 +3,11 @@
 #include "internals/stub.h"
 #include "types.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    nethuns_socket_t * nethuns_open(struct nethuns_socket_options *opt);
+    nethuns_socket_t * nethuns_open(struct nethuns_socket_options *opt, char *errbuf);
 
     int nethuns_bind(nethuns_socket_t * s, const char *dev);
 
@@ -31,11 +30,11 @@ extern "C" {
 
 	int nethuns_get_stats(nethuns_socket_t * s, struct nethuns_stats *);
 
-    nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode);
+    nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
+
     int nethuns_pcap_close(nethuns_pcap_t * p);
     uint64_t nethuns_pcap_read(nethuns_pcap_t * p, nethuns_pkthdr_t **pkthdr, uint8_t **pkt);
     int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t *pkthdr, uint8_t const *packet, unsigned int len);
-
 
     //
     // BOOL nethuns_valid_id(uint64_t)
@@ -51,11 +50,17 @@ extern "C" {
 #define nethuns_valid_id(n) (n != 0 && n != (uint64_t)-1)
 #define nethuns_err_id(n) (n == (uint64_t)-1)
 
+#define nethuns_release(sock, pkt_id, consumer_id) \
+{ \
+    __atomic_store_n(&((struct nethuns_socket_base *)sock)->sync.id[consumer_id].value, (pkt_id-1), __ATOMIC_RELEASE); \
+}
 
-#define nethuns_release(s, pkt_id, consumer_id) \
-    { \
-        __atomic_store_n(&((struct nethuns_socket_base *)s)->sync.id[consumer_id].value, (pkt_id-1), __ATOMIC_RELEASE); \
-    }
+    void nethuns_perror(char *buf, char *msg);
+
+#define nethuns_error(sock) \
+{ \
+    return sock->base.errbuf; \
+}
 
 #ifdef __cplusplus
 }

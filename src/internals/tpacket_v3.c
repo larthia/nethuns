@@ -1,3 +1,4 @@
+#include "../nethuns.h"
 #include "tpacket_v3.h"
 
 #include <linux/version.h>
@@ -8,19 +9,21 @@
 #include <string.h>
 
 nethuns_socket_t *
-nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 {
     nethuns_socket_t * sock;
     int fd, err, v = TPACKET_V3;
     unsigned int i;
 
     fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-    if (fd == -1)
+    if (fd == -1) {
+        nethuns_perror(errbuf, "open");
         return NULL;
+    }
 
     err = setsockopt(fd, SOL_PACKET, PACKET_VERSION, &v, sizeof(v));
     if (err < 0) {
-        perror("nethuns: setsockopt PACKET_VERSION v3");
+        nethuns_perror(errbuf, "setsockopt PACKET_VERSION");
         close(fd);
         return NULL;
     }
@@ -38,7 +41,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 
     err = setsockopt(fd, SOL_PACKET, PACKET_RX_RING, &sock->rx_ring.req, sizeof(sock->rx_ring.req));
     if (err < 0) {
-        perror("nethuns: setsockopt RX_RING");
+        nethuns_perror(errbuf, "setsockopt RX_RING");
         free(sock);
         close(fd);
         return NULL;
@@ -51,7 +54,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 
     err = setsockopt(fd, SOL_PACKET, PACKET_TX_RING, &sock->tx_ring.req, sizeof(sock->tx_ring.req));
     if (err < 0) {
-        perror("nethuns: setsockopt TX_RING");
+        nethuns_perror(errbuf, "setsockopt TX_RING");
         free(sock);
         close(fd);
         return NULL;
@@ -65,7 +68,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
                             , PROT_READ | PROT_WRITE, MAP_SHARED | MAP_LOCKED | MAP_POPULATE, fd, 0);
 
     if (sock->rx_ring.map == MAP_FAILED) {
-        perror("nethuns: mmap");
+        nethuns_perror(errbuf, "mmap");
         free(sock);
         close(fd);
         return NULL;
@@ -98,7 +101,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
     int one = 1;
     setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
 
-
     sock->fd = fd;
 
     sock->rx_block_idx_rls = 0;
@@ -111,7 +113,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt)
 
     sock->rx_frame_idx = 0;
     sock->tx_frame_idx = 0;
-
 
     sock->rx_pfd.fd = fd;
     sock->rx_pfd.events = POLLIN | POLLERR;
@@ -134,10 +135,10 @@ int nethuns_close_tpacket_v3(nethuns_socket_t *s)
 {
     if (s)
     {
-	free(s->tx_ring.rd);
-	free(s->rx_ring.rd);
-	munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
-						   s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
+	    free(s->tx_ring.rd);
+	    free(s->rx_ring.rd);
+	    munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
+						       s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
         close(s->fd);
         free(s);
     }
@@ -157,13 +158,13 @@ int nethuns_bind_tpacket_v3(nethuns_socket_t *s, const char *dev)
     addr.sll_ifindex  = (int)if_nametoindex(dev);
 
     if (!addr.sll_ifindex) {
-        perror("nethuns: if_nametoindex");
+        nethuns_perror(s->base.errbuf, "if_nametoindex");
         return -1;
     }
 
     err = bind(s->fd, (struct sockaddr *)&addr, sizeof(addr));
     if (err < 0) {
-        perror("nethuns: bind");
+        nethuns_perror(s->base.errbuf, "bind");
         return -1;
     }
 
@@ -175,7 +176,6 @@ int nethuns_fd_tpacket_v3(nethuns_socket_t *s)
 {
     return s->fd;
 }
-
 
 
 static int
@@ -199,7 +199,7 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t *s)
 
 
 uint64_t
-nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t **pkt)
+nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
 {
     struct block_descr_v3 * pb;
 
@@ -243,7 +243,7 @@ static inline int
 __nethuns_flush_tpacket_v3(nethuns_socket_t *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
-        perror("nethuns: flush");
+        nethuns_perror(s->base.errbuf, "flush (sendto)");
         return -1;
     }
 
@@ -259,7 +259,7 @@ nethuns_flush_tpacket_v3(nethuns_socket_t *s)
 
 
 int
-nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t *packet, unsigned int len)
+nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t const *packet, unsigned int len)
 {
     const size_t numpackets = s->tx_ring.req.tp_block_size/s->tx_ring.req.tp_frame_size;
 
@@ -394,7 +394,7 @@ nethuns_fanout_tpacket_v3(nethuns_socket_t *s, int group, const char *fanout)
 
 	fanout_code = __parse_fanout(fanout);
 	if (fanout_code < 0) {
-	    perror("nethuns: parse_fanout error!");
+	    nethuns_perror(s->base.errbuf, "parse_fanout");
         return -1;
 	}
 
@@ -402,7 +402,7 @@ nethuns_fanout_tpacket_v3(nethuns_socket_t *s, int group, const char *fanout)
 
 	err = setsockopt(s->fd, SOL_PACKET, PACKET_FANOUT, &fanout_arg, sizeof(fanout_arg));
 	if (err) {
-		perror("nethuns: fanout");
+		nethuns_perror(s->base.errbuf, "fanout");
 		return -1;
 	}
 
@@ -441,7 +441,7 @@ nethuns_get_stats_tpacket_v3(nethuns_socket_t *s, struct nethuns_stats *stats)
     socklen_t len;
     if (getsockopt(s->fd, SOL_PACKET, PACKET_STATISTICS, &_stats, &len) < 0)
     {
-        perror("nethuns: stats");
+        nethuns_perror(s->base.errbuf, "stats");
         return -1;
     }
 

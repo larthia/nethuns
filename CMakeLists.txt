@@ -15,8 +15,9 @@ include_directories(src)
 
 add_definitions(-D_GNU_SOURCE)
 
-set(NETHUNS_SRC src/internals/tpacket_v3.c
-                src/internals/pcap.c 
+set(NETHUNS_SRC src/nethuns.c
+                src/internals/tpacket_v3.c
+                src/internals/filepcap.c 
    )
 
 

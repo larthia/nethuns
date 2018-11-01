@@ -1,13 +1,18 @@
 #pragma once
 
+#include "internals/synapse.h"
 #include "internals/types.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 
+#define NETHUNS_ERRBUF_SIZE     512
+
+
 struct nethuns_socket_base
 {
     struct nethuns_synapse sync;
+    char  errbuf[NETHUNS_ERRBUF_SIZE];
 };
 
 
