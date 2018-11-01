@@ -57,10 +57,8 @@ extern "C" {
 
     void nethuns_perror(char *buf, char *msg);
 
-#define nethuns_error(sock) \
-{ \
-    return sock->base.errbuf; \
-}
+#define nethuns_error(sock) (sock->base.errbuf)
+
 
 #ifdef __cplusplus
 }
