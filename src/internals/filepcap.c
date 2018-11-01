@@ -23,7 +23,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 {
     struct nethuns_pcap_socket *pcap;
     FILE *f;
-    struct  nethuns_ring_slot *ring = NULL;
+    struct  nethuns_ring *ring = NULL;
     uint32_t snaplen;
 
     if (!mode)
@@ -55,7 +55,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             return NULL;
         }
 
-        ring = calloc(1, opt->numblocks * opt->numpackets * opt->packetsize);
+        ring = nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize);
         if (!ring)
         {
             nethuns_perror(errbuf, "pcap_open: failed to allocate ring");
@@ -135,9 +135,7 @@ __nethus_pcap_packets_release(nethuns_pcap_t *p)
 
     for(; rid < cur; ++rid)
     {
-        struct nethuns_ring_slot * slot = (struct nethuns_ring_slot *)
-                ((char *)p->rx_ring + (rid % (p->base.opt.numblocks * p->base.opt.numpackets)) * p->base.opt.packetsize);
-
+        struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->rx_ring, rid);
         slot->inuse = 0;
     }
 
@@ -157,7 +155,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
 
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = (struct nethuns_ring_slot *)((char *)p->rx_ring + idx * p->base.opt.packetsize);
+    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->rx_ring, idx);
 
     if (slot->inuse)
     {

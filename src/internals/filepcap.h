@@ -44,12 +44,12 @@ struct nethuns_pcap_socket
 {
     struct nethuns_socket_base      base;
 
-    FILE *         file;
-    int            mode;
-    uint32_t       snaplen;
-    void          *rx_ring;
+    FILE *              file;
+    int                 mode;
+    uint32_t            snaplen;
+    struct nethuns_ring *rx_ring;
 
-    uint64_t       idx;
-    uint64_t       idx_rls;
+    uint64_t            idx;
+    uint64_t            idx_rls;
 };
 
