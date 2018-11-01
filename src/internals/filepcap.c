@@ -147,15 +147,13 @@ __nethus_pcap_packets_release(nethuns_pcap_t *p)
 uint64_t
 nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payload)
 {
-    unsigned int caplen = p->base.opt.packetsize - (unsigned int)sizeof(struct nethuns_ring_slot);
+    unsigned int caplen = p->base.opt.packetsize;
     unsigned int bytes;
     size_t n;
 
-    unsigned long idx = p->idx % (p->base.opt.numblocks * p->base.opt.numpackets);
-
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->rx_ring, idx);
+    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->rx_ring, p->idx);
 
     if (slot->inuse)
     {
