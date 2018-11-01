@@ -29,6 +29,7 @@ struct nethuns_timeval
     uint32_t    tv_usec;
 };
 
+
 struct nethuns_pcap_pkthdr
 {
     struct nethuns_timeval ts;      /* time stamp */
@@ -39,17 +40,6 @@ struct nethuns_pcap_pkthdr
 
 typedef struct nethuns_pcap_socket nethuns_pcap_t;
 
-
-struct nethuns_pcap_rx_slot
-{
-    bool                    inuse;
-#ifdef NETHUNS_USE_TPACKET_V3
-    struct tpacket3_hdr     pkthdr;
-#endif
-    unsigned char           packet[];
-};
-
-
 struct nethuns_pcap_socket
 {
     struct nethuns_socket_base      base;
@@ -59,7 +49,7 @@ struct nethuns_pcap_socket
     uint32_t       snaplen;
     void          *rx_ring;
 
-    uint64_t        idx;
-    uint64_t        idx_rls;
+    uint64_t       idx;
+    uint64_t       idx_rls;
 };
 

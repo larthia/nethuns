@@ -9,6 +9,7 @@
 #include "internals/stub.h"
 
 #include "pcap.h"
+#include "ring.h"
 
 #define TCPDUMP_MAGIC           0xa1b2c3d4
 #define KUZNETZOV_TCPDUMP_MAGIC 0xa1b2cd34
@@ -22,7 +23,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 {
     struct nethuns_pcap_socket *pcap;
     FILE *f;
-    struct  nethuns_pcap_rx_slot *ring = NULL;
+    struct  nethuns_ring_slot *ring = NULL;
     uint32_t snaplen;
 
     if (!mode)
@@ -134,7 +135,7 @@ __nethus_pcap_packets_release(nethuns_pcap_t *p)
 
     for(; rid < cur; ++rid)
     {
-        struct nethuns_pcap_rx_slot * slot = (struct nethuns_pcap_rx_slot *)
+        struct nethuns_ring_slot * slot = (struct nethuns_ring_slot *)
                 ((char *)p->rx_ring + (rid % (p->base.opt.numblocks * p->base.opt.numpackets)) * p->base.opt.packetsize);
 
         slot->inuse = 0;
@@ -148,7 +149,7 @@ __nethus_pcap_packets_release(nethuns_pcap_t *p)
 uint64_t
 nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payload)
 {
-    unsigned int caplen = p->base.opt.packetsize - (unsigned int)sizeof(struct nethuns_pcap_rx_slot);
+    unsigned int caplen = p->base.opt.packetsize - (unsigned int)sizeof(struct nethuns_ring_slot);
     unsigned int bytes;
     size_t n;
 
@@ -156,7 +157,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
 
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_pcap_rx_slot * slot = (struct nethuns_pcap_rx_slot *)((char *)p->rx_ring + idx * p->base.opt.packetsize);
+    struct nethuns_ring_slot * slot = (struct nethuns_ring_slot *)((char *)p->rx_ring + idx * p->base.opt.packetsize);
 
     if (slot->inuse)
     {
