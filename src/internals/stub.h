@@ -1,10 +1,10 @@
 #pragma once
 
 #include "internals/filepcap.h"
+#include "internals/devpcap.h"
+#include "internals/tpacket_v3.h"
 
 #ifdef NETHUNS_USE_TPACKET_V3
-
-#include "internals/tpacket_v3.h"
 
 #define nethuns_open(...)           nethuns_open_tpacket_v3(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_tpacket_v3(__VA_ARGS__)
@@ -24,6 +24,27 @@
 #define nethuns_vlan_tci(...)       nethuns_vlan_tci_tpacket_v3(__VA_ARGS__)
 #define nethuns_dump_rings(...)     nethuns_dump_rings_tpacket_v3(__VA_ARGS__)
 #define nethuns_get_stats(...)      nethuns_get_stats_tpacket_v3(__VA_ARGS__)
+
+#elif defined (NETHUNS_USE_DEVPCAP)
+
+#define nethuns_open(...)           nethuns_open_devpcap(__VA_ARGS__)
+#define nethuns_close(...)          nethuns_close_devpcap(__VA_ARGS__)
+#define nethuns_bind(...)           nethuns_bind_devpcap(__VA_ARGS__)
+#define nethuns_fd(...)             nethuns_fd_devpcap(__VA_ARGS__)
+#define nethuns_recv(...)           nethuns_recv_devpcap(__VA_ARGS__)
+#define nethuns_flush(...)          nethuns_flush_devpcap(__VA_ARGS__)
+#define nethuns_send(...)           nethuns_send_devpcap(__VA_ARGS__)
+#define nethuns_set_consumer(...)   nethuns_set_consumer_devpcap(__VA_ARGS__)
+#define nethuns_fanout(...)         nethuns_fanout_devpcap(__VA_ARGS__)
+
+#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_devpcap(__VA_ARGS__)
+#define nethuns_snaplen(...)        nethuns_snaplen_devpcap(__VA_ARGS__)
+#define nethuns_len(...)            nethuns_len_devpcap(__VA_ARGS__)
+#define nethuns_rxhash(...)         nethuns_rxhash_devpcap(__VA_ARGS__)
+#define nethuns_vlan_tci(...)       nethuns_vlan_tci_devpcap(__VA_ARGS__)
+#define nethuns_dump_rings(...)     nethuns_dump_rings_devpcap(__VA_ARGS__)
+#define nethuns_get_stats(...)      nethuns_get_stats_devpcap(__VA_ARGS__)
 
 #else
 

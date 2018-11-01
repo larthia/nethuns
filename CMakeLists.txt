@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.4)
 project (nethuns)
 
 add_definitions(-DNETHUNS_USE_TPACKET_V3)
+# add_definitions(-DNETHUNS_USE_DEVPCAP)
 
 
 #set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion -fsanitize=address -fsanitize=undefined")
@@ -17,6 +18,7 @@ add_definitions(-D_GNU_SOURCE)
 
 set(NETHUNS_SRC src/nethuns.c
                 src/internals/tpacket_v3.c
+                src/internals/devpcap.c
                 src/internals/filepcap.c 
    )
 
