@@ -81,20 +81,20 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->rx_ring.rd = malloc(sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
     memset(sock->rx_ring.rd, 0, sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
 
-	for (i = 0; i < sock->rx_ring.req.tp_block_nr; ++i) {
-		sock->rx_ring.rd[i].iov_base = sock->rx_ring.map + (i * sock->rx_ring.req.tp_block_size);
-		sock->rx_ring.rd[i].iov_len  = sock->rx_ring.req.tp_block_size;
-	}
+    for (i = 0; i < sock->rx_ring.req.tp_block_nr; ++i) {
+        sock->rx_ring.rd[i].iov_base = sock->rx_ring.map + (i * sock->rx_ring.req.tp_block_size);
+        sock->rx_ring.rd[i].iov_len  = sock->rx_ring.req.tp_block_size;
+    }
 
     /* setup Tx ring... */
 
     sock->tx_ring.rd = malloc(sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
     memset(sock->tx_ring.rd, 0, sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
 
-	for (i = 0; i < sock->tx_ring.req.tp_block_nr; ++i) {
-		sock->tx_ring.rd[i].iov_base = sock->tx_ring.map + (i * sock->tx_ring.req.tp_block_size);
-		sock->tx_ring.rd[i].iov_len  = sock->tx_ring.req.tp_block_size;
-	}
+    for (i = 0; i < sock->tx_ring.req.tp_block_nr; ++i) {
+        sock->tx_ring.rd[i].iov_base = sock->tx_ring.map + (i * sock->tx_ring.req.tp_block_size);
+        sock->tx_ring.rd[i].iov_len  = sock->tx_ring.req.tp_block_size;
+    }
 
     /* QDISC bypass */
 
@@ -104,7 +104,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->fd = fd;
 
     sock->rx_block_idx_rls = 0;
-    sock->rx_block_idx	   = 0;
+    sock->rx_block_idx     = 0;
     sock->rx_block_mod     = 0;
 
     sock->tx_block_idx_rls = 0;
@@ -135,10 +135,10 @@ int nethuns_close_tpacket_v3(nethuns_socket_t *s)
 {
     if (s)
     {
-	    free(s->tx_ring.rd);
-	    free(s->rx_ring.rd);
-	    munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
-						       s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
+        free(s->tx_ring.rd);
+        free(s->rx_ring.rd);
+        munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
+                               s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
         close(s->fd);
         free(s);
     }
@@ -221,7 +221,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t 
 
         *pkthdr    = s->rx_ppd;
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
-		s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+        s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
         return s->rx_block_idx + 1;
     }
@@ -319,118 +319,118 @@ int nethuns_set_consumer_tpacket_v3(nethuns_socket_t *s, unsigned int numb)
 static inline
 int __fanout_code(int strategy, int defrag, int rollover)
 {
-	if (defrag)   strategy |= PACKET_FANOUT_FLAG_DEFRAG;
-	if (rollover) strategy |= PACKET_FANOUT_FLAG_ROLLOVER;
-	return strategy;
+    if (defrag)   strategy |= PACKET_FANOUT_FLAG_DEFRAG;
+    if (rollover) strategy |= PACKET_FANOUT_FLAG_ROLLOVER;
+    return strategy;
 }
 
 
 static int
 __parse_fanout(const char *str)
 {
-	int defrag = 0, rollover = 0;
+    int defrag = 0, rollover = 0;
 
-	if (!str) return -1;
+    if (!str) return -1;
 
-	/* parse options */
+    /* parse options */
 
     if (strcasestr(str, "|defrag"))
-		defrag = 1;
+        defrag = 1;
 
     if (strcasestr(str, "|rollover"))
-		rollover = 1;
+        rollover = 1;
 
-	/* parse strategy */
+    /* parse strategy */
 
 #define _(x)  x, (sizeof(x)-1)
 
 #ifdef PACKET_FANOUT_DATA
-	if (strncasecmp(str, _("data")) == 0)
-		return __fanout_code(PACKET_FANOUT_DATA, defrag, rollover);
+    if (strncasecmp(str, _("data")) == 0)
+        return __fanout_code(PACKET_FANOUT_DATA, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_HASH
-	if (strncasecmp(str, _("hash")) == 0)
-		return __fanout_code(PACKET_FANOUT_HASH, defrag, rollover);
+    if (strncasecmp(str, _("hash")) == 0)
+        return __fanout_code(PACKET_FANOUT_HASH, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_LB
-	if (strncasecmp(str, _("lb")) == 0)
-		return __fanout_code(PACKET_FANOUT_LB, defrag, rollover);
+    if (strncasecmp(str, _("lb")) == 0)
+        return __fanout_code(PACKET_FANOUT_LB, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_CPU
-	if (strncasecmp(str, _("cpu")) == 0)
-		return __fanout_code(PACKET_FANOUT_CPU, defrag, rollover);
+    if (strncasecmp(str, _("cpu")) == 0)
+        return __fanout_code(PACKET_FANOUT_CPU, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_ROLLOVER
-	if (strncasecmp(str, _("rollover")) == 0)
-			return __fanout_code(PACKET_FANOUT_ROLLOVER, defrag, rollover);
+    if (strncasecmp(str, _("rollover")) == 0)
+            return __fanout_code(PACKET_FANOUT_ROLLOVER, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_RND
-	if (strncasecmp(str, _("rnd")) == 0)
-			return __fanout_code(PACKET_FANOUT_RND, defrag, rollover);
+    if (strncasecmp(str, _("rnd")) == 0)
+            return __fanout_code(PACKET_FANOUT_RND, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_QM
-	if (strncasecmp(str, _("qm")) == 0)
-			return __fanout_code(PACKET_FANOUT_QM, defrag, rollover);
+    if (strncasecmp(str, _("qm")) == 0)
+            return __fanout_code(PACKET_FANOUT_QM, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_CBPF
-	if (strncasecmp(str, _("cbpf")) == 0)
-			return __fanout_code(PACKET_FANOUT_CBPF, defrag, rollover);
+    if (strncasecmp(str, _("cbpf")) == 0)
+            return __fanout_code(PACKET_FANOUT_CBPF, defrag, rollover);
 #endif
 #ifdef PACKET_FANOUT_EBPF
-	if (strncasecmp(str, _("ebpf")) == 0)
-		return __fanout_code(PACKET_FANOUT_EBPF, defrag, rollover);
+    if (strncasecmp(str, _("ebpf")) == 0)
+        return __fanout_code(PACKET_FANOUT_EBPF, defrag, rollover);
 #endif
 #undef _
 
-	return -1;
+    return -1;
 }
 
 
 int
 nethuns_fanout_tpacket_v3(nethuns_socket_t *s, int group, const char *fanout)
 {
-	int fanout_code, fanout_arg;
-	int err;
+    int fanout_code, fanout_arg;
+    int err;
 
-	fanout_code = __parse_fanout(fanout);
-	if (fanout_code < 0) {
-	    nethuns_perror(s->base.errbuf, "parse_fanout");
+    fanout_code = __parse_fanout(fanout);
+    if (fanout_code < 0) {
+        nethuns_perror(s->base.errbuf, "parse_fanout");
         return -1;
-	}
+    }
 
-	fanout_arg = group | (fanout_code << 16);
+    fanout_arg = group | (fanout_code << 16);
 
-	err = setsockopt(s->fd, SOL_PACKET, PACKET_FANOUT, &fanout_arg, sizeof(fanout_arg));
-	if (err) {
-		nethuns_perror(s->base.errbuf, "fanout");
-		return -1;
-	}
+    err = setsockopt(s->fd, SOL_PACKET, PACKET_FANOUT, &fanout_arg, sizeof(fanout_arg));
+    if (err) {
+        nethuns_perror(s->base.errbuf, "fanout");
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 
 void
 __dump_ring(struct ring_v3 *ring, const char *label)
 {
-	fprintf(stderr, "%s {", label);
-	unsigned int n;
-	for(n = 0; n < ring->req.tp_block_nr; ++n)
-	{
-		struct block_descr_v3 * pb;
-		pb = __nethuns_block_tpacket_v3(ring, n);
-		fprintf(stderr, "%x[%u] ", pb->hdr.block_status
-					 , pb->hdr.num_pkts);
-	}
-	fprintf(stderr, "} ");
+    fprintf(stderr, "%s {", label);
+    unsigned int n;
+    for(n = 0; n < ring->req.tp_block_nr; ++n)
+    {
+        struct block_descr_v3 * pb;
+        pb = __nethuns_block_tpacket_v3(ring, n);
+        fprintf(stderr, "%x[%u] ", pb->hdr.block_status
+                     , pb->hdr.num_pkts);
+    }
+    fprintf(stderr, "} ");
 }
 
 void
 nethuns_dump_rings_tpacket_v3(nethuns_socket_t *s)
 {
-	__dump_ring(&s->rx_ring, "rx");
-	__dump_ring(&s->tx_ring, "tx");
-	fprintf(stderr, "\n");
+    __dump_ring(&s->rx_ring, "rx");
+    __dump_ring(&s->tx_ring, "tx");
+    fprintf(stderr, "\n");
 }
 
 

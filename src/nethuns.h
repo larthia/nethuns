@@ -26,9 +26,9 @@ extern "C" {
 
     int nethuns_fanout(nethuns_socket_t * s, int group, const char *fanout);
 
-	void nethuns_dump_rings(nethuns_socket_t * s);
+    void nethuns_dump_rings(nethuns_socket_t * s);
 
-	int nethuns_get_stats(nethuns_socket_t * s, struct nethuns_stats *);
+    int nethuns_get_stats(nethuns_socket_t * s, struct nethuns_stats *);
 
     nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 

@@ -31,9 +31,9 @@ struct nethuns_timeval
 
 struct nethuns_pcap_pkthdr
 {
-	struct nethuns_timeval ts;	    /* time stamp */
-	uint32_t caplen;	            /* length of portion present */
-	uint32_t len;	                /* length this packet (off wire) */
+    struct nethuns_timeval ts;      /* time stamp */
+    uint32_t caplen;                /* length of portion present */
+    uint32_t len;                   /* length this packet (off wire) */
 };
 
 

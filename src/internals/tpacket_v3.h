@@ -60,9 +60,9 @@ struct tpacket_v3_socket
 
 struct block_descr_v3
 {
-	uint32_t version;
-	uint32_t offset_to_priv;
-	struct tpacket_hdr_v1 hdr;
+    uint32_t version;
+    uint32_t offset_to_priv;
+    struct tpacket_hdr_v1 hdr;
 };
 
 

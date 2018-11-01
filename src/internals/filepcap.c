@@ -10,11 +10,11 @@
 
 #include "pcap.h"
 
-#define TCPDUMP_MAGIC		    0xa1b2c3d4
-#define KUZNETZOV_TCPDUMP_MAGIC	0xa1b2cd34
-#define FMESQUITA_TCPDUMP_MAGIC	0xa1b234cd
-#define NAVTEL_TCPDUMP_MAGIC	0xa12b3c4d
-#define NSEC_TCPDUMP_MAGIC	    0xa1b23c4d
+#define TCPDUMP_MAGIC           0xa1b2c3d4
+#define KUZNETZOV_TCPDUMP_MAGIC 0xa1b2cd34
+#define FMESQUITA_TCPDUMP_MAGIC 0xa1b234cd
+#define NAVTEL_TCPDUMP_MAGIC    0xa12b3c4d
+#define NSEC_TCPDUMP_MAGIC      0xa1b23c4d
 
 
 nethuns_pcap_t *
@@ -44,8 +44,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         snaplen = fh.snaplen;
 
         if (fh.magic != TCPDUMP_MAGIC &&
-            fh.magic != KUZNETZOV_TCPDUMP_MAGIC	&&
-            fh.magic != FMESQUITA_TCPDUMP_MAGIC	&&
+            fh.magic != KUZNETZOV_TCPDUMP_MAGIC &&
+            fh.magic != FMESQUITA_TCPDUMP_MAGIC &&
             fh.magic != NAVTEL_TCPDUMP_MAGIC &&
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {

@@ -8,11 +8,11 @@
 #endif
 
 #ifndef unlikely
-#define unlikely(x)	__builtin_expect((x),0)
+#define unlikely(x) __builtin_expect((x),0)
 #endif
 
 #ifndef __cachedline_aligned
-#define __cacheline_aligned		__attribute__((aligned(64)))
+#define __cacheline_aligned     __attribute__((aligned(64)))
 #endif
 
 
