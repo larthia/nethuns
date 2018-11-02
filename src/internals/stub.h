@@ -1,10 +1,10 @@
 #pragma once
 
 #include "internals/filepcap.h"
-#include "internals/devpcap.h"
-#include "internals/tpacket_v3.h"
 
 #ifdef NETHUNS_USE_TPACKET_V3
+
+#include "internals/tpacket_v3.h"
 
 #define nethuns_open(...)           nethuns_open_tpacket_v3(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_tpacket_v3(__VA_ARGS__)
@@ -30,6 +30,8 @@
 #define nethuns_get_stats(...)      nethuns_get_stats_tpacket_v3(__VA_ARGS__)
 
 #elif defined (NETHUNS_USE_DEVPCAP)
+
+#include "internals/devpcap.h"
 
 #define nethuns_open(...)           nethuns_open_devpcap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_devpcap(__VA_ARGS__)

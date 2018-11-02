@@ -1,6 +1,7 @@
 #include <nethuns.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 
 
 int
