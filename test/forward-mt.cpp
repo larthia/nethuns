@@ -62,7 +62,7 @@ int consumer(std::string dev)
         if (queue.pop(pkt)) {
             total_fwd++;
 
-            while (!nethuns_send(out, (uint8_t *)pkt.payload, pkt.pkthdr->tp_len))
+            while (!nethuns_send(out, (uint8_t *)pkt.payload, nethuns_len(pkt.pkthdr)))
             {
             };
 

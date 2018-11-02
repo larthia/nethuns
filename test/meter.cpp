@@ -10,7 +10,10 @@ void dump_packet(nethuns_pkthdr_t *hdr, unsigned char *frame)
 {
     int i = 0;
 
-    printf("%u:%u snap:%u len:%u mac:%u", hdr->tp_sec, hdr->tp_nsec, hdr->tp_snaplen, hdr->tp_len, hdr->tp_mac);
+    printf("%u:%u snap:%u len:%u ", nethuns_tstamp_get_sec(hdr)
+                                  , nethuns_tstamp_get_nsec(hdr)
+                                  , nethuns_snaplen(hdr)
+                                  , nethuns_len(hdr));
     for(; i < 14; i++)
     {
         printf("%02x ", frame[i]);
