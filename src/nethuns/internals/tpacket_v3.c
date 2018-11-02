@@ -202,7 +202,7 @@ __nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 
 
 uint64_t
-nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
+nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **pkt)
 {
     struct block_descr_v3 * pb;
 

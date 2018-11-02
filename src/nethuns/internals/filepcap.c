@@ -147,7 +147,7 @@ __nethus_pcap_packets_release(nethuns_pcap_t *p)
 
 
 uint64_t
-nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payload)
+nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     unsigned int caplen = p->base.opt.packetsize;
     unsigned int bytes;
@@ -206,7 +206,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
 
 
 int
-nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t *pkthdr, uint8_t const *packet, unsigned int len)
+nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
 {
     struct nethuns_pcap_pkthdr header;
 

@@ -125,7 +125,7 @@ __nethus_pcap_packets_release(struct nethuns_socket_devpcap *p)
 
 
 uint64_t
-nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t **pkthdr, uint8_t const **payload)
+nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     unsigned int caplen = s->base.opt.packetsize;
     unsigned int bytes;

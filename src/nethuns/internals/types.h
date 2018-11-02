@@ -11,7 +11,7 @@ typedef struct tpacket3_hdr              nethuns_pkthdr_t;
 #include <pcap/pcap.h>
 
 typedef struct nethuns_socket_devpcap    nethuns_socket_t;
-typedef struct pcap_pkthdr              nethuns_pkthdr_t;
+typedef struct pcap_pkthdr               nethuns_pkthdr_t;
 
 #else
 

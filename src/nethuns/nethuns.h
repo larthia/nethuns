@@ -12,7 +12,7 @@ extern "C" {
     int nethuns_bind(nethuns_socket_t * s, const char *dev);
 
     uint64_t
-    nethuns_recv(nethuns_socket_t * s, nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);
+    nethuns_recv(nethuns_socket_t * s, const nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);
 
     int nethuns_fd(nethuns_socket_t * s);
 
@@ -31,8 +31,9 @@ extern "C" {
     nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
     int nethuns_pcap_close(nethuns_pcap_t * p);
-    uint64_t nethuns_pcap_read(nethuns_pcap_t * p, nethuns_pkthdr_t **pkthdr, uint8_t **pkt);
-    int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t *pkthdr, uint8_t const *packet, unsigned int len);
+
+    uint64_t nethuns_pcap_read(nethuns_pcap_t * p, const nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);
+    int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
     //
     // BOOL nethuns_valid_id(uint64_t)
@@ -51,24 +52,31 @@ extern "C" {
 
     const char * nethuns_version();
 
-#define nethuns_sock(s)  ((struct nethuns_socket_base *)(s))
 
-#define nethuns_error(s) ({nethuns_sock(s)->errbuf;})
-
-
-#define nethuns_valid_id(n) ((n) != 0 && (n) != (uint64_t)-1)
-
-#define nethuns_err_id(n) ((n) == (uint64_t)-1)
+#ifdef __cplusplus
+#define nethuns_base(_sock)     (reinterpret_cast<struct nethuns_socket_base *>(_sock))
+#else
+#define nethuns_base(_sock)     ((struct nethuns_socket_base *)(_sock))
+#endif
 
 
-#define nethuns_release(s, pkt_id, consumer_id) do \
+#define nethuns_error(_sock) ({nethuns_base(_sock)->errbuf;})
+
+
+#define nethuns_valid_id(_n) ((_n) != 0 && (_n) != (uint64_t)-1)
+
+#define nethuns_err_id(_n) ((_n) == (uint64_t)-1)
+
+
+#define nethuns_release(_sock, _pktid, _consid) do \
 { \
-    __atomic_store_n(& nethuns_sock(s)->sync.id[consumer_id].value, (pkt_id)-1, __ATOMIC_RELEASE); \
+    __atomic_store_n(& nethuns_base(_sock)->sync.id[_consid].value, (_pktid)-1, __ATOMIC_RELEASE); \
 } while (0)
 
 
-#define nethuns_set_consumer(s, numb) ({ \
-    ((numb) >= sizeof((nethuns_sock(s))->sync.id)/sizeof(nethuns_sock(s)->sync.id[0])) ? (-1) : (nethuns_sock(s)->sync.number = (numb), 0); \
+#define nethuns_set_consumer(_sock, _numb) \
+({ \
+    ((_numb) >= sizeof((nethuns_base(_sock))->sync.id)/sizeof(nethuns_base(_sock)->sync.id[0])) ? (-1) : (nethuns_base(_sock)->sync.number = (_numb), 0); \
 })
 
 

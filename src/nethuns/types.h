@@ -27,6 +27,7 @@ struct nethuns_socket_base
     char   errbuf[NETHUNS_ERRBUF_SIZE];
 };
 
+typedef struct nethuns_socket_base  nethuns_socket_base_t;
 
 struct nethuns_stats
 {
@@ -39,10 +40,10 @@ struct nethuns_stats
 
 struct nethuns_packet
 {
-    uint8_t const     *payload;
-    nethuns_pkthdr_t  *pkthdr;
-    nethuns_socket_t  *socket;
-    uint64_t           id;
+    uint8_t const                 *payload;
+    const nethuns_pkthdr_t        *pkthdr;
+    nethuns_socket_base_t         *socket;
+    uint64_t                       id;
 };
 
 

@@ -96,7 +96,7 @@ try
     }
 
     const unsigned char *frame;
-    nethuns_pkthdr_t *pkthdr;
+    const nethuns_pkthdr_t *pkthdr;
 
     nethuns_set_consumer(in, 1);
 

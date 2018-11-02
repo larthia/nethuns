@@ -112,7 +112,7 @@ try
     }
 
     const unsigned char *frame;
-    nethuns_pkthdr_t * pkthdr;
+    const nethuns_pkthdr_t * pkthdr;
 
     nethuns_set_consumer(s, 1);
 
@@ -123,7 +123,7 @@ try
         if ((id = nethuns_recv(s, &pkthdr, &frame)))
         {
             total_rcv++;
-            struct nethuns_packet p { frame, pkthdr, s, id };
+            struct nethuns_packet p { frame, pkthdr, nethuns_base(s), id };
 
             while (!queue.push(p))
             { };

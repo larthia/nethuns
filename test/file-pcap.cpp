@@ -35,8 +35,8 @@ try
             throw std::runtime_error(errbuf);
         }
 
-        unsigned char *frame;
-        nethuns_pkthdr_t * pkthdr;
+        const unsigned char *frame;
+        const nethuns_pkthdr_t * pkthdr;
 
         uint64_t pkt_id;
 
@@ -95,7 +95,7 @@ try
         for(int i = 0; i < 10;)
         {
             const unsigned char *frame;
-            nethuns_pkthdr_t * pkthdr;
+            const nethuns_pkthdr_t * pkthdr;
 
             uint64_t pkt_id;
             if ((pkt_id = nethuns_recv(in, &pkthdr, &frame)))

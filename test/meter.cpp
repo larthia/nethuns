@@ -73,7 +73,7 @@ try
     std::thread(meter).detach();
 
     const unsigned char *frame;
-    nethuns_pkthdr_t *pkthdr;
+    const nethuns_pkthdr_t *pkthdr;
 
     nethuns_set_consumer(s, 1);
 
