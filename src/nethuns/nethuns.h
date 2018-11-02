@@ -49,6 +49,7 @@ extern "C" {
 
     void nethuns_perror(char *buf, char *msg);
 
+    const char * nethuns_version();
 
 #define nethuns_sock(s)  ((struct nethuns_socket_base *)(s))
 
