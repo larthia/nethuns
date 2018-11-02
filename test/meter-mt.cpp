@@ -60,7 +60,7 @@ try
         .numblocks       = 4
     ,   .numpackets      = 65536
     ,   .packetsize      = 2048
-    ,   .timeout         = 0
+    ,   .timeout_ms      = 0
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = false
     };

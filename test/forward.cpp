@@ -56,7 +56,7 @@ try
         .numblocks       = 4
     ,   .numpackets      = 2048
     ,   .packetsize      = 2048
-    ,   .timeout         = 0
+    ,   .timeout_ms      = 0
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
     };
@@ -66,7 +66,7 @@ try
         .numblocks       = 4
     ,   .numpackets      = 2048
     ,   .packetsize      = 2048
-    ,   .timeout         = 0
+    ,   .timeout_ms      = 0
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
     };

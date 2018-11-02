@@ -22,7 +22,7 @@ try
             .numblocks       = 1
         ,   .numpackets      = 1024
         ,   .packetsize      = 2048
-        ,   .timeout         = 0
+        ,   .timeout_ms      = 0
         ,   .rxhash          = true
         ,   .tx_qdisc_bypass = true
         };
@@ -64,7 +64,7 @@ try
             .numblocks       = 2
         ,   .numpackets      = 1024
         ,   .packetsize      = 2048
-        ,   .timeout         = 0
+        ,   .timeout_ms      = 0
         ,   .rxhash          = true
         ,   .tx_qdisc_bypass = true
         };
