@@ -30,7 +30,10 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 
     sock->base.sync.number = 1;
     sock->base.opt = *opt;
-    sock->ring = ring;
+    sock->ring     = ring;
+    sock->idx      = 0;
+    sock->idx_rls  = 0;
+
     return sock;
 }
 
@@ -101,40 +104,71 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
 }
 
 
-int nethuns_fd_devpcap(struct nethuns_socket_devpcap *s)
-{
-    return -1;
-}
-
-
 static int
-__nethuns_blocks_release_devpcap(struct nethuns_socket_devpcap *s)
+__nethus_pcap_packets_release(struct nethuns_socket_devpcap *p)
 {
-#if 0
-    uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
+    uint64_t rid = p->idx_rls, cur = UINT64_MAX;
     unsigned int i;
 
-    for(i = 0; i < s->base.sync.number; i++)
-        cur = MIN(cur, __atomic_load_n(&s->base.sync.id[i].value, __ATOMIC_ACQUIRE));
+    for(i = 0; i < p->base.sync.number; i++)
+        cur = MIN(cur, __atomic_load_n(&p->base.sync.id[i].value, __ATOMIC_ACQUIRE));
 
     for(; rid < cur; ++rid)
     {
-        struct block_descr_v3 *pb = __nethuns_block_mod_devpcap(&s->rx_ring, rid);
-        pb->hdr.block_status = TP_STATUS_KERNEL;
+        struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->ring, rid);
+        slot->inuse = 0;
     }
 
-    s->rx_block_idx_rls = rid;
-#endif
-
+    p->idx_rls = rid;
     return 0;
 }
 
 
 uint64_t
-nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
+nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t **pkthdr, uint8_t const **payload)
 {
+    unsigned int caplen = s->base.opt.packetsize;
+    unsigned int bytes;
+    const uint8_t *ppayload;
+
+    struct pcap_pkthdr header;
+
+    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(s->ring, s->idx);
+
+    if (slot->inuse)
+    {
+        __nethus_pcap_packets_release(s);
+        return 0;
+    }
+
+    ppayload = pcap_next(s->p, &header);
+
+    bytes = MIN(caplen, header.caplen);
+
+    if (ppayload)
+    {
+        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+        memcpy(slot->packet, ppayload, bytes);
+        slot->pkthdr.caplen = bytes;
+
+        slot->inuse = 1;
+
+        *pkthdr  = &slot->pkthdr;
+        *payload =  slot->packet;
+        s->idx++;
+        return s->idx;
+    }
+
     return 0;
 }
+
+
+int
+nethuns_send_devpcap(struct nethuns_socket_devpcap *s, uint8_t const *packet, unsigned int len)
+{
+    return pcap_inject(s->p, packet, len);
+}
+
 
 int
 nethuns_flush_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
@@ -144,15 +178,18 @@ nethuns_flush_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
 
 
 int
-nethuns_send_devpcap(struct nethuns_socket_devpcap *s, uint8_t const *packet, unsigned int len)
-{
-    return 1;
-}
-
-
-int
 nethuns_get_stats_devpcap(struct nethuns_socket_devpcap *s, struct nethuns_stats *stats)
 {
+    struct pcap_stat ps;
+    if (pcap_stats(s->p, &ps) == -1)
+    {
+        return -1;
+    }
+
+    stats->packets = ps.ps_recv;
+    stats->drops   = ps.ps_drop;
+    stats->ifdrops = ps.ps_ifdrop;
+    stats->freeze  = 0;
     return 0;
 }
 
@@ -164,8 +201,16 @@ nethuns_fanout_devpcap(__maybe_unused struct nethuns_socket_devpcap *s, __maybe_
 }
 
 
+int nethuns_fd_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
+{
+    return -1;
+}
+
+
 void
 nethuns_dump_rings_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
 {
 }
+
+
 
