@@ -28,8 +28,9 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 
     /* set a single consumer by default */
 
-    sock->base.sync.number = 1;
+    nethuns_synapse_init(&sock->base.sync);
     sock->base.opt = *opt;
+
     sock->ring     = ring;
     sock->idx      = 0;
     sock->idx_rls  = 0;

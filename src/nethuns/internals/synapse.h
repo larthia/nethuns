@@ -38,3 +38,13 @@ nethuns_synapse_min(struct nethuns_synapse *sync)
     return cur;
 }
 
+static inline void
+nethuns_synapse_init(struct nethuns_synapse *sync)
+{
+    unsigned int i;
+    for(i = 1; i < sizeof(sync->id)/sizeof(sync->id[0]); ++i)
+    {
+        sync->id[i] = UINT64_MAX;
+    }
+    sync->number = 1;
+}

@@ -104,6 +104,9 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
     }
 
+    nethuns_synapse_init(&sock->base.sync);
+    sock->base.opt = *opt;
+
     sock->fd = fd;
 
     sock->rx_block_idx_rls = 0;
@@ -125,11 +128,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->tx_pfd.events = POLLOUT | POLLERR;
     sock->tx_pfd.revents = 0;
 
-    /* set a single consumer by default */
-
-    sock->base.sync.number = 1;
-
-    sock->base.opt = *opt;
     return sock;
 }
 

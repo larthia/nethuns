@@ -103,7 +103,9 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         return NULL;
     }
 
+    nethuns_synapse_init(&pcap->base.sync);
     pcap->base.opt  = *opt;
+
     pcap->file      = f;
     pcap->mode      = mode;
     pcap->snaplen   = snaplen;
@@ -111,7 +113,6 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     pcap->idx       = 0;
     pcap->idx_rls   = 0;
 
-    pcap->base.sync.number = 1;
     return pcap;
 }
 
