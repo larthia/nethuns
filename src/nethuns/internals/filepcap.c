@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #include "../nethuns.h"
-#include "internals/stub.h"
+#include "nethuns/internals/stub.h"
 
 #include "pcap.h"
 #include "ring.h"
@@ -42,7 +42,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             return NULL;
         }
 
-        snaplen = fh.snaplen;
+        snaplen = MIN(fh.snaplen, opt->packetsize);
 
         if (fh.magic != TCPDUMP_MAGIC &&
             fh.magic != KUZNETZOV_TCPDUMP_MAGIC &&
@@ -65,6 +65,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     }
     else
     {
+        snaplen = opt->packetsize;
+
         f = fopen(filename, "w");
         if (!f) {
             nethuns_perror(errbuf, "pcap_open");

@@ -23,7 +23,9 @@ set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS tpacket3 libpcap)
 # define the list of library to link...
 #
 
-set(NETHUNS_SRC src/nethuns.c src/internals/filepcap.c)
+set(NETHUNS_SRC src/nethuns/nethuns.c 
+                src/nethuns/internals/filepcap.c)
+
 set(NETHUNS_LIB nethuns)
 set(NETHUNS_DEP)
 
@@ -36,14 +38,14 @@ if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
     message ("Native TPACKET_v3 enabled!")
 
     add_definitions(-DNETHUNS_USE_TPACKET_V3)
-    list(APPEND NETHUNS_SRC src/internals/tpacket_v3.c)
+    list(APPEND NETHUNS_SRC src/nethuns/internals/tpacket_v3.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
     message ("Basic libpcap enabled!")
 
     add_definitions(-DNETHUNS_USE_DEVPCAP)
-    list(APPEND NETHUNS_SRC src/internals/devpcap.c)
+    list(APPEND NETHUNS_SRC src/nethuns/internals/devpcap.c)
     list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND NETHUNS_LIB -lpcap)
 

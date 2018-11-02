@@ -1,4 +1,4 @@
-#include <nethuns.h>
+#include <nethuns/nethuns.h>
 #include <iostream>
 #include <string>
 #include <cstring>

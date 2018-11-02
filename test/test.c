@@ -1,4 +1,4 @@
-#include <nethuns.h>
+#include <nethuns/nethuns.h>
 #include <stdio.h>
 
 void dump_packet(nethuns_pkthdr_t *hdr, const unsigned char *frame)
