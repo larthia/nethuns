@@ -24,7 +24,7 @@ struct nethuns_synapse
 
 
 static inline uint64_t
-nethuns_synpse_min(struct nethuns_synapse *sync)
+nethuns_synapse_min(struct nethuns_synapse *sync)
 {
     uint64_t cur = __atomic_load_n(&sync->id[0], __ATOMIC_ACQUIRE);
     unsigned int i;

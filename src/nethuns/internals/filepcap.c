@@ -130,7 +130,7 @@ static int
 __nethus_pcap_packets_release(nethuns_pcap_t *p)
 {
     uint64_t rid = p->idx_rls;
-    uint64_t cur = nethuns_synpse_min(&p->base.sync);
+    uint64_t cur = nethuns_synapse_min(&p->base.sync);
 
     for(; rid < cur; ++rid)
     {

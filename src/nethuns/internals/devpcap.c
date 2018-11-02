@@ -108,7 +108,7 @@ static int
 __nethus_devpcap_packets_release(struct nethuns_socket_devpcap *p)
 {
     uint64_t rid = p->idx_rls;
-    uint64_t cur = nethuns_synpse_min(&p->base.sync);
+    uint64_t cur = nethuns_synapse_min(&p->base.sync);
 
     for(; rid < cur; ++rid)
     {
