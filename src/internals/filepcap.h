@@ -47,7 +47,7 @@ struct nethuns_pcap_socket
     FILE *              file;
     int                 mode;
     uint32_t            snaplen;
-    struct nethuns_ring *rx_ring;
+    struct nethuns_ring *ring;
 
     uint64_t            idx;
     uint64_t            idx_rls;

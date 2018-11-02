@@ -105,7 +105,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     pcap->file      = f;
     pcap->mode      = mode;
     pcap->snaplen   = snaplen;
-    pcap->rx_ring   = ring;
+    pcap->ring      = ring;
     pcap->idx       = 0;
     pcap->idx_rls   = 0;
 
@@ -118,7 +118,7 @@ int
 nethuns_pcap_close(nethuns_pcap_t *p)
 {
     fclose(p->file);
-    free(p->rx_ring);
+    free(p->ring);
     free(p);
     return 0;
 }
@@ -135,7 +135,7 @@ __nethus_pcap_packets_release(nethuns_pcap_t *p)
 
     for(; rid < cur; ++rid)
     {
-        struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->rx_ring, rid);
+        struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->ring, rid);
         slot->inuse = 0;
     }
 
@@ -153,7 +153,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
 
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->rx_ring, p->idx);
+    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->ring, p->idx);
 
     if (slot->inuse)
     {

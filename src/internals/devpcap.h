@@ -10,7 +10,8 @@
 struct nethuns_socket_devpcap
 {
     struct nethuns_socket_base base;
-
+    struct  nethuns_ring *ring;
+    pcap_t  *p;
 };
 
 #ifdef __cplusplus
@@ -18,9 +19,9 @@ extern "C" {
 #endif
 
 
-#define nethuns_tstamp_get_sec_devpcap(hdr)      ({hdr->ts.tv_sec; })
-#define nethuns_tstamp_get_usec_devpcap(hdr)     ({hdr->ts.tv_usec; })
-#define nethuns_tstamp_get_nsec_devpcap(hdr)     ({hdr->ts.tv_usec * 1000;})
+#define nethuns_tstamp_get_sec_devpcap(hdr)        ({(uint32_t)hdr->ts.tv_sec; })
+#define nethuns_tstamp_get_usec_devpcap(hdr)       ({(uint32_t)hdr->ts.tv_usec; })
+#define nethuns_tstamp_get_nsec_devpcap(hdr)       ({(uint32_t)hdr->ts.tv_usec * 1000;})
 
 #define nethuns_tstamp_set_sec_devpcap(hdr,v)      ({hdr->ts.tv_sec = v;})
 #define nethuns_tstamp_set_usec_devpcap(hdr,v)     ({hdr->ts.tv_usec = v;})

@@ -35,7 +35,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->rx_ring.req.tp_frame_size     = opt->packetsize;
     sock->rx_ring.req.tp_block_nr       = opt->numblocks;
     sock->rx_ring.req.tp_frame_nr       = opt->numblocks * opt->numpackets;
-    sock->rx_ring.req.tp_retire_blk_tov = opt->timeout;
+    sock->rx_ring.req.tp_retire_blk_tov = opt->timeout_ms;
     sock->rx_ring.req.tp_sizeof_priv    = 0;
     sock->rx_ring.req.tp_feature_req_word = opt->rxhash ? TP_FT_REQ_FILL_RXHASH : 0;
 
@@ -279,7 +279,7 @@ nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *pack
         s->tx_block_mod = (s->tx_block_mod + 1) % s->tx_ring.req.tp_block_nr;
         s->tx_frame_idx = 0;
     }
-    else if (s->base.opt.timeout == 0)
+    else if (s->base.opt.timeout_ms == 0)
     {
         nethuns_flush_tpacket_v3(s);
     }
@@ -306,15 +306,6 @@ nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *pack
 
     s->tx_frame_idx++;
     return 1;
-}
-
-
-int nethuns_set_consumer_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, unsigned int numb)
-{
-    if (numb >= sizeof(s->base.sync.id)/sizeof(s->base.sync.id[0]))
-        return -1;
-    s->base.sync.number = numb;
-    return 0;
 }
 
 

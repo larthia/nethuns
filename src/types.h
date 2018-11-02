@@ -14,7 +14,7 @@ struct nethuns_socket_options
     unsigned int    numblocks;
     unsigned int    numpackets;
     unsigned int    packetsize;
-    unsigned int    timeout;
+    unsigned int    timeout_ms;
     bool            rxhash;
     bool            tx_qdisc_bypass;
 };

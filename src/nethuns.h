@@ -14,8 +14,6 @@ extern "C" {
     uint64_t
     nethuns_recv(nethuns_socket_t * s, nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);
 
-    int nethuns_set_consumer(nethuns_socket_t * s, unsigned int numb);
-
     int nethuns_fd(nethuns_socket_t * s);
 
     int nethuns_send(nethuns_socket_t * s, const uint8_t *packet, unsigned int len);
@@ -49,17 +47,29 @@ extern "C" {
     // TYPE nethuns_vlan_tci(nethuns_pkthdr_t *hdr)
     //
 
-#define nethuns_valid_id(n) (n != 0 && n != (uint64_t)-1)
-#define nethuns_err_id(n) (n == (uint64_t)-1)
-
-#define nethuns_release(sock, pkt_id, consumer_id) \
-{ \
-    __atomic_store_n(&((struct nethuns_socket_base *)sock)->sync.id[consumer_id].value, (pkt_id-1), __ATOMIC_RELEASE); \
-}
-
     void nethuns_perror(char *buf, char *msg);
 
-#define nethuns_error(sock) (sock->base.errbuf)
+
+#define nethuns_sock(s)  ((struct nethuns_socket_base *)(s))
+
+#define nethuns_error(s) ({nethuns_sock(s)->errbuf;})
+
+
+#define nethuns_valid_id(n) ((n) != 0 && (n) != (uint64_t)-1)
+
+#define nethuns_err_id(n) ((n) == (uint64_t)-1)
+
+
+#define nethuns_release(s, pkt_id, consumer_id) do \
+{ \
+    __atomic_store_n(& nethuns_sock(s)->sync.id[consumer_id].value, (pkt_id)-1, __ATOMIC_RELEASE); \
+} while (0)
+
+
+#define nethuns_set_consumer(s, numb) ({ \
+    ((numb) >= sizeof((nethuns_sock(s))->sync.id)/sizeof(nethuns_sock(s)->sync.id[0])) ? (-1) : (nethuns_sock(s)->sync.number = (numb), 0); \
+})
+
 
 #ifdef __cplusplus
 }

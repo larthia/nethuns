@@ -6,6 +6,8 @@
 #include <pcap/pcap.h>
 #endif
 
+#include <stdlib.h>
+
 struct nethuns_ring_slot
 {
 #if defined (NETHUNS_USE_TPACKET_V3)
@@ -30,8 +32,8 @@ static inline
 struct nethuns_ring *
 nethuns_make_ring(size_t nslots, size_t psize)
 {
-    struct nethuns_ring * r = calloc(1, sizeof(struct nethuns_ring) +
-                                        nslots * (sizeof(struct nethuns_ring_slot) + psize));
+    struct nethuns_ring * r = (struct nethuns_ring *)calloc(1, sizeof(struct nethuns_ring) +
+                                                               nslots * (sizeof(struct nethuns_ring_slot) + psize));
 
     r->size  = nslots;
     r->psize = psize;
