@@ -35,7 +35,7 @@ int consumer()
 
         if (queue.pop(pkt)) {
             total++;
-            nethuns_release(pkt.socket, pkt.id, 0);
+            nethuns_release(pkt.sock, pkt.id, 0);
         }
     }
 }

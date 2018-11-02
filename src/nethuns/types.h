@@ -42,7 +42,7 @@ struct nethuns_packet
 {
     uint8_t const                 *payload;
     const nethuns_pkthdr_t        *pkthdr;
-    nethuns_socket_base_t         *socket;
+    nethuns_socket_base_t         *sock;
     uint64_t                       id;
 };
 
