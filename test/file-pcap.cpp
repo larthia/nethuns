@@ -45,7 +45,7 @@ try
 
             if (nethuns_valid_id(pkt_id))
             {
-                std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
+                std::cerr << nethuns_tstamp_get_sec(pkthdr) << ":" << nethuns_tstamp_get_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
 
             nethuns_release(p, pkt_id, 0);

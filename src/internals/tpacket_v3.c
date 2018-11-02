@@ -1,4 +1,4 @@
-#include "../nethuns.h"
+#include "nethuns_base.h"
 #include "tpacket_v3.h"
 
 #include <linux/version.h>
@@ -8,10 +8,10 @@
 
 #include <string.h>
 
-nethuns_socket_t *
+struct nethuns_socket_tpacket_v3 *
 nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 {
-    nethuns_socket_t * sock;
+    struct nethuns_socket_tpacket_v3 * sock;
     int fd, err, v = TPACKET_V3;
     unsigned int i;
 
@@ -28,7 +28,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    sock = malloc(sizeof(struct tpacket_v3_socket));
+    sock = malloc(sizeof(struct nethuns_socket_tpacket_v3));
     memset(sock, 0, sizeof(*sock));
 
     sock->rx_ring.req.tp_block_size     = opt->numpackets * opt->packetsize;
@@ -134,7 +134,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 }
 
 
-int nethuns_close_tpacket_v3(nethuns_socket_t *s)
+int nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (s)
     {
@@ -149,7 +149,7 @@ int nethuns_close_tpacket_v3(nethuns_socket_t *s)
 }
 
 
-int nethuns_bind_tpacket_v3(nethuns_socket_t *s, const char *dev)
+int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev)
 {
     struct sockaddr_ll addr;
     int err;
@@ -175,14 +175,14 @@ int nethuns_bind_tpacket_v3(nethuns_socket_t *s, const char *dev)
 }
 
 
-int nethuns_fd_tpacket_v3(nethuns_socket_t *s)
+int nethuns_fd_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     return s->fd;
 }
 
 
 static int
-__nethuns_blocks_release_tpacket_v3(nethuns_socket_t *s)
+__nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
     unsigned int i;
@@ -202,7 +202,7 @@ __nethuns_blocks_release_tpacket_v3(nethuns_socket_t *s)
 
 
 uint64_t
-nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
+nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
 {
     struct block_descr_v3 * pb;
 
@@ -243,7 +243,7 @@ nethuns_recv_tpacket_v3(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t 
 
 
 static inline int
-__nethuns_flush_tpacket_v3(nethuns_socket_t *s)
+__nethuns_flush_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
         nethuns_perror(s->base.errbuf, "flush (sendto)");
@@ -255,14 +255,14 @@ __nethuns_flush_tpacket_v3(nethuns_socket_t *s)
 
 
 int
-nethuns_flush_tpacket_v3(nethuns_socket_t *s)
+nethuns_flush_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     return __nethuns_flush_tpacket_v3(s);
 }
 
 
 int
-nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t const *packet, unsigned int len)
+nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *packet, unsigned int len)
 {
     const size_t numpackets = s->tx_ring.req.tp_block_size/s->tx_ring.req.tp_frame_size;
 
@@ -309,7 +309,7 @@ nethuns_send_tpacket_v3(nethuns_socket_t *s, uint8_t const *packet, unsigned int
 }
 
 
-int nethuns_set_consumer_tpacket_v3(nethuns_socket_t *s, unsigned int numb)
+int nethuns_set_consumer_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, unsigned int numb)
 {
     if (numb >= sizeof(s->base.sync.id)/sizeof(s->base.sync.id[0]))
         return -1;
@@ -390,7 +390,7 @@ __parse_fanout(const char *str)
 
 
 int
-nethuns_fanout_tpacket_v3(nethuns_socket_t *s, int group, const char *fanout)
+nethuns_fanout_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, int group, const char *fanout)
 {
     int fanout_code, fanout_arg;
     int err;
@@ -429,7 +429,7 @@ __dump_ring(struct ring_v3 *ring, const char *label)
 }
 
 void
-nethuns_dump_rings_tpacket_v3(nethuns_socket_t *s)
+nethuns_dump_rings_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     __dump_ring(&s->rx_ring, "rx");
     __dump_ring(&s->tx_ring, "tx");
@@ -438,7 +438,7 @@ nethuns_dump_rings_tpacket_v3(nethuns_socket_t *s)
 
 
 int
-nethuns_get_stats_tpacket_v3(nethuns_socket_t *s, struct nethuns_stats *stats)
+nethuns_get_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_stats *stats)
 {
     struct tpacket_stats_v3 _stats;
     socklen_t len;

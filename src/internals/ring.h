@@ -2,11 +2,16 @@
 
 #include "../types.h"
 
+#ifdef NETHUNS_USE_DEVPCAP
+#include <pcap/pcap.h>
+#endif
 
 struct nethuns_ring_slot
 {
-#ifdef NETHUNS_USE_TPACKET_V3
+#if defined (NETHUNS_USE_TPACKET_V3)
     struct tpacket3_hdr     pkthdr;
+#elif defined (NETHUNS_USE_DEVPCAP)
+    struct pcap_pkthdr      pkthdr;
 #endif
     int                     inuse;
     unsigned char           packet[];

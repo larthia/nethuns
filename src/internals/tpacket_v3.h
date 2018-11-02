@@ -30,7 +30,7 @@ struct ring_v3
 };
 
 
-struct tpacket_v3_socket
+struct nethuns_socket_tpacket_v3
 {
     struct nethuns_socket_base base;
 
@@ -78,7 +78,6 @@ __nethuns_block_mod_tpacket_v3(struct ring_v3 *ring, uint64_t id)
     return (struct block_descr_v3 *) ring->rd[id % ring->req.tp_block_nr].iov_base;
 }
 
-
 static inline
 struct block_descr_v3 *
 __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
@@ -87,12 +86,18 @@ __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 }
 
 
-#define nethuns_tstamp_sec_tpacket_v3(hdr)      (hdr->tp_sec)
-#define nethuns_tstamp_nsec_tpacket_v3(hdr)     (hdr->tp_nsec)
-#define nethuns_snaplen_tpacket_v3(hdr)         (hdr->tp_snaplen)
-#define nethuns_len_tpacket_v3(hdr)             (hdr->tp_len)
-#define nethuns_rxhash_tpacket_v3(hdr)          (hdr->hv1.tp_rxhash)
-#define nethuns_vlan_tci_tpacket_v3(hdr)        (hdr->hv1.tp_vlan_tci)
+#define nethuns_tstamp_get_sec_tpacket_v3(hdr)      ({hdr->tp_sec;})
+#define nethuns_tstamp_get_usec_tpacket_v3(hdr)     ({hdr->tp_nsec/1000;})
+#define nethuns_tstamp_get_nsec_tpacket_v3(hdr)     ({hdr->tp_nsec;})
+
+#define nethuns_tstamp_set_sec_tpacket_v3(hdr,v)    ({hdr->tp_sec = v;})
+#define nethuns_tstamp_set_usec_tpacket_v3(hdr,v)   ({hdr->tp_nsec = v *1000;})
+#define nethuns_tstamp_set_nsec_tpacket_v3(hdr,v)   ({hdr->tp_nsec;})
+
+#define nethuns_snaplen_tpacket_v3(hdr)             (hdr->tp_snaplen)
+#define nethuns_len_tpacket_v3(hdr)                 (hdr->tp_len)
+#define nethuns_rxhash_tpacket_v3(hdr)              (hdr->hv1.tp_rxhash)
+#define nethuns_vlan_tci_tpacket_v3(hdr)            (hdr->hv1.tp_vlan_tci)
 
 
 #ifdef __cplusplus

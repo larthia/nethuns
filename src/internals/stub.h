@@ -16,8 +16,13 @@
 #define nethuns_set_consumer(...)   nethuns_set_consumer_tpacket_v3(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_tpacket_v3(__VA_ARGS__)
 
-#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_tpacket_v3(__VA_ARGS__)
-#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_get_sec(...)     nethuns_tstamp_get_sec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_get_usec(...)    nethuns_tstamp_get_usec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_get_nsec(...)    nethuns_tstamp_get_nsec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_set_sec(...)     nethuns_tstamp_set_sec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_set_usec(...)    nethuns_tstamp_set_usec_tpacket_v3(__VA_ARGS__)
+#define nethuns_tstamp_set_nsec(...)    nethuns_tstamp_set_nsec_tpacket_v3(__VA_ARGS__)
+
 #define nethuns_snaplen(...)        nethuns_snaplen_tpacket_v3(__VA_ARGS__)
 #define nethuns_len(...)            nethuns_len_tpacket_v3(__VA_ARGS__)
 #define nethuns_rxhash(...)         nethuns_rxhash_tpacket_v3(__VA_ARGS__)
@@ -37,8 +42,13 @@
 #define nethuns_set_consumer(...)   nethuns_set_consumer_devpcap(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_devpcap(__VA_ARGS__)
 
-#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_devpcap(__VA_ARGS__)
-#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_get_sec(...)     nethuns_tstamp_get_sec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_get_usec(...)    nethuns_tstamp_get_usec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_get_nsec(...)    nethuns_tstamp_get_nsec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_set_sec(...)     nethuns_tstamp_set_sec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_set_usec(...)    nethuns_tstamp_set_usec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_set_nsec(...)    nethuns_tstamp_set_nsec_devpcap(__VA_ARGS__)
+
 #define nethuns_snaplen(...)        nethuns_snaplen_devpcap(__VA_ARGS__)
 #define nethuns_len(...)            nethuns_len_devpcap(__VA_ARGS__)
 #define nethuns_rxhash(...)         nethuns_rxhash_devpcap(__VA_ARGS__)

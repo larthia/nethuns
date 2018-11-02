@@ -39,8 +39,10 @@ extern "C" {
     //
     // BOOL nethuns_valid_id(uint64_t)
     //
-    // TYPE nethuns_tstamp_sec(nethuns_pkthdr_t *hdr)
-    // TYPE nethuns_tstamp_nsec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_get_sec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_get_usec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_get_nsec(nethuns_pkthdr_t *hdr)
+    //
     // TYPE nethuns_snaplen(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_len(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_rxhash(nethuns_pkthdr_t *hdr)
@@ -58,7 +60,6 @@ extern "C" {
     void nethuns_perror(char *buf, char *msg);
 
 #define nethuns_error(sock) (sock->base.errbuf)
-
 
 #ifdef __cplusplus
 }

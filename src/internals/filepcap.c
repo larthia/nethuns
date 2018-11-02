@@ -176,8 +176,9 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t **pkthdr, uint8_t **payloa
         return (uint64_t)-1;
     }
 
-    nethuns_tstamp_sec ((&slot->pkthdr)) = header.ts.tv_sec;
-    nethuns_tstamp_nsec((&slot->pkthdr)) = header.ts.tv_usec * 1000;
+    nethuns_tstamp_set_sec ((&slot->pkthdr), header.ts.tv_sec);
+    nethuns_tstamp_set_usec((&slot->pkthdr), header.ts.tv_usec);
+
     nethuns_len        ((&slot->pkthdr)) = header.len;
     nethuns_snaplen    ((&slot->pkthdr)) = bytes;
 
@@ -207,8 +208,8 @@ nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t *pkthdr, uint8_t const *p
 {
     struct nethuns_pcap_pkthdr header;
 
-    header.ts.tv_sec  = nethuns_tstamp_sec(pkthdr);
-    header.ts.tv_usec = nethuns_tstamp_nsec(pkthdr)/1000;
+    header.ts.tv_sec  = nethuns_tstamp_get_sec(pkthdr);
+    header.ts.tv_usec = nethuns_tstamp_get_usec(pkthdr);
     header.caplen     = (uint32_t) MIN(len, nethuns_snaplen(pkthdr));
     header.len        = (uint32_t) nethuns_len(pkthdr);
 
