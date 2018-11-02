@@ -32,6 +32,7 @@ struct nethuns_stats
 {
     uint64_t     packets;
     uint64_t     drops;
+    uint64_t     ifdrops;
     uint64_t     freeze;
 };
 

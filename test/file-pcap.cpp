@@ -9,7 +9,7 @@ try
 {
     if (argc < 3)
     {
-        fprintf(stderr,"usage: %s [read file|write ifname]\n", argv[0]);
+        fprintf(stderr,"usage: %s [read file| capture ifname]\n", argv[0]);
         return 0;
     }
 
@@ -55,7 +55,7 @@ try
         nethuns_pcap_close(p);
 
     }
-    else if (strcmp(argv[1], "write") == 0)
+    else if (strcmp(argv[1], "capture") == 0)
     {
         nethuns_pcap_t *out;
 

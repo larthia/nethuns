@@ -246,7 +246,7 @@ static inline int
 __nethuns_flush_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
-        nethuns_perror(s->base.errbuf, "flush (sendto)");
+        nethuns_perror(s->base.errbuf, "nethuns_flush");
         return -1;
     }
 
