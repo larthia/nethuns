@@ -1,34 +1,65 @@
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.8)
 
 project (nethuns)
 
-add_definitions(-DNETHUNS_USE_TPACKET_V3)
-# add_definitions(-DNETHUNS_USE_DEVPCAP)
+#
+# Compiler options...
+#
 
-
-#set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion -fsanitize=address -fsanitize=undefined")
 set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
 
-
+add_definitions(-D_GNU_SOURCE)
 include_directories(src)
 
+#
+# NETHUNS_CAPTURE_SOCKET variable...
+#
 
-add_definitions(-D_GNU_SOURCE)
+set(NETHUNS_CAPTURE_SOCKET "tpacket3" CACHE STRING "Nethuns underlying capture engine")
+set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS tpacket3 libpcap)
 
-set(NETHUNS_SRC src/nethuns.c
-                src/internals/tpacket_v3.c
-                src/internals/devpcap.c
-                src/internals/filepcap.c 
-   )
+#
+# define the list of library to link...
+#
 
+set(NETHUNS_LIB nethuns)
+set(NETHUNS_SRC src/nethuns.c src/internals/filepcap.c)
+
+
+list(APPEND NETHUNS_LIB -pthread)
+
+
+if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
+
+    message ("Native TPACKET_v3 enabled!")
+
+    add_definitions(-DNETHUNS_USE_TPACKET_V3)
+    list(APPEND NETHUNS_SRC src/internals/tpacket_v3.c)
+
+elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
+
+    message ("Basic libpcap enabled!")
+
+    add_definitions(-DNETHUNS_USE_DEVPCAP)
+    list(APPEND NETHUNS_SRC src/internals/devpcap.c)
+    list(APPEND NETHUNS_LIB -lpcap)
+
+endif()
+
+#
+# Build the Nethuns library
+#
 
 add_library(nethuns_static STATIC ${NETHUNS_SRC})
 add_library(nethuns SHARED ${NETHUNS_SRC})
 
-
 link_directories(${nethuns_BINARY_DIR})
 
+#
+# Build tests..
+#
+message (${NETHUNS_LIB})
 
 add_executable(nethuns-test       test/test.c)
 add_executable(nethuns-send       test/send.cpp)
@@ -44,16 +75,17 @@ add_executable(pcap-forward-mt    test/forward-pcap-mt.cpp)
 add_executable(pcap-meter-mt      test/meter-pcap-mt.cpp)
 
 
-target_link_libraries(nethuns-test       nethuns)
-target_link_libraries(nethuns-send       nethuns -pthread)
-target_link_libraries(nethuns-forward    nethuns -pthread)
-target_link_libraries(nethuns-forward-mt nethuns -pthread)
-target_link_libraries(nethuns-file-pcap  nethuns)
+target_link_libraries(nethuns-test       ${NETHUNS_LIB} -lnethuns)
+target_link_libraries(nethuns-send       ${NETHUNS_LIB} -lnethuns)
+target_link_libraries(nethuns-forward    ${NETHUNS_LIB} -lnethuns)
+target_link_libraries(nethuns-forward-mt ${NETHUNS_LIB} -lnethuns)
+target_link_libraries(nethuns-file-pcap  ${NETHUNS_LIB} -lnethuns)
+target_link_libraries(nethuns-meter      ${NETHUNS_LIB} -lnethuns)
+target_link_libraries(nethuns-meter-mt   ${NETHUNS_LIB} -lnethuns)
+
 
 target_link_libraries(pcap-forward      -lpcap  -pthread)
 target_link_libraries(pcap-forward-mt   -lpcap  -pthread)
-target_link_libraries(nethuns-meter     nethuns -pthread)
-target_link_libraries(nethuns-meter-mt  nethuns -pthread)
 target_link_libraries(pcap-meter        -lpcap  -pthread)
 target_link_libraries(pcap-meter-mt     -lpcap  -pthread)
 
