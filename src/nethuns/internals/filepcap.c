@@ -129,11 +129,8 @@ nethuns_pcap_close(nethuns_pcap_t *p)
 static int
 __nethus_pcap_packets_release(nethuns_pcap_t *p)
 {
-    uint64_t rid = p->idx_rls, cur = UINT64_MAX;
-    unsigned int i;
-
-    for(i = 0; i < p->base.sync.number; i++)
-        cur = MIN(cur, __atomic_load_n(&p->base.sync.id[i].value, __ATOMIC_ACQUIRE));
+    uint64_t rid = p->idx_rls;
+    uint64_t cur = nethuns_synpse_min(&p->base.sync);
 
     for(; rid < cur; ++rid)
     {

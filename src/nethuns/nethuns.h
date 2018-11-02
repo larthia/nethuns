@@ -70,7 +70,7 @@ extern "C" {
 
 #define nethuns_release(_sock, _pktid, _consid) do \
 { \
-    __atomic_store_n(& nethuns_base(_sock)->sync.id[_consid].value, (_pktid)-1, __ATOMIC_RELEASE); \
+    __atomic_store_n(& nethuns_base(_sock)->sync.id[_consid], (_pktid)-1, __ATOMIC_RELEASE); \
 } while (0)
 
 

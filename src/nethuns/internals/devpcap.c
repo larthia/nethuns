@@ -105,13 +105,12 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
 
 
 static int
-__nethus_pcap_packets_release(struct nethuns_socket_devpcap *p)
+__nethus_devpcap_packets_release(struct nethuns_socket_devpcap *p)
 {
-    uint64_t rid = p->idx_rls, cur = UINT64_MAX;
+    uint64_t rid = p->idx_rls;
     unsigned int i;
 
-    for(i = 0; i < p->base.sync.number; i++)
-        cur = MIN(cur, __atomic_load_n(&p->base.sync.id[i].value, __ATOMIC_ACQUIRE));
+    uint64_t cur = nethuns_synpse_min(&p->base.sync);
 
     for(; rid < cur; ++rid)
     {
@@ -137,7 +136,7 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
 
     if (slot->inuse)
     {
-        __nethus_pcap_packets_release(s);
+        __nethus_devpcap_packets_release(s);
         return 0;
     }
 
