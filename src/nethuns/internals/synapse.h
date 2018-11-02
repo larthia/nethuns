@@ -19,17 +19,21 @@
 struct nethuns_synapse
 {
     unsigned int number;
-    uint64_t id[256];
+    uint64_t id[256] __attribute__((aligned(sizeof(uint64_t))));
 };
 
 
 static inline uint64_t
 nethuns_synpse_min(struct nethuns_synapse *sync)
 {
-    uint64_t cur = UINT64_MAX;
+    uint64_t cur = __atomic_load_n(&sync->id[0], __ATOMIC_ACQUIRE);
     unsigned int i;
-    for(i = 0; i < sync->number; i++)
+
+    for(i = 1; i < sync->number; i++)
+    {
+        __builtin_prefetch (&sync->id[i+1], 0, 1);
         cur = MIN(cur, __atomic_load_n(&sync->id[i], __ATOMIC_ACQUIRE));
+    }
 
     return cur;
 }
