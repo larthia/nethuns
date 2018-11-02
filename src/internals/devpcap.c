@@ -1,17 +1,17 @@
-#include "../nethuns.h"
+#include "nethuns_base.h"
 #include "devpcap.h"
 
 #include <linux/version.h>
 #include <sys/ioctl.h>
 #include <poll.h>
 #include <errno.h>
-
+#include <stdlib.h>
 #include <string.h>
 
-nethuns_socket_t *
+struct nethuns_socket_devpcap *
 nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 {
-    struct devpcap_socket *sock = malloc(sizeof(struct devpcap_socket));
+    struct nethuns_socket_devpcap *sock = malloc(sizeof(struct nethuns_socket_devpcap));
     memset(sock, 0, sizeof(*sock));
 
     /* set a single consumer by default */
@@ -22,7 +22,7 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 }
 
 
-int nethuns_close_devpcap(nethuns_socket_t *s)
+int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
 {
     if (s)
     {
@@ -32,20 +32,20 @@ int nethuns_close_devpcap(nethuns_socket_t *s)
 }
 
 
-int nethuns_bind_devpcap(nethuns_socket_t *s, const char *dev)
+int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
 {
     return 0;
 }
 
 
-int nethuns_fd_devpcap(nethuns_socket_t *s)
+int nethuns_fd_devpcap(struct nethuns_socket_devpcap *s)
 {
     return 0;
 }
 
 
 static int
-__nethuns_blocks_release_devpcap(nethuns_socket_t *s)
+__nethuns_blocks_release_devpcap(struct nethuns_socket_devpcap *s)
 {
 #if 0
     uint64_t rid = s->rx_block_idx_rls, cur = UINT64_MAX;
@@ -68,26 +68,26 @@ __nethuns_blocks_release_devpcap(nethuns_socket_t *s)
 
 
 uint64_t
-nethuns_recv_devpcap(nethuns_socket_t *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
+nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t **pkthdr, uint8_t const **pkt)
 {
     return 0;
 }
 
 int
-nethuns_flush_devpcap(nethuns_socket_t *s)
+nethuns_flush_devpcap(struct nethuns_socket_devpcap *s)
 {
     return 0;
 }
 
 
 int
-nethuns_send_devpcap(nethuns_socket_t *s, uint8_t const *packet, unsigned int len)
+nethuns_send_devpcap(struct nethuns_socket_devpcap *s, uint8_t const *packet, unsigned int len)
 {
     return 1;
 }
 
 
-int nethuns_set_consumer_devpcap(nethuns_socket_t *s, unsigned int numb)
+int nethuns_set_consumer_devpcap(struct nethuns_socket_devpcap *s, unsigned int numb)
 {
     if (numb >= sizeof(s->base.sync.id)/sizeof(s->base.sync.id[0]))
         return -1;
@@ -96,36 +96,21 @@ int nethuns_set_consumer_devpcap(nethuns_socket_t *s, unsigned int numb)
 }
 
 
-
-static inline
-int __fanout_code(int strategy, int defrag, int rollover)
-{
-    return 0;
-}
-
-
-static int
-__parse_fanout(const char *str)
-{
-    return -1;
-}
-
-
 int
-nethuns_fanout_devpcap(nethuns_socket_t *s, int group, const char *fanout)
+nethuns_fanout_devpcap(struct nethuns_socket_devpcap *s, int group, const char *fanout)
 {
     return -1;
 }
 
 
 void
-nethuns_dump_rings_devpcap(nethuns_socket_t *s)
+nethuns_dump_rings_devpcap(struct nethuns_socket_devpcap *s)
 {
 }
 
 
 int
-nethuns_get_stats_devpcap(nethuns_socket_t *s, struct nethuns_stats *stats)
+nethuns_get_stats_devpcap(struct nethuns_socket_devpcap *s, struct nethuns_stats *stats)
 {
     return 0;
 }
