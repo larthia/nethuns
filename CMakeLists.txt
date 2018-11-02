@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project (nethuns)
 
+include (Nethuns.cmake)
+
 #
 # Compiler options...
 #
@@ -12,12 +14,6 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-point
 add_definitions(-D_GNU_SOURCE)
 include_directories(/usr/local/include/ src)
 
-#
-# Nethuns options...
-#
-
-set(NETHUNS_CAPTURE_SOCKET "tpacket3" CACHE STRING "Nethuns underlying capture engine")
-set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS tpacket3 libpcap)
 option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 
 #
@@ -33,19 +29,12 @@ set(NETHUNS_DEP)
 
 list(APPEND NETHUNS_LIB -pthread)
 
-
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 
-    message ("Native TPACKET_v3 enabled!")
-
-    add_definitions(-DNETHUNS_USE_TPACKET_V3)
     list(APPEND NETHUNS_SRC src/nethuns/internals/tpacket_v3.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
-    message ("Basic libpcap enabled!")
-
-    add_definitions(-DNETHUNS_USE_DEVPCAP)
     list(APPEND NETHUNS_SRC src/nethuns/internals/devpcap.c)
     list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND NETHUNS_LIB -lpcap)
