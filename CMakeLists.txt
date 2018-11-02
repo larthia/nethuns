@@ -6,11 +6,11 @@ project (nethuns)
 # Compiler options...
 #
 
-set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -Wconversion ")
+set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow ")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow ")
 
 add_definitions(-D_GNU_SOURCE)
-include_directories(src)
+include_directories(/usr/local/include/ src)
 
 #
 # NETHUNS_CAPTURE_SOCKET variable...
@@ -23,8 +23,9 @@ set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS tpacket3 libpcap)
 # define the list of library to link...
 #
 
-set(NETHUNS_LIB nethuns)
 set(NETHUNS_SRC src/nethuns.c src/internals/filepcap.c)
+set(NETHUNS_LIB nethuns)
+set(NETHUNS_DEP)
 
 
 list(APPEND NETHUNS_LIB -pthread)
@@ -36,13 +37,14 @@ if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 
     add_definitions(-DNETHUNS_USE_TPACKET_V3)
     list(APPEND NETHUNS_SRC src/internals/tpacket_v3.c)
-
+    
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
     message ("Basic libpcap enabled!")
 
     add_definitions(-DNETHUNS_USE_DEVPCAP)
     list(APPEND NETHUNS_SRC src/internals/devpcap.c)
+    list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND NETHUNS_LIB -lpcap)
 
 endif()
@@ -53,6 +55,10 @@ endif()
 
 add_library(nethuns_static STATIC ${NETHUNS_SRC})
 add_library(nethuns SHARED ${NETHUNS_SRC})
+
+target_link_libraries(nethuns ${NETHUNS_DEP})
+target_link_libraries(nethuns_static ${NETHUNS_DEP})
+
 
 link_directories(${nethuns_BINARY_DIR})
 
