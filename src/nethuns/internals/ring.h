@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../types.h"
-
+#ifdef NETHUNS_USE_TPACKET_V3
+#include <linux/if_packet.h>
+#endif
 #ifdef NETHUNS_USE_DEVPCAP
 #include <pcap/pcap.h>
 #endif
