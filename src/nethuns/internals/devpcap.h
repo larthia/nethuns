@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <pcap/pcap.h>
 
-#include "synapse.h"
 #include "../types.h"
 
 

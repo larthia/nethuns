@@ -7,7 +7,6 @@
 #include <sys/time.h>
 #include <stdio.h>
 
-#include "synapse.h"
 #include "../types.h"
 
 
