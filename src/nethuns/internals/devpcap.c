@@ -19,7 +19,7 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
     ring = nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize);
     if (!ring)
     {
-        nethuns_perror(errbuf, "nethuns_open: failed to allocate ring");
+        nethuns_perror(errbuf, "open: failed to allocate ring");
         return NULL;
     }
 
@@ -56,48 +56,56 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
 
     s->p = pcap_create(dev, errbuf);
     if (!s->p) {
-        nethuns_perror(s->base.errbuf, errbuf);
+        nethuns_perror(s->base.errbuf, "bind: %s", errbuf);
         return -1;
     }
 
     if (pcap_set_immediate_mode(s->p, 1) != 0)
     {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
     }
 
     if (pcap_set_buffer_size(s->p, (int)(s->base.opt.numblocks * s->base.opt.numpackets * s->base.opt.packetsize)) != 0)
     {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
     }
 
     if (pcap_set_promisc(s->p, 1) != 0)
     {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
     }
 
     if (pcap_set_snaplen(s->p, (int)s->base.opt.packetsize) != 0)
     {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
     }
 
     if (pcap_set_timeout(s->p, (int)s->base.opt.timeout_ms) != 0)
     {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
-    }
-
-    if (pcap_setnonblock(s->p, 1, errbuf) < 0)
-    {
-        nethuns_perror(s->base.errbuf, errbuf);
-    }
-
-    if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
-    {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
     }
 
     if (pcap_activate(s->p) != 0)
     {
-        nethuns_perror(s->base.errbuf, pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
+    }
+
+    if (pcap_setnonblock(s->p, 1, errbuf) < 0)
+    {
+        nethuns_perror(s->base.errbuf, "bind: %s", errbuf);
+        return -1;
+    }
+
+    if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
+    {
+        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        return -1;
     }
 
     return 0;
