@@ -48,7 +48,7 @@ extern "C" {
     // TYPE nethuns_vlan_tci(nethuns_pkthdr_t *hdr)
     //
 
-    void nethuns_perror(char *buf, char *msg);
+    void nethuns_perror(char *buf, char *format, ...);
 
     const char * nethuns_version();
 
