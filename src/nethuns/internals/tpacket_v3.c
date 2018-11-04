@@ -184,9 +184,8 @@ int nethuns_fd_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 static int
 __nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
-#if 0
     uint64_t rid = s->rx_block_idx_rls;
-    uint64_t cur = nethuns_synapse_min(&s->base.sync);
+    uint64_t cur = nethuns_ring_last_free_id(s->base.ring);
 
     for(; rid < cur; ++rid)
     {
@@ -195,7 +194,6 @@ __nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
     }
 
     s->rx_block_idx_rls = rid;
-#endif
     return 0;
 }
 
