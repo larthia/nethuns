@@ -64,6 +64,14 @@ nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
 }
 
 
+static inline
+struct nethuns_ring_slot *
+nethuns_ring_next(struct nethuns_ring *ring)
+{
+    return nethuns_ring_get_slot(ring,ring->head++);
+}
+
+
 static inline uint64_t
 nethuns_ring_last_free_id(struct nethuns_ring *ring)
 {

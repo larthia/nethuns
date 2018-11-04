@@ -223,17 +223,15 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
         s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
+        nethuns_ring_next(s->base.ring)->id = s->rx_block_idx + 1;
         return s->rx_block_idx + 1;
     }
 
     __nethuns_blocks_release_tpacket_v3(s);
 
-    if ((s->rx_block_idx - s-> rx_block_idx_rls) < (s->rx_ring.req.tp_block_nr - 1))
-    {
-        s->rx_block_idx++;
-        s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;
-        s->rx_frame_idx = 0;
-    }
+    s->rx_block_idx++;
+    s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;
+    s->rx_frame_idx = 0;
 
     return 0;
 }
