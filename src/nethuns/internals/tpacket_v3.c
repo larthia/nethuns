@@ -25,7 +25,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     err = setsockopt(fd, SOL_PACKET, PACKET_VERSION, &v, sizeof(v));
     if (err < 0) {
-        nethuns_perror(errbuf, "setsockopt PACKET_VERSION");
+        nethuns_perror(errbuf, "unsupported PACKET_VERSION");
         close(fd);
         return NULL;
     }
@@ -161,13 +161,13 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
     addr.sll_ifindex  = (int)if_nametoindex(dev);
 
     if (!addr.sll_ifindex) {
-        nethuns_perror(s->base.errbuf, "if_nametoindex");
+        nethuns_perror(s->base.errbuf, "if_nametoindex %s", dev);
         return -1;
     }
 
     err = bind(s->fd, (struct sockaddr *)&addr, sizeof(addr));
     if (err < 0) {
-        nethuns_perror(s->base.errbuf, "bind");
+        nethuns_perror(s->base.errbuf, "bind %s", dev);
         return -1;
     }
 
@@ -241,7 +241,7 @@ static inline int
 __nethuns_flush_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
-        nethuns_perror(s->base.errbuf, "nethuns_flush");
+        nethuns_perror(s->base.errbuf, "flush");
         return -1;
     }
 

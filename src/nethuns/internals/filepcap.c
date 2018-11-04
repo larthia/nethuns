@@ -38,7 +38,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     {
         f = fopen(filename, "r");
         if (!f) {
-            nethuns_perror(errbuf, "pcap_open");
+            nethuns_perror(errbuf, "pcap_open: could not open '%s' file", filename);
             return NULL;
         }
 
@@ -58,7 +58,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             fh.magic != NAVTEL_TCPDUMP_MAGIC &&
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {
-            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header mismatch!");
+            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header mismatch");
             fclose(f);
             return NULL;
         }
@@ -70,7 +70,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 
         f = fopen(filename, "w");
         if (!f) {
-            nethuns_perror(errbuf, "pcap_open");
+            nethuns_perror(errbuf, "pcap_open: could not open '%s' file for writing", filename);
             return NULL;
         }
 
