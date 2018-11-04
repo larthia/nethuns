@@ -8,8 +8,11 @@ include (Nethuns.cmake)
 # Compiler options...
 #
 
-set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow ")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow ")
+# set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")   
+# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")
+
+set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")   
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 
 add_definitions(-D_GNU_SOURCE)
 include_directories(/usr/local/include/ src)
