@@ -55,8 +55,6 @@ main(int argc, char *argv[])
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    nethuns_set_consumer(s, 1);
-
     for(;;)
     {
         uint64_t pkt_id;
@@ -64,7 +62,7 @@ main(int argc, char *argv[])
         if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
             dump_packet(pkthdr, frame);
-            nethuns_release(s, pkt_id, 0);
+            nethuns_release(s, pkt_id);
         }
     }
 

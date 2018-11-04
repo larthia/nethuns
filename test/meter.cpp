@@ -75,8 +75,6 @@ try
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    nethuns_set_consumer(s, 1);
-
     uint64_t total2 = 0;
     for(;;)
     {
@@ -93,7 +91,7 @@ try
                 nethuns_dump_rings(s);
             }
 
-            nethuns_release(s, pkt_id, 0);
+            nethuns_release(s, pkt_id);
         }
     }
 

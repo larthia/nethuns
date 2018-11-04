@@ -68,16 +68,11 @@ extern "C" {
 #define nethuns_err_id(_n) ((_n) == (uint64_t)-1)
 
 
-#define nethuns_release(_sock, _pktid, _consid) do \
+#define nethuns_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(& nethuns_base(_sock)->sync.id[_consid], (_pktid)-1, __ATOMIC_RELEASE); \
+    __atomic_store_n(&nethuns_ring_get_slot(nethuns_base(_sock)->ring, _pktid)->inuse, 0, __ATOMIC_RELEASE); \
 } while (0)
 
-
-#define nethuns_set_consumer(_sock, _numb) \
-({ \
-    ((_numb) >= sizeof((nethuns_base(_sock))->sync.id)/sizeof(nethuns_base(_sock)->sync.id[0])) ? (-1) : (nethuns_base(_sock)->sync.number = (_numb), 0); \
-})
 
 
 #ifdef __cplusplus

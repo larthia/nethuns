@@ -98,8 +98,6 @@ try
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    nethuns_set_consumer(in, 1);
-
     for(;;)
     {
         uint64_t pkt_id;
@@ -111,7 +109,7 @@ try
             while (!nethuns_send(out, frame, nethuns_len(pkthdr)))
             { };
 
-            nethuns_release(in, pkt_id, 0);
+            nethuns_release(in, pkt_id);
         }
     }
 

@@ -66,7 +66,7 @@ int consumer(std::string dev)
             {
             };
 
-            nethuns_release(pkt.sock, pkt.id, 0);
+            nethuns_release(pkt.sock, pkt.id);
         }
     }
 
@@ -113,8 +113,6 @@ try
 
     const unsigned char *frame;
     const nethuns_pkthdr_t * pkthdr;
-
-    nethuns_set_consumer(s, 1);
 
     for(;;)
     {

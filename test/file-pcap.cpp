@@ -49,7 +49,7 @@ try
                 std::cerr << nethuns_tstamp_get_sec(pkthdr) << ":" << nethuns_tstamp_get_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
 
-            nethuns_release(p, pkt_id, 0);
+            nethuns_release(p, pkt_id);
         }
         while (!nethuns_err_id(pkt_id));
 
@@ -90,8 +90,6 @@ try
             throw std::runtime_error(nethuns_error(in));
         }
 
-        nethuns_set_consumer(in, 1);
-
         for(int i = 0; i < 10;)
         {
             const unsigned char *frame;
@@ -103,7 +101,7 @@ try
                 std::cerr << "WRITE: #" << i << " packet!" << std::endl;
                 nethuns_pcap_write(out, pkthdr, frame, nethuns_len(pkthdr));
 
-                nethuns_release(in, pkt_id, 0);
+                nethuns_release(in, pkt_id);
                 i++;
             }
         }
