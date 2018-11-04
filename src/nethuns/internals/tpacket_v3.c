@@ -1,5 +1,7 @@
 #include "nethuns_base.h"
 #include "tpacket_v3.h"
+#include "compiler.h"
+#include "ring.h"
 
 #include <linux/version.h>
 #include <sys/ioctl.h>
@@ -104,8 +106,8 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
     }
 
-    nethuns_synapse_init(&sock->base.sync);
-    sock->base.opt = *opt;
+    sock->base.ring = nethuns_make_ring(opt->numpackets * opt->packetsize / 16, 0);     /* ring of no packets */
+    sock->base.opt  = *opt;
 
     sock->fd = fd;
 
@@ -182,6 +184,7 @@ int nethuns_fd_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 static int
 __nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
+#if 0
     uint64_t rid = s->rx_block_idx_rls;
     uint64_t cur = nethuns_synapse_min(&s->base.sync);
 
@@ -192,6 +195,7 @@ __nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
     }
 
     s->rx_block_idx_rls = rid;
+#endif
     return 0;
 }
 

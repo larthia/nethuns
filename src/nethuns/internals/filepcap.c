@@ -7,6 +7,7 @@
 
 #include "../nethuns.h"
 #include "nethuns/internals/stub.h"
+#include "nethuns/internals/compiler.h"
 
 #include "pcap.h"
 #include "ring.h"
@@ -25,6 +26,13 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     FILE *f;
     struct  nethuns_ring *ring = NULL;
     uint32_t snaplen;
+
+    ring = nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize);
+    if (!ring)
+    {
+        nethuns_perror(errbuf, "pcap_open: failed to allocate ring");
+        return NULL;
+    }
 
     if (!mode)
     {
@@ -55,13 +63,6 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             return NULL;
         }
 
-        ring = nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize);
-        if (!ring)
-        {
-            nethuns_perror(errbuf, "pcap_open: failed to allocate ring");
-            fclose(f);
-            return NULL;
-        }
     }
     else
     {
@@ -103,13 +104,12 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         return NULL;
     }
 
-    nethuns_synapse_init(&pcap->base.sync);
+    pcap->base.ring = ring;
     pcap->base.opt  = *opt;
 
     pcap->file      = f;
     pcap->mode      = mode;
     pcap->snaplen   = snaplen;
-    pcap->ring      = ring;
     pcap->idx       = 0;
     pcap->idx_rls   = 0;
 
@@ -121,25 +121,8 @@ int
 nethuns_pcap_close(nethuns_pcap_t *p)
 {
     fclose(p->file);
-    free(p->ring);
+    free(p->base.ring);
     free(p);
-    return 0;
-}
-
-
-static int
-__nethus_pcap_packets_release(nethuns_pcap_t *p)
-{
-    uint64_t rid = p->idx_rls;
-    uint64_t cur = nethuns_synapse_min(&p->base.sync);
-
-    for(; rid < cur; ++rid)
-    {
-        struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->ring, rid);
-        slot->inuse = 0;
-    }
-
-    p->idx_rls = rid;
     return 0;
 }
 
@@ -153,11 +136,9 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->ring, p->idx);
-
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(p->base.ring, p->idx);
     if (slot->inuse)
     {
-        __nethus_pcap_packets_release(p);
         return 0;
     }
 

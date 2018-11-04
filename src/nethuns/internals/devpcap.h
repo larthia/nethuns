@@ -9,7 +9,7 @@
 struct nethuns_socket_devpcap
 {
     struct nethuns_socket_base base;
-    struct  nethuns_ring *ring;
+
     pcap_t  *p;
     uint64_t idx;
     uint64_t idx_rls;

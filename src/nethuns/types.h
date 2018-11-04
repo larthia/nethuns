@@ -1,6 +1,6 @@
 #pragma once
 
-#include "internals/synapse.h"
+#include "internals/ring.h"
 #include "internals/types.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -22,8 +22,8 @@ struct nethuns_socket_options
 
 struct nethuns_socket_base
 {
-    struct nethuns_synapse        sync;
     struct nethuns_socket_options opt;
+    struct nethuns_ring *ring;
     char   errbuf[NETHUNS_ERRBUF_SIZE];
 };
 
