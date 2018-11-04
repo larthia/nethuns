@@ -28,10 +28,9 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 
     /* set a single consumer by default */
 
-    nethuns_synapse_init(&sock->base.sync);
+    sock->base.ring = ring;
     sock->base.opt = *opt;
 
-    sock->ring     = ring;
     sock->idx      = 0;
     sock->idx_rls  = 0;
 
@@ -44,7 +43,7 @@ int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
     if (s)
     {
         pcap_close(s->p);
-        free(s->ring);
+        free(s->base.ring);
         free(s);
     }
     return 0;
@@ -105,23 +104,6 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
 }
 
 
-static int
-__nethus_devpcap_packets_release(struct nethuns_socket_devpcap *p)
-{
-    uint64_t rid = p->idx_rls;
-    uint64_t cur = nethuns_synapse_min(&p->base.sync);
-
-    for(; rid < cur; ++rid)
-    {
-        struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(p->ring, rid);
-        slot->inuse = 0;
-    }
-
-    p->idx_rls = rid;
-    return 0;
-}
-
-
 uint64_t
 nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
@@ -131,11 +113,10 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
 
     struct pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_slot_mod(s->ring, s->idx);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(s->base.ring, s->idx);
 
     if (slot->inuse)
     {
-        __nethus_devpcap_packets_release(s);
         return 0;
     }
 
