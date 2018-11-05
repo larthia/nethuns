@@ -141,7 +141,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->base.opt  = *opt;
     sock->fd        = fd;
 
-    sock->rx_pktid         = 0;
     sock->rx_block_idx_rls = 0;
     sock->rx_block_idx     = 0;
     sock->rx_block_mod     = 0;
@@ -260,21 +259,15 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
         s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-        slot = nethuns_ring_next(&s->base.ring);
+        slot       = nethuns_ring_next(&s->base.ring);
 
         slot->id = s->rx_block_idx;
         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
-        return ++s->rx_pktid;
+        return s->base.ring.head;
     }
 
-
-    if ((s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1))
-    {
-        nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
-        if ((s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1))
-            return 0;
-    }
+    nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
 
     s->rx_block_idx++;
     s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;

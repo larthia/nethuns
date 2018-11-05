@@ -36,7 +36,6 @@ struct nethuns_socket_tpacket_v3
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;
 
-    uint64_t        rx_pktid;
     uint64_t        rx_block_mod;
     uint64_t        rx_block_idx;
     uint64_t        rx_block_idx_rls;
