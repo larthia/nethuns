@@ -18,7 +18,7 @@ void meter()
         now += std::chrono::seconds(1);
         std::this_thread::sleep_until(now);
         auto x = total.exchange(0);
-        std::cout << "pkt/sec: " << x << std::endl;
+        std::cerr << "pkt/sec: " << x << std::endl;
     }
 }
 
@@ -35,6 +35,7 @@ int consumer()
 
         if (queue.pop(pkt)) {
             total++;
+            std::cout << pkt.id << std::endl;
             nethuns_release(pkt.sock, pkt.id);
         }
     }
