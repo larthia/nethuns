@@ -30,8 +30,13 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    sock = malloc(sizeof(struct nethuns_socket_tpacket_v3));
-    memset(sock, 0, sizeof(*sock));
+    sock = calloc(1, sizeof(struct nethuns_socket_tpacket_v3));
+    if (!sock)
+    {
+        nethuns_perror(errbuf, "open: could not allocate socket");
+        close(fd);
+        return NULL;
+    }
 
     sock->rx_ring.req.tp_block_size     = opt->numpackets * opt->packetsize;
     sock->rx_ring.req.tp_frame_size     = opt->packetsize;
@@ -80,8 +85,15 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     /* setup Rx ring... */
 
-    sock->rx_ring.rd = malloc(sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
-    memset(sock->rx_ring.rd, 0, sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
+    sock->rx_ring.rd = calloc(1, sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
+    if (!sock->rx_ring.rd)
+    {
+        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
+                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
+        free(sock);
+        close(fd);
+        return NULL;
+    }
 
     for (i = 0; i < sock->rx_ring.req.tp_block_nr; ++i) {
         sock->rx_ring.rd[i].iov_base = sock->rx_ring.map + (i * sock->rx_ring.req.tp_block_size);
@@ -90,8 +102,16 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     /* setup Tx ring... */
 
-    sock->tx_ring.rd = malloc(sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
-    memset(sock->tx_ring.rd, 0, sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
+    sock->tx_ring.rd = calloc(1, sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
+    if (!sock->tx_ring.rd)
+    {
+        free(sock->rx_ring.rd);
+        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
+                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
+        free(sock);
+        close(fd);
+        return NULL;
+    }
 
     for (i = 0; i < sock->tx_ring.req.tp_block_nr; ++i) {
         sock->tx_ring.rd[i].iov_base = sock->tx_ring.map + (i * sock->tx_ring.req.tp_block_size);
@@ -106,11 +126,22 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
     }
 
-    sock->base.ring = nethuns_make_ring(opt->numpackets * opt->packetsize / 16, 0);     /* ring of no packets */
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.ring) < 0)
+    {
+        nethuns_perror(errbuf, "ring: could not allocate ring");
+        free(sock->rx_ring.rd);
+        free(sock->tx_ring.rd);
+        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
+                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
+        free(sock);
+        close(fd);
+        return NULL;
+    }
+
     sock->base.opt  = *opt;
+    sock->fd        = fd;
 
-    sock->fd = fd;
-
+    sock->rx_pktid         = 0;
     sock->rx_block_idx_rls = 0;
     sock->rx_block_idx     = 0;
     sock->rx_block_mod     = 0;
@@ -138,6 +169,7 @@ int nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (s)
     {
+        free(s->base.ring.ring);
         free(s->tx_ring.rd);
         free(s->rx_ring.rd);
         munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
@@ -182,15 +214,16 @@ int nethuns_fd_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 
 
 static int
-__nethuns_blocks_release_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
+__nethuns_blocks_free(uint64_t blockid, void *user)
 {
+    struct nethuns_socket_tpacket_v3 * s = (struct nethuns_socket_tpacket_v3 *)user;
     uint64_t rid = s->rx_block_idx_rls;
-    uint64_t cur = nethuns_ring_last_free_id(s->base.ring);
 
-    for(; rid < cur; ++rid)
+    while ((blockid - rid) > 1)
     {
         struct block_descr_v3 *pb = __nethuns_block_mod_tpacket_v3(&s->rx_ring, rid);
         pb->hdr.block_status = TP_STATUS_KERNEL;
+        ++rid;
     }
 
     s->rx_block_idx_rls = rid;
@@ -205,12 +238,15 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
 
     pb = __nethuns_block_tpacket_v3(&s->rx_ring, s->rx_block_mod);
 
-    if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0))
+    if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0 ||                        /* real ring is full or.. */
+                    (s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)    /* virtual ring is full   */
+                 ))
     {
-        __nethuns_blocks_release_tpacket_v3(s);
-        poll(&s->rx_pfd, 1, -1);
+        nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
+        // poll(&s->rx_pfd, 1, -1);
         return 0;
     }
+
 
     if (likely(s->rx_frame_idx < pb->hdr.num_pkts))
     {
@@ -223,11 +259,17 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
         s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-        nethuns_ring_next(s->base.ring)->id = s->rx_block_idx + 1;
-        return s->rx_block_idx + 1;
+        nethuns_ring_next(&s->base.ring)->id = s->rx_block_idx;
+        return ++s->rx_pktid;
     }
 
-    __nethuns_blocks_release_tpacket_v3(s);
+
+    if ((s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1))
+    {
+        nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
+        if ((s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1))
+            return 0;
+    }
 
     s->rx_block_idx++;
     s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;
