@@ -123,7 +123,7 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
     struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
 
 #if 1
-    if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED))
+    if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
     }
@@ -146,7 +146,7 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
         memcpy(slot->packet, ppayload, bytes);
         slot->pkthdr.caplen = bytes;
 
-        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELAXED);
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
         *pkthdr  = &slot->pkthdr;
         *payload =  slot->packet;

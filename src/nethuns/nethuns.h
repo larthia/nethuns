@@ -68,7 +68,7 @@ extern "C" {
 
 #define nethuns_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_base(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELAXED); \
+    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_base(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
 } while (0)
 
 

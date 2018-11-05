@@ -74,7 +74,7 @@ nethuns_ring_free_id(struct nethuns_ring *ring, nethuns_free_id_t cb, void *user
 {
     int n = 0;
 
-    while (ring->tail != ring->head && !__atomic_load_n(&nethuns_ring_get_slot(ring, ring->tail)->inuse, __ATOMIC_RELAXED))
+    while (ring->tail != ring->head && !__atomic_load_n(&nethuns_ring_get_slot(ring, ring->tail)->inuse, __ATOMIC_ACQUIRE))
     {
         cb(nethuns_ring_get_slot(ring, ring->tail)->id, user);
         ring->tail++;

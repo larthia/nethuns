@@ -238,18 +238,19 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
 
     pb = __nethuns_block_tpacket_v3(&s->rx_ring, s->rx_block_mod);
 
-    if (unlikely((pb->hdr.block_status & TP_STATUS_USER) == 0 ||                        /* real ring is full or.. */
-                    (s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)    /* virtual ring is full   */
-                 ))
+    if (unlikely(  (pb->hdr.block_status & TP_STATUS_USER) == 0                      /* real ring is full or.. */
+                || (s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)  /* virtual ring is full   */
+                ))
     {
         nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
         // poll(&s->rx_pfd, 1, -1);
         return 0;
     }
 
-
     if (likely(s->rx_frame_idx < pb->hdr.num_pkts))
     {
+        struct nethuns_ring_slot *slot;
+
         if (unlikely(s->rx_frame_idx++ == 0))
         {
             s->rx_ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
@@ -259,7 +260,11 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
         s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-        nethuns_ring_next(&s->base.ring)->id = s->rx_block_idx;
+        slot = nethuns_ring_next(&s->base.ring);
+
+        slot->id = s->rx_block_idx;
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
         return ++s->rx_pktid;
     }
 
