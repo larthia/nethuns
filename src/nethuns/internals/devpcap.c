@@ -13,26 +13,25 @@
 struct nethuns_socket_devpcap *
 nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 {
-    struct  nethuns_ring *ring = NULL;
     struct nethuns_socket_devpcap *sock;
 
-    ring = nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize);
-    if (!ring)
+    sock = calloc(1, sizeof(struct nethuns_socket_devpcap));
+    if (!sock)
     {
-        nethuns_perror(errbuf, "open: failed to allocate ring");
+        nethuns_perror(errbuf, "open: could not allocate socket");
         return NULL;
     }
 
-    sock = malloc(sizeof(struct nethuns_socket_devpcap));
-    memset(sock, 0, sizeof(*sock));
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.ring) < 0)
+    {
+        nethuns_perror(errbuf, "open: failed to allocate ring");
+        free(sock);
+        return NULL;
+    }
 
     /* set a single consumer by default */
 
-    sock->base.ring = ring;
     sock->base.opt = *opt;
-
-    sock->idx      = 0;
-    sock->idx_rls  = 0;
 
     return sock;
 }
@@ -43,7 +42,7 @@ int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
     if (s)
     {
         pcap_close(s->p);
-        free(s->base.ring);
+        free(s->base.ring.ring);
         free(s);
     }
     return 0;
@@ -121,12 +120,21 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
 
     struct pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(s->base.ring, s->idx);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
 
-    if (slot->inuse)
+#if 1
+    if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED))
     {
         return 0;
     }
+#else
+    if ((p->base.ring.head - p->base.ring.tail) == (p->base.ring.size-1))
+    {
+        nethuns_ring_free_id(&p->base.ring, CALLBACK, ARG);
+        if ((p->base.ring.head - p->base.ring.tail) == (p->base.ring.size-1))
+            return 0;
+    }
+#endif
 
     ppayload = pcap_next(s->p, &header);
 
@@ -138,12 +146,12 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
         memcpy(slot->packet, ppayload, bytes);
         slot->pkthdr.caplen = bytes;
 
-        slot->inuse = 1;
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELAXED);
 
         *pkthdr  = &slot->pkthdr;
         *payload =  slot->packet;
-        s->idx++;
-        return s->idx;
+
+        return ++s->base.ring.head;
     }
 
     return 0;

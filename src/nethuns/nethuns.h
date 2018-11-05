@@ -60,17 +60,15 @@ extern "C" {
 #endif
 
 
-#define nethuns_error(_sock) ({nethuns_base(_sock)->errbuf;})
+#define nethuns_error(_sock)    ({nethuns_base(_sock)->errbuf;})
 
-
-#define nethuns_valid_id(_n) ((_n) != 0 && (_n) != (uint64_t)-1)
-
-#define nethuns_err_id(_n) ((_n) == (uint64_t)-1)
+#define nethuns_valid_id(_n)    ((_n) != 0 && (_n) != (uint64_t)-1)
+#define nethuns_err_id(_n)      ((_n) == (uint64_t)-1)
 
 
 #define nethuns_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_ring_get_slot(nethuns_base(_sock)->ring, _pktid)->inuse, 0, __ATOMIC_RELAXED); \
+    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_base(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELAXED); \
 } while (0)
 
 

@@ -23,14 +23,20 @@ nethuns_pcap_t *
 nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf)
 {
     struct nethuns_pcap_socket *pcap;
-    FILE *f;
-    struct  nethuns_ring *ring = NULL;
     uint32_t snaplen;
+    FILE *f;
 
-    ring = nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize);
-    if (!ring)
+    pcap = malloc(sizeof(struct nethuns_pcap_socket));
+    if (!pcap)
     {
-        nethuns_perror(errbuf, "pcap_open: failed to allocate ring");
+        nethuns_perror(errbuf, "pcap_open: could not allocate socket");
+        return NULL;
+    }
+
+    if(nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &pcap->base.ring) < 0)
+    {
+        nethuns_perror(errbuf, "pcap_open: could not allocate ring");
+        free(pcap);
         return NULL;
     }
 
@@ -39,6 +45,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         f = fopen(filename, "r");
         if (!f) {
             nethuns_perror(errbuf, "pcap_open: could not open '%s' file", filename);
+            free(pcap->base.ring.ring);
+            free(pcap);
             return NULL;
         }
 
@@ -47,6 +55,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         {
             nethuns_perror(errbuf, "pcap_open: could not read pcap_file_header");
             fclose(f);
+            free(pcap->base.ring.ring);
+            free(pcap);
             return NULL;
         }
 
@@ -60,9 +70,10 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         {
             nethuns_perror(errbuf, "pcap_open: magic pcap_file_header mismatch");
             fclose(f);
+            free(pcap->base.ring.ring);
+            free(pcap);
             return NULL;
         }
-
     }
     else
     {
@@ -71,6 +82,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         f = fopen(filename, "w");
         if (!f) {
             nethuns_perror(errbuf, "pcap_open: could not open '%s' file for writing", filename);
+            free(pcap->base.ring.ring);
+            free(pcap);
             return NULL;
         }
 
@@ -89,29 +102,18 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         {
             nethuns_perror(errbuf, "pcap_open: could not write to pcap file!");
             fclose(f);
+            free(pcap->base.ring.ring);
+            free(pcap);
             return NULL;
         }
 
         fflush(f);
     }
 
-    pcap = malloc(sizeof(struct nethuns_pcap_socket));
-    if (!pcap)
-    {
-        nethuns_perror(errbuf, "pcap_open: could not allocate socket");
-        fclose(f);
-        free(ring);
-        return NULL;
-    }
-
-    pcap->base.ring = ring;
     pcap->base.opt  = *opt;
-
     pcap->file      = f;
     pcap->mode      = mode;
     pcap->snaplen   = snaplen;
-    pcap->idx       = 0;
-    pcap->idx_rls   = 0;
 
     return pcap;
 }
@@ -121,11 +123,18 @@ int
 nethuns_pcap_close(nethuns_pcap_t *p)
 {
     fclose(p->file);
-    free(p->base.ring);
+    free(p->base.ring.ring);
     free(p);
     return 0;
 }
 
+
+#if 0
+int nethuns_pcap_free_id(uint64_t __maybe_unused id, void __maybe_unused *user)
+{
+    return 0;
+}
+#endif
 
 uint64_t
 nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
@@ -136,11 +145,21 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(p->base.ring, p->idx);
-    if (slot->inuse)
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.ring, p->base.ring.head);
+
+#if 1
+    if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED))
     {
         return 0;
     }
+#else
+    if ((p->base.ring.head - p->base.ring.tail) == (p->base.ring.size-1))
+    {
+        nethuns_ring_free_id(&p->base.ring, nethuns_pcap_free_id, NULL);
+        if ((p->base.ring.head - p->base.ring.tail) == (p->base.ring.size-1))
+            return 0;
+    }
+#endif
 
     if ((n = fread(&header, sizeof(header), 1, p->file)) != 1)
     {
@@ -173,14 +192,12 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
         }
     }
 
-    slot->inuse = 1;
+    __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELAXED);
 
-    *pkthdr  = &slot->pkthdr;
-    *payload =  slot->packet;
+    *pkthdr   = &slot->pkthdr;
+    *payload  =  slot->packet;
 
-    p->idx++;
-
-    return p->idx;
+    return ++p->base.ring.head;
 }
 
 

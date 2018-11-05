@@ -23,7 +23,7 @@ struct nethuns_socket_options
 struct nethuns_socket_base
 {
     struct nethuns_socket_options opt;
-    struct nethuns_ring *ring;
+    struct nethuns_ring           ring;
     char   errbuf[NETHUNS_ERRBUF_SIZE];
 };
 

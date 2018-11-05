@@ -28,29 +28,24 @@ struct nethuns_ring
     size_t size;
     size_t pktsize;
 
-    uint64_t last_id;
-
     uint64_t head;
     uint64_t tail;
 
-    struct nethuns_ring_slot ring[];
+    struct nethuns_ring_slot *ring;
 };
 
 
 static inline
-struct nethuns_ring *
-nethuns_make_ring(size_t nslots, size_t pktsize)
+int
+nethuns_make_ring(size_t nslots, size_t pktsize, struct nethuns_ring *r)
 {
-    struct nethuns_ring * r = (struct nethuns_ring *)calloc(1, sizeof(struct nethuns_ring) +
-                                                               nslots * (sizeof(struct nethuns_ring_slot) + pktsize));
-
     r->size    = nslots;
     r->pktsize = pktsize;
-    r->last_id = 0;
     r->head    = 0;
     r->tail    = 0;
+    r->ring    = (struct nethuns_ring_slot *)calloc(1, nslots * (sizeof(struct nethuns_ring_slot) + pktsize));
 
-    return r;
+    return r->ring ? 0 : -1;
 }
 
 
@@ -59,8 +54,7 @@ struct nethuns_ring_slot *
 nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
 {
     return (struct nethuns_ring_slot *)
-            ((char *)ring->ring +
-                (n % ring->size) * (sizeof(struct nethuns_ring_slot) + ring->pktsize));
+            ((char *)ring->ring + (n % ring->size) * (sizeof(struct nethuns_ring_slot) + ring->pktsize));
 }
 
 
@@ -72,15 +66,23 @@ nethuns_ring_next(struct nethuns_ring *ring)
 }
 
 
-static inline uint64_t
-nethuns_ring_last_free_id(struct nethuns_ring *ring)
+typedef int(*nethuns_free_id_t)(uint64_t id, void *user);
+
+
+static inline int
+nethuns_ring_free_id(struct nethuns_ring *ring, nethuns_free_id_t cb, void *user)
 {
-    while (ring->tail != ring->head && !nethuns_ring_get_slot(ring, ring->tail)->inuse)
+    int n = 0;
+
+    while (ring->tail != ring->head && !__atomic_load_n(&nethuns_ring_get_slot(ring, ring->tail)->inuse, __ATOMIC_RELAXED))
     {
-        ring->last_id = nethuns_ring_get_slot(ring, ring->tail)->id;
+        cb(nethuns_ring_get_slot(ring, ring->tail)->id, user);
         ring->tail++;
     }
 
-    return ring->last_id;
+    return n;
 }
+
+
+
 
