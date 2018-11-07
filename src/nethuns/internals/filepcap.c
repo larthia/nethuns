@@ -68,7 +68,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             fh.magic != NAVTEL_TCPDUMP_MAGIC &&
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {
-            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header mismatch");
+            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header unsupported (%x)", fh.magic);
             fclose(f);
             free(pcap->base.ring.ring);
             free(pcap);
