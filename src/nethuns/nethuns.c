@@ -8,21 +8,18 @@
 void
 nethuns_perror(char *buf, char *msg, ...)
 {
+    int n;
+
     va_list ap;
     va_start(ap, msg);
 
-    char pattern[NETHUNS_ERRBUF_SIZE];
-    strcpy(pattern, "nethuns: ");
-    strcat(pattern, msg);
+    strcpy(buf, "nethuns: ");
+
+    n = vsnprintf(buf+9, NETHUNS_ERRBUF_SIZE-9, msg, ap);
 
     if (errno != 0)
     {
-        int r = vsnprintf(buf, NETHUNS_ERRBUF_SIZE, pattern, ap);
-        snprintf(buf+r, NETHUNS_ERRBUF_SIZE - r, " (%s)", strerror(errno));
-    }
-    else
-    {
-        vsnprintf(buf, NETHUNS_ERRBUF_SIZE, "nethuns: %s", ap);
+        snprintf(buf+9+n, NETHUNS_ERRBUF_SIZE-9 - n, " (%s)", strerror(errno));
     }
 
     va_end(ap);
