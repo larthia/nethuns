@@ -56,6 +56,7 @@ try
     ,   .timeout_ms      = 0
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
+    ,   .dir             = nethuns_in_out
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
