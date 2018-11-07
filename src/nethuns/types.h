@@ -8,15 +8,23 @@
 
 #define NETHUNS_ERRBUF_SIZE     512
 
+enum nethuns_capture_dir
+{
+    nethuns_in
+,   nethuns_out
+,   nethuns_in_out
+};
+
 
 struct nethuns_socket_options
 {
-    unsigned int    numblocks;
-    unsigned int    numpackets;
-    unsigned int    packetsize;
-    unsigned int    timeout_ms;
-    bool            rxhash;
-    bool            tx_qdisc_bypass;
+    unsigned int                numblocks;
+    unsigned int                numpackets;
+    unsigned int                packetsize;
+    unsigned int                timeout_ms;
+    bool                        rxhash;
+    bool                        tx_qdisc_bypass;
+    enum nethuns_capture_dir    dir;
 };
 
 
@@ -27,7 +35,9 @@ struct nethuns_socket_base
     char   errbuf[NETHUNS_ERRBUF_SIZE];
 };
 
+
 typedef struct nethuns_socket_base  nethuns_socket_base_t;
+
 
 struct nethuns_stats
 {

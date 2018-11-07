@@ -17,6 +17,12 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     int fd, err, v = TPACKET_V3;
     unsigned int i;
 
+    if (opt->dir != nethuns_in_out)
+    {
+        nethuns_perror(errbuf, "unsupported catpure direction (%d)", (int)opt->dir);
+        return NULL;
+    }
+
     fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (fd == -1) {
         nethuns_perror(errbuf, "open");

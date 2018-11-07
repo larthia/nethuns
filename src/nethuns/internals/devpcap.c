@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 struct nethuns_socket_devpcap *
 nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 {
@@ -101,10 +102,30 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
         return -1;
     }
 
-    if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
+    switch (s->base.opt.dir)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-        return -1;
+        case nethuns_in: {
+            if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
+            {
+                nethuns_perror(s->base.errbuf, "bind: dir_in %s", pcap_geterr(s->p));
+                return -1;
+            }
+        } break;
+        case nethuns_out: {
+            if (pcap_setdirection(s->p, PCAP_D_OUT) < 0)
+            {
+                nethuns_perror(s->base.errbuf, "bind: dir_out %s", pcap_geterr(s->p));
+                return -1;
+            }
+        } break;
+        case nethuns_in_out:
+        {
+            if (pcap_setdirection(s->p, PCAP_D_INOUT) < 0)
+            {
+                nethuns_perror(s->base.errbuf, "bind: dir_inout %s", pcap_geterr(s->p));
+                return -1;
+            }
+        }
     }
 
     return 0;

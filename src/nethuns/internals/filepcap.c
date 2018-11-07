@@ -26,6 +26,12 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     uint32_t snaplen;
     FILE *f;
 
+    if (opt->dir != nethuns_in_out)
+    {
+        nethuns_perror(errbuf, "unsupported catpure direction (%d)", (int)opt->dir);
+        return NULL;
+    }
+
     pcap = malloc(sizeof(struct nethuns_pcap_socket));
     if (!pcap)
     {
