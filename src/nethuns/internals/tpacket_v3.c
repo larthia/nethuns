@@ -138,27 +138,27 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    sock->base.opt  = *opt;
-    sock->fd        = fd;
+    sock->base.opt          = *opt;
+    sock->fd                = fd;
 
-    sock->rx_block_idx_rls = 0;
-    sock->rx_block_idx     = 0;
-    sock->rx_block_mod     = 0;
+    sock->rx_block_idx_rls  = 0;
+    sock->rx_block_idx      = 0;
+    sock->rx_block_mod      = 0;
 
-    sock->tx_block_idx_rls = 0;
-    sock->tx_block_idx     = 0;
-    sock->tx_block_mod     = 0;
+    sock->tx_block_idx_rls  = 0;
+    sock->tx_block_idx      = 0;
+    sock->tx_block_mod      = 0;
 
-    sock->rx_frame_idx = 0;
-    sock->tx_frame_idx = 0;
+    sock->rx_frame_idx      = 0;
+    sock->tx_frame_idx      = 0;
 
-    sock->rx_pfd.fd = fd;
-    sock->rx_pfd.events = POLLIN | POLLERR;
-    sock->rx_pfd.revents = 0;
+    sock->rx_pfd.fd         = fd;
+    sock->rx_pfd.events     = POLLIN | POLLERR;
+    sock->rx_pfd.revents    = 0;
 
-    sock->tx_pfd.fd = fd;
-    sock->tx_pfd.events = POLLOUT | POLLERR;
-    sock->tx_pfd.revents = 0;
+    sock->tx_pfd.fd         = fd;
+    sock->tx_pfd.events     = POLLOUT | POLLERR;
+    sock->tx_pfd.revents    = 0;
 
     return sock;
 }
