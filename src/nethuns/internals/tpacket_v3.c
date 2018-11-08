@@ -17,12 +17,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     int fd, err, v = TPACKET_V3;
     unsigned int i;
 
-    if (opt->dir != nethuns_in_out)
-    {
-        nethuns_perror(errbuf, "unsupported catpure direction (%d)", (int)opt->dir);
-        return NULL;
-    }
-
     fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (fd == -1) {
         nethuns_perror(errbuf, "open");
@@ -261,16 +255,29 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             s->rx_ppd = (struct tpacket3_hdr *) ((uint8_t *) pb + pb->hdr.offset_to_first_pkt);
         }
 
-        *pkthdr    = s->rx_ppd;
-        *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
-        s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+        struct sockaddr_ll *sll = (struct sockaddr_ll *)((uint8_t *)s->rx_ppd + TPACKET_ALIGN(sizeof(struct tpacket3_hdr)));
 
-        slot       = nethuns_ring_next(&s->base.ring);
 
-        slot->id = s->rx_block_idx;
-        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+        if ((s->base.opt.dir == nethuns_in_out)                                     ||
+            (s->base.opt.dir == nethuns_in  && sll->sll_pkttype != PACKET_OUTGOING) ||
+            (s->base.opt.dir == nethuns_out && sll->sll_pkttype == PACKET_OUTGOING))
+        {
+            *pkthdr    = s->rx_ppd;
+            *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
 
-        return s->base.ring.head;
+            s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+
+            slot = nethuns_ring_next(&s->base.ring);
+            slot->id = s->rx_block_idx;
+            __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+            return s->base.ring.head;
+        }
+        else /* discard this packet */
+        {
+            s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+            return 0;
+        }
     }
 
     nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
