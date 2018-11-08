@@ -35,7 +35,6 @@ int consumer()
 
         if (queue.pop(pkt)) {
             total++;
-            std::cout << pkt.id << std::endl;
             nethuns_release(pkt.sock, pkt.id);
         }
     }

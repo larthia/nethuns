@@ -54,9 +54,9 @@ try
     struct nethuns_socket_options in_opt =
     {
         .numblocks       = 4
-    ,   .numpackets      = 2048
+    ,   .numpackets      = 65536
     ,   .packetsize      = 2048
-    ,   .timeout_ms      = 0
+    ,   .timeout_ms      = 20
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
     ,   .dir             = nethuns_in_out
@@ -65,9 +65,9 @@ try
     struct nethuns_socket_options out_opt =
     {
         .numblocks       = 4
-    ,   .numpackets      = 2048
+    ,   .numpackets      = 65536
     ,   .packetsize      = 2048
-    ,   .timeout_ms      = 0
+    ,   .timeout_ms      = 20
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
     ,   .dir             = nethuns_in_out
