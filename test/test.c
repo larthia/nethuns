@@ -31,10 +31,12 @@ main(int argc, char *argv[])
 
     struct nethuns_socket_options opt =
     {
-        .numblocks  = 4
-    ,   .numpackets = 65536
-    ,   .packetsize = 2048
-    ,   .rxhash     = true
+        .numblocks       = 4
+    ,   .numpackets      = 65536
+    ,   .packetsize      = 2048
+    ,   .rxhash          = true
+    ,   .tx_qdisc_bypass = false
+    ,   .dir             = nethuns_in_out
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
