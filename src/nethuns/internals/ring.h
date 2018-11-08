@@ -3,6 +3,10 @@
 #ifdef NETHUNS_USE_TPACKET_V3
 #include <linux/if_packet.h>
 #endif
+#ifdef NETHUNS_USE_NETMAP
+#define NETMAP_WITH_LIBS
+#include <net/netmap_user.h>
+#endif
 #ifdef NETHUNS_USE_DEVPCAP
 #include <pcap/pcap.h>
 #endif
@@ -14,6 +18,8 @@ struct nethuns_ring_slot
 {
 #if defined (NETHUNS_USE_TPACKET_V3)
     struct tpacket3_hdr     pkthdr;
+#elif defined (NETHUNS_USE_NETMAP)
+    struct nm_pkthdr      	pkthdr;
 #elif defined (NETHUNS_USE_DEVPCAP)
     struct pcap_pkthdr      pkthdr;
 #endif

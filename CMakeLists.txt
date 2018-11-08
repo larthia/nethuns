@@ -36,6 +36,10 @@ if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 
     list(APPEND NETHUNS_SRC src/nethuns/internals/tpacket_v3.c)
     
+elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
+
+    list(APPEND NETHUNS_SRC src/nethuns/internals/netmap.c)
+    
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
     list(APPEND NETHUNS_SRC src/nethuns/internals/devpcap.c)

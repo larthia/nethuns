@@ -29,6 +29,33 @@
 #define nethuns_dump_rings(...)     nethuns_dump_rings_tpacket_v3(__VA_ARGS__)
 #define nethuns_get_stats(...)      nethuns_get_stats_tpacket_v3(__VA_ARGS__)
 
+#elif defined(NETHUNS_USE_NETMAP)
+
+#include "nethuns/internals/netmap.h"
+
+#define nethuns_open(...)           nethuns_open_netmap(__VA_ARGS__)
+#define nethuns_close(...)          nethuns_close_netmap(__VA_ARGS__)
+#define nethuns_bind(...)           nethuns_bind_netmap(__VA_ARGS__)
+#define nethuns_fd(...)             nethuns_fd_netmap(__VA_ARGS__)
+#define nethuns_recv(...)           nethuns_recv_netmap(__VA_ARGS__)
+#define nethuns_flush(...)          nethuns_flush_netmap(__VA_ARGS__)
+#define nethuns_send(...)           nethuns_send_netmap(__VA_ARGS__)
+#define nethuns_fanout(...)         nethuns_fanout_netmap(__VA_ARGS__)
+
+#define nethuns_tstamp_get_sec(...)     nethuns_tstamp_get_sec_netmap(__VA_ARGS__)
+#define nethuns_tstamp_get_usec(...)    nethuns_tstamp_get_usec_netmap(__VA_ARGS__)
+#define nethuns_tstamp_get_nsec(...)    nethuns_tstamp_get_nsec_netmap(__VA_ARGS__)
+#define nethuns_tstamp_set_sec(...)     nethuns_tstamp_set_sec_netmap(__VA_ARGS__)
+#define nethuns_tstamp_set_usec(...)    nethuns_tstamp_set_usec_netmap(__VA_ARGS__)
+#define nethuns_tstamp_set_nsec(...)    nethuns_tstamp_set_nsec_netmap(__VA_ARGS__)
+
+#define nethuns_snaplen(...)        nethuns_snaplen_netmap(__VA_ARGS__)
+#define nethuns_len(...)            nethuns_len_netmap(__VA_ARGS__)
+#define nethuns_rxhash(...)         nethuns_rxhash_netmap(__VA_ARGS__)
+#define nethuns_vlan_tci(...)       nethuns_vlan_tci_netmap(__VA_ARGS__)
+#define nethuns_dump_rings(...)     nethuns_dump_rings_netmap(__VA_ARGS__)
+#define nethuns_get_stats(...)      nethuns_get_stats_netmap(__VA_ARGS__)
+
 #elif defined (NETHUNS_USE_DEVPCAP)
 
 #include "nethuns/internals/devpcap.h"

@@ -6,6 +6,14 @@
 typedef struct nethuns_socket_tpacket_v3 nethuns_socket_t;
 typedef struct tpacket3_hdr              nethuns_pkthdr_t;
 
+#elif defined (NETHUNS_USE_NETMAP)
+
+#define NETMAP_WITH_LIBS
+#include <net/netmap_user.h>
+
+typedef struct nethuns_socket_netmap 	 nethuns_socket_t;
+typedef struct nm_pkthdr               	 nethuns_pkthdr_t;
+
 #elif defined (NETHUNS_USE_DEVPCAP)
 
 #include <pcap/pcap.h>
