@@ -3,6 +3,10 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <unistd.h>
+
 #include "nethuns.h"
 
 

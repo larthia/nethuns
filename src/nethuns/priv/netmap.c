@@ -1,4 +1,4 @@
-#include "nethuns_base.h"
+#include "../nethuns.h"
 #include "compiler.h"
 #include "netmap.h"
 #include "ring.h"
@@ -50,12 +50,12 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 
 int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
 {
-	fprintf(stderr, "BNIND!\n");
 	s->p = nm_open(dev, NULL, 0, NULL);
     if (!s->p)
     {
         nethuns_perror(s->base.errbuf, "open: could not bind to dev %s", dev);
 	}
+
     return 0;
 }
 
@@ -63,6 +63,8 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
 uint64_t
 nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
+
+
     // unsigned int caplen = s->base.opt.packetsize;
     // unsigned int bytes;
     // const uint8_t *ppayload;

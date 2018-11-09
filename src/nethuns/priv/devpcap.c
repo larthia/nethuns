@@ -1,4 +1,4 @@
-#include "nethuns_base.h"
+#include "../nethuns.h"
 #include "compiler.h"
 #include "devpcap.h"
 #include "ring.h"

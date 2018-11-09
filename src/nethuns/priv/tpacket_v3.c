@@ -1,13 +1,15 @@
-#include "nethuns_base.h"
+#include "../nethuns.h"
 #include "tpacket_v3.h"
 #include "compiler.h"
 #include "ring.h"
 
 #include <linux/version.h>
+
 #include <sys/ioctl.h>
+#include <net/if.h>
+
 #include <poll.h>
 #include <errno.h>
-
 #include <string.h>
 
 struct nethuns_socket_tpacket_v3 *
