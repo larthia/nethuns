@@ -39,7 +39,7 @@ nethuns_version ()
 
 
 int
-nethuns_if_ioctl(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags)
+nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags)
 {
     struct ifreq ifr;
     int rv;
@@ -68,6 +68,41 @@ nethuns_if_ioctl(nethuns_socket_t *s, const char *devname, unsigned long what, u
         *flags = ifr.ifr_flags;
 
     close (fd);
+    return 0;
+}
+
+
+int
+nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
+{
+    uint32_t flags;
+
+    if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
+        return -1;
+
+    if (!(flags & IFF_PROMISC)) {
+        flags |= IFF_PROMISC;
+        if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
+            return -1;
+        nethuns_base(s)->clear_promisc = true;
+    }
+
+    return 0;
+}
+
+
+int
+nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
+{
+    uint32_t flags;
+    if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
+        return -1;
+
+    flags &= ~IFF_PROMISC;
+    if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
+        return -1;
+
+    fprintf(stderr, "clear promisc!\n");
     return 0;
 }
 
