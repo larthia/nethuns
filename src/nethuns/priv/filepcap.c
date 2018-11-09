@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 #include "../nethuns.h"
-#include "nethuns/internals/stub.h"
-#include "nethuns/internals/compiler.h"
+#include "stub.h"
+#include "compiler.h"
 
 #include "pcap.h"
 #include "ring.h"

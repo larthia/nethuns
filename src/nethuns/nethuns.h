@@ -1,6 +1,6 @@
 #pragma once
 
-#include "internals/stub.h"
+#include "priv/stub.h"
 #include "types.h"
 
 #ifdef __cplusplus

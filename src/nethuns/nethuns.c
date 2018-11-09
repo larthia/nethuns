@@ -3,7 +3,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#include "types.h"
+#include "nethuns.h"
+
 
 void
 nethuns_perror(char *buf, char *msg, ...)
@@ -31,3 +32,38 @@ nethuns_version ()
     static const char ver[] = "nethuns v1.0";
     return ver;
 }
+
+
+int
+nethuns_if_ioctl(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags)
+{
+    struct ifreq ifr;
+    int rv;
+
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        nethuns_perror(nethuns_base(s)->errbuf, "ioctl: could not open socket");
+        return -1;
+    }
+
+    bzero(&ifr, sizeof(ifr));
+    strncpy(ifr.ifr_name, devname, sizeof(ifr.ifr_name));
+
+    if (what == SIOCSIFFLAGS)
+        ifr.ifr_flags = *flags;
+
+    rv = ioctl(fd, what, &ifr);
+    if (rv < 0)
+    {
+        nethuns_perror(nethuns_base(s)->errbuf, "ioctl");
+        close (fd);
+        return -1;
+    }
+
+    if (what == SIOCGIFFLAGS)
+        *flags = ifr.ifr_flags;
+
+    close (fd);
+    return 0;
+}
+

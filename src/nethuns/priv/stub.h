@@ -1,10 +1,10 @@
 #pragma once
 
-#include "nethuns/internals/filepcap.h"
+#include "filepcap.h"
 
 #ifdef NETHUNS_USE_TPACKET_V3
 
-#include "nethuns/internals/tpacket_v3.h"
+#include "tpacket_v3.h"
 
 #define nethuns_open(...)           nethuns_open_tpacket_v3(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_tpacket_v3(__VA_ARGS__)
@@ -31,7 +31,7 @@
 
 #elif defined(NETHUNS_USE_NETMAP)
 
-#include "nethuns/internals/netmap.h"
+#include "netmap.h"
 
 #define nethuns_open(...)           nethuns_open_netmap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_netmap(__VA_ARGS__)
@@ -58,7 +58,7 @@
 
 #elif defined (NETHUNS_USE_DEVPCAP)
 
-#include "nethuns/internals/devpcap.h"
+#include "devpcap.h"
 
 #define nethuns_open(...)           nethuns_open_devpcap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_devpcap(__VA_ARGS__)

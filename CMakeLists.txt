@@ -24,7 +24,7 @@ option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 #
 
 set(NETHUNS_SRC src/nethuns/nethuns.c 
-                src/nethuns/internals/filepcap.c)
+                src/nethuns/priv/filepcap.c)
 
 set(NETHUNS_LIB nethuns)
 set(NETHUNS_DEP)
@@ -34,15 +34,15 @@ list(APPEND NETHUNS_LIB -pthread)
 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 
-    list(APPEND NETHUNS_SRC src/nethuns/internals/tpacket_v3.c)
+    list(APPEND NETHUNS_SRC src/nethuns/priv/tpacket_v3.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
 
-    list(APPEND NETHUNS_SRC src/nethuns/internals/netmap.c)
+    list(APPEND NETHUNS_SRC src/nethuns/priv/netmap.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
-    list(APPEND NETHUNS_SRC src/nethuns/internals/devpcap.c)
+    list(APPEND NETHUNS_SRC src/nethuns/priv/devpcap.c)
     list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND NETHUNS_LIB -lpcap)
 
