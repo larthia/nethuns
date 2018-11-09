@@ -35,6 +35,8 @@ extern "C" {
     uint64_t nethuns_pcap_read(nethuns_pcap_t * p, const nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);
     int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
+    int nethuns_if_ioctl(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags);
+
     //
     // BOOL nethuns_valid_id(uint64_t)
     //
