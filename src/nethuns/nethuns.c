@@ -30,11 +30,20 @@ nethuns_perror(char *buf, char *msg, ...)
     va_end(ap);
 }
 
+
 const char *
 nethuns_version ()
 {
     static const char ver[] = "nethuns v1.0";
     return ver;
+}
+
+
+void
+nethuns_free_base(nethuns_socket_t *s)
+{
+    free(nethuns_base(s)->devname);
+    free(nethuns_base(s)->ring.ring);
 }
 
 
