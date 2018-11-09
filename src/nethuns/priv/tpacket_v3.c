@@ -172,8 +172,13 @@ int nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (s)
     {
-        free(s->base.ring.ring);
+        if (nethuns_base(s)->clear_promisc)
+        {
+            nethuns_clear_if_promisc(s, nethuns_base(s)->devname);
+        }
         free(s->tx_ring.rd);
+        free(nethuns_base(s)->ring.ring);
+        free(nethuns_base(s)->devname);
         free(s->rx_ring.rd);
         munmap(s->rx_ring.map, s->rx_ring.req.tp_block_size * s->rx_ring.req.tp_block_nr +
                                s->tx_ring.req.tp_block_size * s->tx_ring.req.tp_block_nr);
@@ -204,6 +209,18 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
     if (err < 0) {
         nethuns_perror(s->base.errbuf, "bind %s", dev);
         return -1;
+    }
+
+    /* save device name.. */
+
+    nethuns_base(s)->devname = strdup(dev);
+
+    /* set promisc interface */
+
+    if (nethuns_base(s)->opt.promisc)
+    {
+        if (nethuns_set_if_promisc(s, dev) < 0)
+            return -1;
     }
 
     return 0;
