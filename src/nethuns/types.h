@@ -22,17 +22,20 @@ struct nethuns_socket_options
     unsigned int                numpackets;
     unsigned int                packetsize;
     unsigned int                timeout_ms;
+    enum nethuns_capture_dir    dir;
+    bool                        promisc;
     bool                        rxhash;
     bool                        tx_qdisc_bypass;
-    enum nethuns_capture_dir    dir;
 };
 
 
 struct nethuns_socket_base
 {
+    char   errbuf[NETHUNS_ERRBUF_SIZE];
+
     struct nethuns_socket_options opt;
     struct nethuns_ring           ring;
-    char   errbuf[NETHUNS_ERRBUF_SIZE];
+    bool                          clear_promisc;
 };
 
 

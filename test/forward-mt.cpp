@@ -37,9 +37,10 @@ int consumer(std::string dev)
     ,   .numpackets      = 65536
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 20
+    ,   .dir             = nethuns_in_out
+    ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
-    ,   .dir             = nethuns_in_out
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -94,10 +95,11 @@ try
         .numblocks       = 4
     ,   .numpackets      = 65536
     ,   .packetsize      = 2048
-    ,   .timeout_ms      = 0
+    ,   .timeout_ms      = 20
+    ,   .dir             = nethuns_in_out
+    ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
-    ,   .dir             = nethuns_in_out
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

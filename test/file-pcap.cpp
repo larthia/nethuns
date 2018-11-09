@@ -24,9 +24,10 @@ try
         ,   .numpackets      = 1024
         ,   .packetsize      = 2048
         ,   .timeout_ms      = 0
-        ,   .rxhash          = true
-        ,   .tx_qdisc_bypass = true
         ,   .dir             = nethuns_in_out
+        ,   .promisc         = false
+        ,   .rxhash          = false
+        ,   .tx_qdisc_bypass = false
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -63,13 +64,14 @@ try
 
         struct nethuns_socket_options opt =
         {
-            .numblocks       = 2
+            .numblocks       = 1
         ,   .numpackets      = 1024
         ,   .packetsize      = 2048
         ,   .timeout_ms      = 0
-        ,   .rxhash          = true
-        ,   .tx_qdisc_bypass = true
         ,   .dir             = nethuns_in_out
+        ,   .promisc         = false
+        ,   .rxhash          = false
+        ,   .tx_qdisc_bypass = false
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];

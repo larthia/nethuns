@@ -54,9 +54,10 @@ try
     ,   .numpackets      = 2048
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 0
+    ,   .dir             = nethuns_in_out
+    ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
-    ,   .dir             = nethuns_in_out
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

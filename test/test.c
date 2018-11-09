@@ -34,9 +34,10 @@ main(int argc, char *argv[])
         .numblocks       = 4
     ,   .numpackets      = 65536
     ,   .packetsize      = 2048
+    ,   .dir             = nethuns_in_out
+    ,   .promisc         = true
     ,   .rxhash          = true
     ,   .tx_qdisc_bypass = false
-    ,   .dir             = nethuns_in_out
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
