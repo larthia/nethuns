@@ -162,6 +162,8 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->tx_pfd.events     = POLLOUT | POLLERR;
     sock->tx_pfd.revents    = 0;
 
+    sock->base.clear_promisc = false;
+
     return sock;
 }
 
