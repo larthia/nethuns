@@ -79,37 +79,35 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
 uint64_t
 nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
+    unsigned int caplen = s->base.opt.packetsize;
+    unsigned int bytes;
+    const uint8_t *ppayload;
 
+    struct nm_pkthdr header;
 
-    // unsigned int caplen = s->base.opt.packetsize;
-    // unsigned int bytes;
-    // const uint8_t *ppayload;
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
 
-    // struct nm_pkthdr header;
+    if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
+    {
+        return 0;
+    }
 
-    // struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
+    ppayload = nm_nextpkt(s->p, &header);
+    bytes = MIN(caplen, header.caplen);
 
-    // if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
-    // {
-    //     return 0;
-    // }
+    if (ppayload)
+    {
+        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+        memcpy(slot->packet, ppayload, bytes);
+        slot->pkthdr.caplen = bytes;
 
-    // ppayload = pcap_next(s->p, &header);
-    // bytes = MIN(caplen, header.caplen);
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
-    // if (ppayload)
-    // {
-    //     memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
-    //     memcpy(slot->packet, ppayload, bytes);
-    //     slot->pkthdr.caplen = bytes;
+        *pkthdr  = &slot->pkthdr;
+        *payload =  slot->packet;
 
-    //     __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
-
-    //     *pkthdr  = &slot->pkthdr;
-    //     *payload =  slot->packet;
-
-    //     return ++s->base.ring.head;
-    // }
+        return ++s->base.ring.head;
+    }
 
     return 0;
 }
@@ -118,7 +116,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len)
 {
-	return 0;
+    return nm_inject(s->p, packet, len);
 }
 
 
@@ -132,6 +130,10 @@ nethuns_flush_netmap(__maybe_unused struct nethuns_socket_netmap *s)
 int
 nethuns_get_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stats *stats)
 {
+    stats->packets = s->p->st.ps_recv;
+    stats->drops   = s->p->st.ps_drop;
+    stats->ifdrops = s->p->st.ps_ifdrop;
+    stats->freeze  = 0;
     return 0;
 }
 
@@ -145,7 +147,7 @@ nethuns_fanout_netmap(__maybe_unused struct nethuns_socket_netmap *s, __maybe_un
 
 int nethuns_fd_netmap(__maybe_unused struct nethuns_socket_netmap *s)
 {
-    return -1;
+    return s->p->fd;
 }
 
 
