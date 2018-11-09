@@ -36,9 +36,10 @@ extern "C" {
     int nethuns_pcap_write(nethuns_pcap_t * s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
     int nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags);
-    int nethuns_set_if_promisc(nethuns_socket_t *s, const char *devname);
-    int nethuns_clear_if_promisc(nethuns_socket_t *s, const char *devname);
-    void nethuns_free_base(nethuns_socket_t *s);
+
+    int  __nethuns_set_if_promisc(nethuns_socket_t *s, const char *devname);
+    int  __nethuns_clear_if_promisc(nethuns_socket_t *s, const char *devname);
+    void __nethuns_free_base(nethuns_socket_t *s);
 
     //
     // BOOL nethuns_valid_id(uint64_t)

@@ -44,7 +44,9 @@ int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
     if (s)
     {
         pcap_close(s->p);
-        free(s->base.ring.ring);
+
+        __nethuns_free_base(s);
+
         free(s);
     }
     return 0;

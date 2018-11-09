@@ -42,8 +42,14 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 {
     if (s)
     {
+        if (nethuns_base(s)->clear_promisc)
+        {
+            __nethuns_clear_if_promisc(s, nethuns_base(s)->devname);
+        }
+
         nm_close(s->p);
-        free(s->base.ring.ring);
+
+        __nethuns_free_base(s);
         free(s);
     }
     return 0;
@@ -57,6 +63,14 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
     {
         nethuns_perror(s->base.errbuf, "open: could not bind to dev %s", dev);
 	}
+
+    nethuns_base(s)->devname = strdup(dev);
+
+    if (nethuns_base(s)->opt.promisc)
+    {
+        if (__nethuns_set_if_promisc(s, nethuns_base(s)->devname) < 0)
+            return -1;
+    }
 
     return 0;
 }

@@ -39,14 +39,6 @@ nethuns_version ()
 }
 
 
-void
-nethuns_free_base(nethuns_socket_t *s)
-{
-    free(nethuns_base(s)->devname);
-    free(nethuns_base(s)->ring.ring);
-}
-
-
 int
 nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags)
 {
@@ -81,8 +73,16 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
 }
 
 
+void
+__nethuns_free_base(nethuns_socket_t *s)
+{
+    free(nethuns_base(s)->devname);
+    free(nethuns_base(s)->ring.ring);
+}
+
+
 int
-nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
+__nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
 
@@ -101,7 +101,7 @@ nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 
 
 int
-nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
+__nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
