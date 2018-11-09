@@ -50,8 +50,8 @@ try
 
     struct nethuns_socket_options opt =
     {
-        .numblocks       = 64
-    ,   .numpackets      = 2048
+        .numblocks       = 1
+    ,   .numpackets      = 65536
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 0
     ,   .dir             = nethuns_in_out
