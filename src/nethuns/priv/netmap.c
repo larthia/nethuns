@@ -59,16 +59,16 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 
 int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
 {
-	char nm_dev[128];
+    char nm_dev[128];
 
     snprintf(nm_dev, 128, "netmap:%s", dev);
 
-	s->p = nm_open(nm_dev, NULL, 0, NULL);
+    s->p = nm_open(nm_dev, NULL, 0, NULL);
     if (!s->p)
     {
         nethuns_perror(s->base.errbuf, "open: could open dev %s (%s)", dev, strerror(errno));
         return -1;
-	}
+    }
 
     nethuns_base(s)->devname = strdup(dev);
 
@@ -79,7 +79,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
     }
 
 
-	sleep(2);
+    sleep(2);
     return 0;
 }
 
@@ -99,19 +99,19 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     }
 
     pkt = nm_nextpkt(s->p, &header);
-	if (unlikely(!pkt))
-	{
+    if (unlikely(!pkt))
+    {
         ioctl(s->p->fd, NIOCRXSYNC);
         return 0;
 
         //
-		// struct pollfd fds;
-		// fds.fd = NETMAP_FD(s->p);
-		// fds.events = POLLIN;
-		// poll(&fds, 1, -1);
-		// goto retry;
-		//
-	}
+        // struct pollfd fds;
+        // fds.fd = NETMAP_FD(s->p);
+        // fds.events = POLLIN;
+        // poll(&fds, 1, -1);
+        // goto retry;
+        //
+    }
 
     bytes = MIN(caplen, header.caplen);
 

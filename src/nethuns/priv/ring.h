@@ -19,7 +19,7 @@ struct nethuns_ring_slot
 #if defined (NETHUNS_USE_TPACKET_V3)
     struct tpacket3_hdr     pkthdr;
 #elif defined (NETHUNS_USE_NETMAP)
-    struct nm_pkthdr      	pkthdr;
+    struct nm_pkthdr        pkthdr;
 #elif defined (NETHUNS_USE_DEVPCAP)
     struct pcap_pkthdr      pkthdr;
 #endif
