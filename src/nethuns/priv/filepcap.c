@@ -142,6 +142,19 @@ int nethuns_pcap_free_id(uint64_t __maybe_unused id, void __maybe_unused *user)
 }
 #endif
 
+int
+nethuns_pcap_rewind(nethuns_pcap_t *p)
+{
+    if (fseek(p->file, sizeof(struct nethuns_pcap_file_header), SEEK_SET) < 0)
+    {
+        nethuns_perror(p->base.errbuf, "pcap_rewind: could not rewind the file");
+        return -1;
+    }
+
+    return 0;
+}
+
+
 uint64_t
 nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
