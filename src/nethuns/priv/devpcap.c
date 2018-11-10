@@ -69,25 +69,28 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
         return -1;
     }
 
-    if (pcap_set_buffer_size(s->p, (int)(s->base.opt.numblocks * s->base.opt.numpackets * s->base.opt.packetsize)) != 0)
+    if (pcap_set_buffer_size(s->p, (int)(nethuns_base(s)->opt.numblocks * nethuns_base(s)->opt.numpackets * nethuns_base(s)->opt.packetsize)) != 0)
     {
         nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
         return -1;
     }
 
-    if (pcap_set_promisc(s->p, 1) != 0)
+    if (nethuns_base(s)->opt.promisc)
+    {
+        if (pcap_set_promisc(s->p, 1) != 0)
+        {
+            nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+            return -1;
+        }
+    }
+
+    if (pcap_set_snaplen(s->p, (int)nethuns_base(s)->opt.packetsize) != 0)
     {
         nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
         return -1;
     }
 
-    if (pcap_set_snaplen(s->p, (int)s->base.opt.packetsize) != 0)
-    {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-        return -1;
-    }
-
-    if (pcap_set_timeout(s->p, (int)s->base.opt.timeout_ms) != 0)
+    if (pcap_set_timeout(s->p, (int)nethuns_base(s)->opt.timeout_ms) != 0)
     {
         nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
         return -1;
@@ -105,7 +108,7 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
         return -1;
     }
 
-    switch (s->base.opt.dir)
+    switch (nethuns_base(s)->opt.dir)
     {
         case nethuns_in: {
             if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
@@ -138,7 +141,7 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
 uint64_t
 nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
-    unsigned int caplen = s->base.opt.packetsize;
+    unsigned int caplen = nethuns_base(s)->opt.packetsize;
     unsigned int bytes;
     const uint8_t *ppayload;
 
