@@ -61,20 +61,9 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
 {
 	char nm_dev[128];
 
-	strcpy(nm_dev, "netmap:");
-	strcat(nm_dev, dev);
+    snprintf(nm_dev, 128, "netmap:%s", dev);
 
-	struct nm_desc base_nmd;
-	bzero(&base_nmd, sizeof(base_nmd));
-
-	base_nmd.req.nr_flags |= NR_ACCEPT_VNET_HDR;
-
-	if (nm_parse(nm_dev, &base_nmd, s->base.errbuf) < 0)
-	{
-		return -1;
-	}
-
-	s->p = nm_open(nm_dev, NULL, NM_OPEN_IFNAME | NM_OPEN_ARG1 | NM_OPEN_ARG2| NM_OPEN_ARG3 | NM_OPEN_RING_CFG, &base_nmd);
+	s->p = nm_open(nm_dev, NULL, 0, NULL);
     if (!s->p)
     {
         nethuns_perror(s->base.errbuf, "open: could open dev %s (%s)", dev, strerror(errno));
@@ -89,6 +78,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
             return -1;
     }
 
+
 	sleep(2);
     return 0;
 }
@@ -99,22 +89,8 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 {
     unsigned int caplen = s->base.opt.packetsize;
     unsigned int bytes;
-    const uint8_t *ppayload;
+    const uint8_t *pkt;
     struct nm_pkthdr header;
-
-retry:
-    ppayload = nm_nextpkt(s->p, &header);
-
-	if (!payload)
-	{
-		struct pollfd fds;
-		fds.fd = NETMAP_FD(s->p);
-		fds.events = POLLIN;
-		poll(&fds, 1, -1);
-		goto retry;
-	}
-
-    bytes = MIN(caplen, header.caplen);
 
     struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -122,8 +98,25 @@ retry:
         return 0;
     }
 
+    pkt = nm_nextpkt(s->p, &header);
+	if (unlikely(!pkt))
+	{
+        ioctl(s->p->fd, NIOCRXSYNC);
+        return 0;
+
+        //
+		// struct pollfd fds;
+		// fds.fd = NETMAP_FD(s->p);
+		// fds.events = POLLIN;
+		// poll(&fds, 1, -1);
+		// goto retry;
+		//
+	}
+
+    bytes = MIN(caplen, header.caplen);
+
     memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
-    memcpy(slot->packet, ppayload, bytes);
+    memcpy(slot->packet, pkt, bytes);
     slot->pkthdr.caplen = bytes;
 
     __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
