@@ -43,8 +43,6 @@ extern "C" {
     void __nethuns_free_base(nethuns_socket_t *s);
 
     //
-    // BOOL nethuns_valid_id(uint64_t)
-    //
     // TYPE nethuns_tstamp_get_sec(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_tstamp_get_usec(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_tstamp_get_nsec(nethuns_pkthdr_t *hdr)
@@ -69,8 +67,9 @@ extern "C" {
 
 #define nethuns_error(_sock)    ({nethuns_base(_sock)->errbuf;})
 
-#define nethuns_valid_id(_n)    ((_n) != 0 && (_n) != (uint64_t)-1)
-#define nethuns_err_id(_n)      ((_n) == (uint64_t)-1)
+#define nethuns_is_valid(_n)    ((_n + 1) > 1)
+#define nethuns_is_null(_n)     ((_n) == 0)
+#define nethuns_is_err(_n)      ((_n) == (uint64_t)-1)
 
 
 #define nethuns_release(_sock, _pktid) do \

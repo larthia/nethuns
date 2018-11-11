@@ -46,14 +46,14 @@ try
         {
             pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
 
-            if (nethuns_valid_id(pkt_id))
+            if (nethuns_is_valid(pkt_id))
             {
                 std::cerr << nethuns_tstamp_get_sec(pkthdr) << ":" << nethuns_tstamp_get_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
 
             nethuns_release(p, pkt_id);
         }
-        while (!nethuns_err_id(pkt_id));
+        while (!nethuns_is_err(pkt_id));
 
         nethuns_pcap_close(p);
 

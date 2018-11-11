@@ -71,14 +71,14 @@ try
     do
     {
         pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
-        if (nethuns_valid_id(pkt_id))
+        if (nethuns_is_valid(pkt_id))
         {
             struct nethuns_packet hdr { frame, pkthdr, nethuns_base(p), pkt_id };
             while (!queue.push(hdr))
             { };
         }
     }
-    while (!nethuns_err_id(pkt_id));
+    while (!nethuns_is_err(pkt_id));
 
     std::cerr << "head: " << p->base.ring.head << std::endl;
 
