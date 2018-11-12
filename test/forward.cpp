@@ -24,7 +24,9 @@ void dump_packet(nethuns_pkthdr_t *hdr, const unsigned char *frame)
 }
 
 
-std::atomic_long total;
+std::atomic_long total_rcv;
+std::atomic_long total_fwd;
+
 
 void meter()
 {
@@ -33,8 +35,9 @@ void meter()
     {
         now += std::chrono::seconds(1);
         std::this_thread::sleep_until(now);
-        auto x = total.exchange(0);
-        std::cout << "pkt/sec: " << x << std::endl;
+        auto r = total_rcv.exchange(0);
+        auto f = total_fwd.exchange(0);
+        std::cout << "pkt/sec: " << r << " fwd/sec: " << f << std::endl;
     }
 }
 
@@ -108,10 +111,16 @@ try
 
         if ((pkt_id = nethuns_recv(in, &pkthdr, &frame)))
         {
-            total++;
+            total_rcv++;
 
+        retry:
             while (!nethuns_send(out, frame, nethuns_len(pkthdr)))
-            { };
+            {
+                nethuns_flush(out);
+                goto retry;
+            };
+
+            total_fwd++;
 
             nethuns_release(in, pkt_id);
         }

@@ -9,6 +9,7 @@
 
 
 std::atomic_long total_rcv;
+
 std::atomic_long total_fwd;
 
 void meter()
@@ -64,9 +65,14 @@ int consumer(std::string dev)
         if (queue.pop(pkt)) {
             total_fwd++;
 
-            while (!nethuns_send(out, (uint8_t *)pkt.payload, nethuns_len(pkt.pkthdr)))
+        retry:
+            while (!nethuns_send(out, pkt.payload, nethuns_len(pkt.pkthdr)))
             {
+                nethuns_flush(out);
+                goto retry;
             };
+
+            total_fwd++;
 
             nethuns_release(pkt.sock, pkt.id);
         }
