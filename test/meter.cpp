@@ -61,7 +61,7 @@ try
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
-    nethuns_socket_t *s = nethuns_open(&opt, errbuf);
+    nethuns_socket_t *s = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
     if (s == nullptr)
     {
         throw std::runtime_error(errbuf);

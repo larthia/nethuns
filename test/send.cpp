@@ -58,7 +58,7 @@ try
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    nethuns_socket_t *out = nethuns_open(&opt, errbuf);
+    nethuns_socket_t *out = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
     if (!out)
     {
         throw std::runtime_error(errbuf);
@@ -78,7 +78,6 @@ try
         {
 
         };
-
     }
 
     nethuns_flush(out);

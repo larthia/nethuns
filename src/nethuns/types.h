@@ -7,6 +7,8 @@
 
 
 #define NETHUNS_ERRBUF_SIZE     512
+#define NETHUNS_ANY_QUEUE       (-1)
+
 
 enum nethuns_capture_dir
 {
@@ -36,6 +38,7 @@ struct nethuns_socket_base
     struct nethuns_socket_options opt;
     struct nethuns_ring           ring;
     char                         *devname;
+    int                           queue;
     bool                          clear_promisc;
 };
 

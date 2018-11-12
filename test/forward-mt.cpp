@@ -46,7 +46,7 @@ int consumer(std::string dev)
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    nethuns_socket_t * out = nethuns_open(&opt, errbuf);
+    nethuns_socket_t * out = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
     if (!out)
     {
         throw std::runtime_error(errbuf);
@@ -110,7 +110,7 @@ try
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    nethuns_socket_t * s = nethuns_open(&opt, errbuf);
+    nethuns_socket_t * s = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
     if (!s)
     {
         throw std::runtime_error(errbuf);

@@ -12,9 +12,15 @@
 
 
 struct nethuns_socket_devpcap *
-nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
+nethuns_open_devpcap(struct nethuns_socket_options *opt, int queue, char *errbuf)
 {
     struct nethuns_socket_devpcap *sock;
+
+    if (queue != NETHUNS_ANY_QUEUE)
+    {
+        nethuns_perror(errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        return NULL;
+    }
 
     sock = calloc(1, sizeof(struct nethuns_socket_devpcap));
     if (!sock)

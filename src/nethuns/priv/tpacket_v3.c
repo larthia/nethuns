@@ -13,11 +13,17 @@
 #include <string.h>
 
 struct nethuns_socket_tpacket_v3 *
-nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, int queue, char *errbuf)
 {
     struct nethuns_socket_tpacket_v3 * sock;
     int fd, err, v = TPACKET_V3;
     unsigned int i;
+
+    if (queue != NETHUNS_ANY_QUEUE)
+    {
+        nethuns_perror(errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        return NULL;
+    }
 
     fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (fd == -1) {
