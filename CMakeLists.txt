@@ -102,4 +102,14 @@ endif()
 install_targets(/lib nethuns)
 install_targets(/lib nethuns_static)
 
-install_files(/include/nethuns FILES src/nethuns.h)
+install_files(/include/nethuns      FILES src/nethuns/nethuns.h src/nethuns/types.h)
+install_files(/include/nethuns/priv FILES src/nethuns/nethuns.h src/nethuns/priv/compiler.h
+                                                                src/nethuns/priv/devpcap.h
+                                                                src/nethuns/priv/filepcap.h
+                                                                src/nethuns/priv/netmap.h
+                                                                src/nethuns/priv/tpacket_v3.h
+                                                                src/nethuns/priv/ring.h
+                                                                src/nethuns/priv/types.h
+                                                                src/nethuns/priv/stub.h)
+
+                                                            
