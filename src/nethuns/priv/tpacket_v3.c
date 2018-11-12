@@ -13,17 +13,11 @@
 #include <string.h>
 
 struct nethuns_socket_tpacket_v3 *
-nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, int queue, char *errbuf)
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_tpacket_v3 * sock;
     int fd, err, v = TPACKET_V3;
     unsigned int i;
-
-    if (queue != NETHUNS_ANY_QUEUE)
-    {
-        nethuns_perror(errbuf, "open: only ANY_QUEUE is currently supported by this device");
-        return NULL;
-    }
 
     fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (fd == -1) {
@@ -194,10 +188,18 @@ int nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 }
 
 
-int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev)
+int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev, int queue)
 {
     struct sockaddr_ll addr;
     int err;
+
+    if (queue != NETHUNS_ANY_QUEUE)
+    {
+        nethuns_perror(nethuns_base(s)->errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        return -1;
+    }
+
+    nethuns_base(s)->queue = NETHUNS_ANY_QUEUE;
 
     memset(&addr, 0, sizeof(addr));
 

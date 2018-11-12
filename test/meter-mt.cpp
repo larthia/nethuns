@@ -69,13 +69,13 @@ try
 
      char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    nethuns_socket_t * s = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
+    nethuns_socket_t * s = nethuns_open(&opt, errbuf);
     if (!s)
     {
         throw std::runtime_error(errbuf);
     }
 
-    if (nethuns_bind(s, argv[1]) < 0)
+    if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
         throw std::runtime_error(nethuns_error(s));
     }

@@ -7,9 +7,9 @@
 extern "C" {
 #endif
 
-    nethuns_socket_t * nethuns_open(struct nethuns_socket_options *opt, int queue, char *errbuf);
+    nethuns_socket_t * nethuns_open(struct nethuns_socket_options *opt, char *errbuf);
 
-    int nethuns_bind(nethuns_socket_t * s, const char *dev);
+    int nethuns_bind(nethuns_socket_t * s, const char *dev, int queue);
 
     uint64_t
     nethuns_recv(nethuns_socket_t * s, const nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);

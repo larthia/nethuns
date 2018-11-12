@@ -12,7 +12,7 @@
 
 
 struct nethuns_socket_netmap *
-nethuns_open_netmap(struct nethuns_socket_options *opt, int queue, char *errbuf)
+nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_netmap *sock;
 
@@ -34,7 +34,6 @@ nethuns_open_netmap(struct nethuns_socket_options *opt, int queue, char *errbuf)
 
     sock->base.opt = *opt;
     sock->base.clear_promisc = false;
-    sock->base.queue = queue;
     return sock;
 }
 
@@ -57,11 +56,13 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 }
 
 
-int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev)
+int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int queue)
 {
     char nm_dev[128];
 
-    if (nethuns_base(s)->queue == NETHUNS_ANY_QUEUE)
+    nethuns_base(s)->queue = queue;
+
+    if (queue == NETHUNS_ANY_QUEUE)
     {
         snprintf(nm_dev, 128, "netmap:%s", dev);
     }

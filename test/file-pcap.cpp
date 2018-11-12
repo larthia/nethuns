@@ -83,13 +83,13 @@ try
 
         nethuns_socket_t * in;
 
-        in = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
+        in = nethuns_open(&opt, errbuf);
         if (!in)
         {
             throw std::runtime_error(errbuf);
         }
 
-        if (nethuns_bind(in, argv[2]) < 0)
+        if (nethuns_bind(in, argv[2], NETHUNS_ANY_QUEUE) < 0)
         {
             throw std::runtime_error(nethuns_error(in));
         }

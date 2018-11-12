@@ -12,15 +12,9 @@
 
 
 struct nethuns_socket_devpcap *
-nethuns_open_devpcap(struct nethuns_socket_options *opt, int queue, char *errbuf)
+nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_devpcap *sock;
-
-    if (queue != NETHUNS_ANY_QUEUE)
-    {
-        nethuns_perror(errbuf, "open: only ANY_QUEUE is currently supported by this device");
-        return NULL;
-    }
 
     sock = calloc(1, sizeof(struct nethuns_socket_devpcap));
     if (!sock)
@@ -59,9 +53,17 @@ int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
 }
 
 
-int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev)
+int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev, int queue)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
+
+    if (queue != NETHUNS_ANY_QUEUE)
+    {
+        nethuns_perror(nethuns_base(s)->errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        return -1;
+    }
+
+    nethuns_base(s)->queue = NETHUNS_ANY_QUEUE;
 
     s->p = pcap_create(dev, errbuf);
     if (!s->p) {

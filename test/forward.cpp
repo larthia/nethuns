@@ -80,24 +80,24 @@ try
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    nethuns_socket_t *in = nethuns_open(&in_opt, NETHUNS_ANY_QUEUE, errbuf);
+    nethuns_socket_t *in = nethuns_open(&in_opt, errbuf);
     if (!in)
     {
         throw std::runtime_error(errbuf);
     }
 
-    nethuns_socket_t *out = nethuns_open(&out_opt, NETHUNS_ANY_QUEUE, errbuf);
+    nethuns_socket_t *out = nethuns_open(&out_opt, errbuf);
     if (!out)
     {
         throw std::runtime_error(errbuf);
     }
 
-    if (nethuns_bind(in, argv[1]) < 0)
+    if (nethuns_bind(in, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
         throw std::runtime_error(nethuns_error(in));
     }
 
-    if (nethuns_bind(out, argv[2]) < 0)
+    if (nethuns_bind(out, argv[2], NETHUNS_ANY_QUEUE) < 0)
     {
         throw std::runtime_error(nethuns_error(out));
     }

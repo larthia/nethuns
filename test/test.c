@@ -42,14 +42,14 @@ main(int argc, char *argv[])
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
 
-    s = nethuns_open(&opt, NETHUNS_ANY_QUEUE, errbuf);
+    s = nethuns_open(&opt, errbuf);
     if (!s)
     {
         fprintf(stderr, "%s\n", errbuf);
         return -1;
     }
 
-    if (nethuns_bind(s, argv[1]) < 0)
+    if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
         fprintf(stderr, "%s\n", nethuns_error(s));
         return -1;
