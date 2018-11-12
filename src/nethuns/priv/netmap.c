@@ -136,9 +136,9 @@ nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsi
 
 
 int
-nethuns_flush_netmap(__maybe_unused struct nethuns_socket_netmap *s)
+nethuns_flush_netmap(struct nethuns_socket_netmap *s)
 {
-    return 0;
+    return ioctl(s->p->fd, NIOCTXSYNC);
 }
 
 
