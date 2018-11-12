@@ -52,7 +52,7 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
     }
 
     bzero(&ifr, sizeof(ifr));
-    strncpy(ifr.ifr_name, devname, sizeof(ifr.ifr_name));
+    strncpy(ifr.ifr_name, devname, sizeof(ifr.ifr_name)-1);
 
     if (what == SIOCSIFFLAGS)
         ifr.ifr_flags = *flags;
