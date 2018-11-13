@@ -170,7 +170,7 @@ nethuns_fanout_netmap(__maybe_unused struct nethuns_socket_netmap *s, __maybe_un
 
 int nethuns_fd_netmap(__maybe_unused struct nethuns_socket_netmap *s)
 {
-    return s->p->fd;
+    return s->p ? s->p->fd : -1;
 }
 
 
