@@ -57,8 +57,6 @@ extern "C" {
     //
     // TYPE nethuns_offvlan_tci(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_offvlan_tpid(nethuns_pkthdr_t *hdr)
-    // TYPE nethuns_vlan_tci(nethuns_pkthdr_t *hdr)
-    // TYPE nethuns_vlan_tpid(nethuns_pkthdr_t *hdr)
     //
 
     void nethuns_perror(char *buf, char *format, ...);
@@ -89,43 +87,52 @@ extern "C" {
 inline uint16_t
 nethuns_vlan_vid(uint16_t tci)
 {
-    return (ntohs(tci) & ((1<<13)-1));
+    return (tci & ((1<<13)-1));
 }
 
 inline uint16_t
 nethuns_vlan_pcp(uint16_t tci)
 {
-    return (ntohs(tci) >> 13) & 7;
+    return (tci >> 13) & 7;
 }
 
 inline bool
 nethuns_vlan_dei(uint16_t tci)
 {
-    return (ntohs(tci) >> 12) & 1;
+    return (tci >> 12) & 1;
+}
+
+
+inline uint16_t
+nethuns_pktvlan_tpid(const uint8_t *payload)
+{
+    struct ethhdr const *eth = (struct ethhdr const *)payload;
+    if (eth->h_proto == htons(ETH_P_8021Q) || eth->h_proto == htons(ETH_P_8021AD))
+        return ntohs(eth->h_proto);
+    return 0;
+}
+
+
+inline uint16_t
+nethuns_pktvlan_tci(const uint8_t *payload)
+{
+    struct ethhdr const *eth = (struct ethhdr const *)payload;
+    if (eth->h_proto == htons(ETH_P_8021Q) || eth->h_proto == htons(ETH_P_8021AD))
+        return ntohs(*(uint16_t const *)(eth+1));
+    return 0;
 }
 
 
 inline uint16_t
 nethuns_vlan_tpid(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
 {
-    struct ethhdr const *eth = (struct ethhdr const *)payload;
-    if (nethuns_offvlan_tpid(hdr))
-        return nethuns_offvlan_tpid(hdr);
-    if (eth->h_proto == ETH_P_8021Q || eth->h_proto == ETH_P_8021AD)
-        return eth->h_proto;
-    return 0;
+    return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tpid(hdr) : nethuns_pktvlan_tpid(payload);
 }
 
-
-inline bool
+inline uint16_t
 nethuns_vlan_tci(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
 {
-    struct ethhdr const *eth = (struct ethhdr const *)payload;
-    if (nethuns_offvlan_tpid(hdr))
-        return nethuns_offvlan_tci(hdr);
-    if (eth->h_proto == ETH_P_8021Q || eth->h_proto == ETH_P_8021AD)
-        return *(uint16_t const *)(eth+1);
-    return 0;
+    return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tci(hdr) : nethuns_pktvlan_tci(payload);
 }
 
 
