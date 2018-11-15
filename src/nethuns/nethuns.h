@@ -51,6 +51,7 @@ extern "C" {
     // TYPE nethuns_len(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_rxhash(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_vlan_tci(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_vlan_tpid(nethuns_pkthdr_t *hdr)
     //
 
     void nethuns_perror(char *buf, char *format, ...);

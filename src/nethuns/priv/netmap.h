@@ -27,10 +27,12 @@ extern "C" {
 #define nethuns_tstamp_set_usec_netmap(hdr,v)     ({hdr->ts.tv_usec = v;})
 #define nethuns_tstamp_set_nsec_netmap(hdr,v)     ({hdr->ts.tv_usec = v/1000;})
 
-#define nethuns_snaplen_netmap(hdr)         (hdr->caplen)
-#define nethuns_len_netmap(hdr)             (hdr->len)
-#define nethuns_rxhash_netmap(hdr)          (0)
-#define nethuns_vlan_tci_netmap(hdr)        (0)
+#define nethuns_snaplen_netmap(hdr)               (hdr->caplen)
+#define nethuns_len_netmap(hdr)                   (hdr->len)
+#define nethuns_rxhash_netmap(hdr)                (0)
+
+#define nethuns_vlan_tci_netmap(hdr)              (0)
+#define nethuns_vlan_tpid_netmap(hdr)             (0)
 
 
 #ifdef __cplusplus
