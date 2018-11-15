@@ -5,13 +5,15 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
     int i = 0;
 
-    printf("%u:%u snap:%u len:%u tci:%x tpid:%x rxhash:0x%x| ", nethuns_tstamp_get_sec(hdr)
-                                                              , nethuns_tstamp_get_nsec(hdr)
-                                                              , nethuns_snaplen(hdr)
-                                                              , nethuns_len(hdr)
-                                                              , nethuns_vlan_tci(hdr)
-                                                              , nethuns_vlan_tpid(hdr)
-                                                              , nethuns_rxhash(hdr));
+    printf("%u:%u snap:%u len:%u off_tci:%x off_tpid:%x tci:%x tpid:%x rxhash:0x%x| ", nethuns_tstamp_get_sec(hdr)
+                                                                                     , nethuns_tstamp_get_nsec(hdr)
+                                                                                     , nethuns_snaplen(hdr)
+                                                                                     , nethuns_len(hdr)
+                                                                                     , nethuns_offvlan_tci(hdr)
+                                                                                     , nethuns_offvlan_tpid(hdr)
+                                                                                     , nethuns_vlan_tci(hdr, frame)
+                                                                                     , nethuns_vlan_tpid(hdr, frame)
+                                                                                     , nethuns_rxhash(hdr));
     for(; i < 14; i++)
     {
         printf("%02x ", frame[i]);
