@@ -224,21 +224,22 @@ int
 nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
 {
     struct nethuns_pcap_pkthdr header;
+    int has_vlan_offload = nethuns_offvlan_tpid(pkthdr) ? 1 : 0;
 
     header.ts.tv_sec  = nethuns_tstamp_get_sec(pkthdr);
     header.ts.tv_usec = nethuns_tstamp_get_usec(pkthdr);
-    header.caplen     = (uint32_t) MIN(len, nethuns_snaplen(pkthdr));
-    header.len        = (uint32_t) nethuns_len(pkthdr);
+
+    header.caplen     = (uint32_t) MIN(len, (nethuns_snaplen(pkthdr) + 4 * has_vlan_offload));
+    header.len        = (uint32_t) (nethuns_len(pkthdr) + 4 * has_vlan_offload);
 
     fwrite(&header, sizeof(header), 1, s->file);
 
-    if (nethuns_offvlan_tpid(pkthdr))
+    if (has_vlan_offload)
     {
         uint16_t h8021q[2] = { htons(nethuns_offvlan_tpid(pkthdr)), htons(nethuns_offvlan_tci(pkthdr)) };
-
         fwrite(packet,    1, 12, s->file);
         fwrite(h8021q,    1, 4,  s->file);
-        fwrite(packet+12, 1, header.caplen-12, s->file);
+        fwrite(packet+12, 1, header.caplen-16, s->file);
     }
     else
     {
