@@ -231,7 +231,20 @@ nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t co
     header.len        = (uint32_t) nethuns_len(pkthdr);
 
     fwrite(&header, sizeof(header), 1, s->file);
-    fwrite(packet, 1, header.caplen, s->file);
+
+    if (nethuns_offvlan_tpid(pkthdr))
+    {
+        uint16_t h8021q[2] = { htons(nethuns_offvlan_tpid(pkthdr)), htons(nethuns_offvlan_tci(pkthdr)) };
+
+        fwrite(packet,    1, 12, s->file);
+        fwrite(h8021q,    1, 4,  s->file);
+        fwrite(packet+12, 1, header.caplen-12, s->file);
+    }
+    else
+    {
+        fwrite(packet, 1, header.caplen, s->file);
+    }
+
     fflush(s->file);
     return 0;
 }
