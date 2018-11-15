@@ -25,10 +25,11 @@
 #define nethuns_snaplen(...)        nethuns_snaplen_tpacket_v3(__VA_ARGS__)
 #define nethuns_len(...)            nethuns_len_tpacket_v3(__VA_ARGS__)
 #define nethuns_rxhash(...)         nethuns_rxhash_tpacket_v3(__VA_ARGS__)
-#define nethuns_vlan_tci(...)       nethuns_vlan_tci_tpacket_v3(__VA_ARGS__)
-#define nethuns_vlan_tpid(...)      nethuns_vlan_tpid_tpacket_v3(__VA_ARGS__)
 #define nethuns_dump_rings(...)     nethuns_dump_rings_tpacket_v3(__VA_ARGS__)
 #define nethuns_get_stats(...)      nethuns_get_stats_tpacket_v3(__VA_ARGS__)
+
+#define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_tpacket_v3(__VA_ARGS__)
+#define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_tpacket_v3(__VA_ARGS__)
 
 #elif defined(NETHUNS_USE_NETMAP)
 
@@ -53,10 +54,11 @@
 #define nethuns_snaplen(...)        nethuns_snaplen_netmap(__VA_ARGS__)
 #define nethuns_len(...)            nethuns_len_netmap(__VA_ARGS__)
 #define nethuns_rxhash(...)         nethuns_rxhash_netmap(__VA_ARGS__)
-#define nethuns_vlan_tci(...)       nethuns_vlan_tci_netmap(__VA_ARGS__)
-#define nethuns_vlan_tpid(...)      nethuns_vlan_tpid_netmap(__VA_ARGS__)
 #define nethuns_dump_rings(...)     nethuns_dump_rings_netmap(__VA_ARGS__)
 #define nethuns_get_stats(...)      nethuns_get_stats_netmap(__VA_ARGS__)
+
+#define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_netmap(__VA_ARGS__)
+#define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_netmap(__VA_ARGS__)
 
 #elif defined (NETHUNS_USE_DEVPCAP)
 
@@ -84,8 +86,10 @@
 #define nethuns_get_stats(...)      nethuns_get_stats_devpcap(__VA_ARGS__)
 
 #define nethuns_rxhash(...)         nethuns_rxhash_devpcap(__VA_ARGS__)
-#define nethuns_vlan_tci(...)       nethuns_vlan_tci_devpcap(__VA_ARGS__)
-#define nethuns_vlan_tpid(...)      nethuns_vlan_tpid_devpcap(__VA_ARGS__)
+
+#define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_devpcap(__VA_ARGS__)
+#define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_devpcap(__VA_ARGS__)
+
 #else
 
 #error "Nethuns: socket type not specified!"

@@ -28,8 +28,8 @@ extern "C" {
 #define nethuns_len_devpcap(hdr)                (hdr->len)
 #define nethuns_rxhash_devpcap(hdr)             (0)
 
-#define nethuns_vlan_tci_devpcap(hdr)           (0)
-#define nethuns_vlan_tpid_devpcap(hdr)          (0)
+#define nethuns_offvlan_tpid_devpcap(hdr)       (0)
+#define nethuns_offvlan_tci_devpcap(hdr)        (0)
 
 
 #ifdef __cplusplus

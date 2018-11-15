@@ -97,8 +97,9 @@ __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 #define nethuns_len_tpacket_v3(hdr)                 (hdr->tp_len)
 #define nethuns_rxhash_tpacket_v3(hdr)              (hdr->hv1.tp_rxhash)
 
-#define nethuns_vlan_tci_tpacket_v3(hdr)            (hdr->hv1.tp_vlan_tci)
-#define nethuns_vlan_tpid_tpacket_v3(hdr)           (hdr->hv1.tp_vlan_tpid)
+#define nethuns_offvlan_tci_tpacket_v3(hdr)          (hdr->hv1.tp_vlan_tci)
+#define nethuns_offvlan_tpid_tpacket_v3(hdr)         (hdr->hv1.tp_vlan_tpid)
+
 
 
 #ifdef __cplusplus

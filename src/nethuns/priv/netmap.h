@@ -31,8 +31,8 @@ extern "C" {
 #define nethuns_len_netmap(hdr)                   (hdr->len)
 #define nethuns_rxhash_netmap(hdr)                (0)
 
-#define nethuns_vlan_tci_netmap(hdr)              (0)
-#define nethuns_vlan_tpid_netmap(hdr)             (0)
+#define nethuns_offvlan_tpid_netmap(hdr)          (0)
+#define nethuns_offvlan_tci_netmap(hdr)           (0)
 
 
 #ifdef __cplusplus
