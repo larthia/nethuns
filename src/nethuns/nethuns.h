@@ -1,11 +1,16 @@
 #pragma once
 
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
+#include <netinet/if_ether.h>
+#include <net/ethernet.h>
 
 #include "priv/compiler.h"
 #include "priv/stub.h"
 #include "types.h"
+
+#define NETHUNS_ETH_P_8021Q     0x8100
+#define NETHUNS_ETH_P_8021AD    0x88A8
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,13 +107,12 @@ nethuns_vlan_dei(uint16_t tci)
     return (tci >> 12) & 1;
 }
 
-
 inline uint16_t
 nethuns_pktvlan_tpid(const uint8_t *payload)
 {
-    struct ethhdr const *eth = (struct ethhdr const *)payload;
-    if (eth->h_proto == htons(ETH_P_8021Q) || eth->h_proto == htons(ETH_P_8021AD))
-        return ntohs(eth->h_proto);
+    struct ether_header const *eth = (struct ether_header const *)payload;
+    if (eth->ether_type == htons(NETHUNS_ETH_P_8021Q) || eth->ether_type == htons(NETHUNS_ETH_P_8021AD))
+        return ntohs(eth->ether_type);
     return 0;
 }
 
@@ -116,8 +120,8 @@ nethuns_pktvlan_tpid(const uint8_t *payload)
 inline uint16_t
 nethuns_pktvlan_tci(const uint8_t *payload)
 {
-    struct ethhdr const *eth = (struct ethhdr const *)payload;
-    if (eth->h_proto == htons(ETH_P_8021Q) || eth->h_proto == htons(ETH_P_8021AD))
+    struct ether_header const *eth = (struct ether_header const *)payload;
+    if (eth->ether_type == htons(NETHUNS_ETH_P_8021Q) || eth->ether_type == htons(NETHUNS_ETH_P_8021AD))
         return ntohs(*(uint16_t const *)(eth+1));
     return 0;
 }
