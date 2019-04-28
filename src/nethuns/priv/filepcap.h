@@ -4,11 +4,14 @@
 #include <linux/if_packet.h>
 #endif
 
+#ifndef NETHUNS_USE_NATIVE_FILEPCAP_READER
+#include <pcap/pcap.h>
+#endif
+
 #include <sys/time.h>
 #include <stdio.h>
 
 #include "../types.h"
-
 
 struct nethuns_pcap_file_header
 {
@@ -42,9 +45,12 @@ typedef struct nethuns_pcap_socket nethuns_pcap_t;
 struct nethuns_pcap_socket
 {
     struct nethuns_socket_base      base;
-
-    FILE *              file;
-    int                 mode;
+#ifdef NETHUNS_USE_NATIVE_FILEPCAP_READER
+    FILE *              r;
+#else
+    pcap_t *            r;
+#endif
+    FILE *              w;
     uint32_t            snaplen;
 };
 

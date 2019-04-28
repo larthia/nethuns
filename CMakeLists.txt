@@ -23,19 +23,19 @@ option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 # define the list of library to link...
 #
 
-if (NETHUNS_NATIVE_FILEPCAP_READER)
-    set(NETHUNS_SRC src/nethuns/nethuns.c 
-                    src/nethuns/priv/filepcap-native.c)
-else()
-    set(NETHUNS_SRC src/nethuns/nethuns.c 
-                    src/nethuns/priv/filepcap.c)
-    list(APPEND NETHUNS_DEP -lpcap)
-    list(APPEND NETHUNS_LIB -lpcap)
-endif()
-
 set(NETHUNS_LIB nethuns)
 set(NETHUNS_DEP)
 
+set(NETHUNS_SRC src/nethuns/nethuns.c 
+                src/nethuns/priv/filepcap.c)
+
+if (NETHUNS_NATIVE_FILEPCAP_READER)
+    message("Nethuns: using native pcapfile reader!")
+else()
+    list(APPEND NETHUNS_DEP -lpcap)
+    list(APPEND NETHUNS_LIB -lpcap)
+    message("Nethuns: using libpcap to read pcapfile!")
+endif()
 
 list(APPEND NETHUNS_LIB -pthread)
 
@@ -113,7 +113,6 @@ install_files(/include/nethuns      FILES src/nethuns/nethuns.h src/nethuns/type
 install_files(/include/nethuns/priv FILES src/nethuns/nethuns.h src/nethuns/priv/compiler.h
                                                                 src/nethuns/priv/devpcap.h
                                                                 src/nethuns/priv/filepcap.h
-                                                                src/nethuns/priv/filepcap-native.h
                                                                 src/nethuns/priv/netmap.h
                                                                 src/nethuns/priv/tpacket_v3.h
                                                                 src/nethuns/priv/ring.h
