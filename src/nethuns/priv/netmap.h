@@ -19,20 +19,70 @@ extern "C" {
 #endif
 
 
-#define nethuns_tstamp_sec_netmap(hdr)        ({(uint32_t)hdr->ts.tv_sec; })
-#define nethuns_tstamp_usec_netmap(hdr)       ({(uint32_t)hdr->ts.tv_usec; })
-#define nethuns_tstamp_nsec_netmap(hdr)       ({(uint32_t)hdr->ts.tv_usec * 1000;})
+static inline uint32_t
+nethuns_tstamp_sec_netmap(struct nm_pkthdr const *hdr) {
+    return (uint32_t)hdr->ts.tv_sec;
+}
 
-#define nethuns_tstamp_set_sec_netmap(hdr,v)      ({hdr->ts.tv_sec = v;})
-#define nethuns_tstamp_set_usec_netmap(hdr,v)     ({hdr->ts.tv_usec = v;})
-#define nethuns_tstamp_set_nsec_netmap(hdr,v)     ({hdr->ts.tv_usec = v/1000;})
+static inline uint32_t
+nethuns_tstamp_usec_netmap(struct nm_pkthdr const *hdr) {
+    return (uint32_t)hdr->ts.tv_usec;
+}
 
-#define nethuns_snaplen_netmap(hdr)               (hdr->caplen)
-#define nethuns_len_netmap(hdr)                   (hdr->len)
-#define nethuns_rxhash_netmap(hdr)                (0)
+static inline uint32_t
+nethuns_tstamp_nsec_netmap(struct nm_pkthdr const *hdr) {
+    return (uint32_t)hdr->ts.tv_usec * 1000;
+}
 
-#define nethuns_offvlan_tpid_netmap(hdr)          (0)
-#define nethuns_offvlan_tci_netmap(hdr)           (0)
+static inline
+void nethuns_tstamp_set_sec_netmap(struct nm_pkthdr *hdr, uint32_t v) {
+    hdr->ts.tv_sec = v;
+}
+
+static inline
+void nethuns_tstamp_set_usec_netmap(struct nm_pkthdr *hdr, uint32_t v) {
+    hdr->ts.tv_usec = v;
+}
+
+static inline
+void nethuns_tstamp_set_nsec_netmap(struct nm_pkthdr *hdr, uint32_t v) {
+    hdr->ts.tv_usec = v/1000;
+}
+
+static inline uint32_t
+nethuns_snaplen_netmap(struct nm_pkthdr const *hdr) {
+    return hdr->caplen;
+}
+
+static inline uint32_t
+nethuns_len_netmap(struct nm_pkthdr const *hdr) {
+    return hdr->len;
+}
+
+static inline void
+nethuns_set_snaplen_netmap(struct nm_pkthdr *hdr, uint32_t v) {
+    hdr->caplen = v;
+}
+
+static inline void
+nethuns_set_len_netmap(struct nm_pkthdr *hdr, uint32_t v) {
+    hdr->len = v;
+}
+
+static inline uint32_t
+nethuns_rxhash_netmap(struct nm_pkthdr const *hdr) {
+    return 0;
+}
+
+static inline uint16_t
+nethuns_offvlan_tpid_netmap(struct nm_pkthdr const *hdr) {
+    return 0;
+}
+
+static inline uint16_t
+nethuns_offvlan_tci_netmap(struct nm_pkthdr const *hdr) {
+    return 0;
+}
 
 
 #ifdef __cplusplus
