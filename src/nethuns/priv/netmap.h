@@ -19,9 +19,9 @@ extern "C" {
 #endif
 
 
-#define nethuns_tstamp_get_sec_netmap(hdr)        ({(uint32_t)hdr->ts.tv_sec; })
-#define nethuns_tstamp_get_usec_netmap(hdr)       ({(uint32_t)hdr->ts.tv_usec; })
-#define nethuns_tstamp_get_nsec_netmap(hdr)       ({(uint32_t)hdr->ts.tv_usec * 1000;})
+#define nethuns_tstamp_sec_netmap(hdr)        ({(uint32_t)hdr->ts.tv_sec; })
+#define nethuns_tstamp_usec_netmap(hdr)       ({(uint32_t)hdr->ts.tv_usec; })
+#define nethuns_tstamp_nsec_netmap(hdr)       ({(uint32_t)hdr->ts.tv_usec * 1000;})
 
 #define nethuns_tstamp_set_sec_netmap(hdr,v)      ({hdr->ts.tv_sec = v;})
 #define nethuns_tstamp_set_usec_netmap(hdr,v)     ({hdr->ts.tv_usec = v;})

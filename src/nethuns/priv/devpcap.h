@@ -4,7 +4,7 @@
 #include <pcap/pcap.h>
 
 #include "../types.h"
-
+#include "compiler.h"
 
 struct nethuns_socket_devpcap
 {
@@ -16,20 +16,69 @@ struct nethuns_socket_devpcap
 extern "C" {
 #endif
 
-#define nethuns_tstamp_get_sec_devpcap(hdr)     ({(uint32_t)hdr->ts.tv_sec; })
-#define nethuns_tstamp_get_usec_devpcap(hdr)    ({(uint32_t)hdr->ts.tv_usec; })
-#define nethuns_tstamp_get_nsec_devpcap(hdr)    ({(uint32_t)hdr->ts.tv_usec * 1000;})
+static inline uint32_t
+nethuns_tstamp_sec_devpcap(struct pcap_pkthdr const *hdr) {
+    return (uint32_t)hdr->ts.tv_sec;
+}
+static inline uint32_t
+nethuns_tstamp_usec_devpcap(struct pcap_pkthdr const *hdr) {
+    return (uint32_t)hdr->ts.tv_usec;
+}
 
-#define nethuns_tstamp_set_sec_devpcap(hdr,v)   ({hdr->ts.tv_sec = v;})
-#define nethuns_tstamp_set_usec_devpcap(hdr,v)  ({hdr->ts.tv_usec = v;})
-#define nethuns_tstamp_set_nsec_devpcap(hdr,v)  ({hdr->ts.tv_usec = v/1000;})
+static inline uint32_t
+nethuns_tstamp_nsec_devpcap(struct pcap_pkthdr const *hdr) {
+    return (uint32_t)hdr->ts.tv_usec * 1000;
+}
 
-#define nethuns_snaplen_devpcap(hdr)            (hdr->caplen)
-#define nethuns_len_devpcap(hdr)                (hdr->len)
-#define nethuns_rxhash_devpcap(hdr)             (0)
+static inline
+void nethuns_tstamp_set_sec_devpcap(struct pcap_pkthdr *hdr, uint32_t v) {
+    hdr->ts.tv_sec = v;
+}
 
-#define nethuns_offvlan_tpid_devpcap(hdr)       (0)
-#define nethuns_offvlan_tci_devpcap(hdr)        (0)
+static inline
+void nethuns_tstamp_set_usec_devpcap(struct pcap_pkthdr *hdr, uint32_t v) {
+    hdr->ts.tv_usec = v;
+}
+
+static inline
+void nethuns_tstamp_set_nsec_devpcap(struct pcap_pkthdr *hdr, uint32_t v) {
+    hdr->ts.tv_usec = v/1000;
+}
+
+static inline uint32_t
+nethuns_snaplen_devpcap(struct pcap_pkthdr const *hdr) {
+    return hdr->caplen;
+}
+
+static inline uint32_t
+nethuns_len_devpcap(struct pcap_pkthdr const *hdr) {
+    return hdr->len;
+}
+
+static inline void
+nethuns_set_snaplen_devpcap(struct pcap_pkthdr *hdr, uint32_t v) {
+    hdr->caplen = v;
+}
+
+static inline void
+nethuns_set_len_devpcap(struct pcap_pkthdr *hdr, uint32_t v) {
+    hdr->len = v;
+}
+
+static inline uint32_t
+nethuns_rxhash_devpcap(__maybe_unused struct pcap_pkthdr const *hdr)  {
+    return 0;
+}
+
+static inline uint16_t
+nethuns_offvlan_tpid_devpcap(__maybe_unused struct pcap_pkthdr const *hdr) {
+    return 0;
+}
+
+static inline uint16_t
+nethuns_offvlan_tci_devpcap(__maybe_unused struct pcap_pkthdr const *hdr) {
+    return 0;
+}
 
 
 #ifdef __cplusplus

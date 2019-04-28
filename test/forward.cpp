@@ -10,8 +10,8 @@ void dump_packet(nethuns_pkthdr_t *hdr, const unsigned char *frame)
 {
     int i = 0;
 
-    printf("%u:%u snap:%u len:%u rxhash:0x%x| ", nethuns_tstamp_get_sec(hdr)
-                                               , nethuns_tstamp_get_nsec(hdr)
+    printf("%u:%u snap:%u len:%u rxhash:0x%x| ", nethuns_tstamp_sec(hdr)
+                                               , nethuns_tstamp_nsec(hdr)
                                                , nethuns_snaplen(hdr)
                                                , nethuns_len(hdr)
                                                , nethuns_rxhash(hdr));

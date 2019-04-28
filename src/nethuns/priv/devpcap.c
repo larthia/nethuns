@@ -155,7 +155,7 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
 
     struct pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
 
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -208,7 +208,7 @@ nethuns_flush_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
 
 
 int
-nethuns_get_stats_devpcap(struct nethuns_socket_devpcap *s, struct nethuns_stats *stats)
+nethuns_stats_devpcap(struct nethuns_socket_devpcap *s, struct nethuns_stats *stats)
 {
     struct pcap_stat ps;
     if (pcap_stats(s->p, &ps) == -1)

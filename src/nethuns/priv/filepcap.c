@@ -164,7 +164,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
     struct nethuns_pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.ring, p->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&p->base.ring, p->base.ring.head);
 
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -226,8 +226,8 @@ nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t co
     struct nethuns_pcap_pkthdr header;
     int has_vlan_offload = nethuns_offvlan_tpid(pkthdr) ? 1 : 0;
 
-    header.ts.tv_sec  = nethuns_tstamp_get_sec(pkthdr);
-    header.ts.tv_usec = nethuns_tstamp_get_usec(pkthdr);
+    header.ts.tv_sec  = nethuns_tstamp_sec(pkthdr);
+    header.ts.tv_usec = nethuns_tstamp_usec(pkthdr);
 
     header.caplen     = (uint32_t) MIN(len, (nethuns_snaplen(pkthdr) + 4 * has_vlan_offload));
     header.len        = (uint32_t) (nethuns_len(pkthdr) + 4 * has_vlan_offload);

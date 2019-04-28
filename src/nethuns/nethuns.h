@@ -35,7 +35,7 @@ extern "C" {
 
     void nethuns_dump_rings(nethuns_socket_t * s);
 
-    int nethuns_get_stats(nethuns_socket_t * s, struct nethuns_stats *);
+    int nethuns_stats(nethuns_socket_t * s, struct nethuns_stats *);
 
     nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
@@ -52,9 +52,9 @@ extern "C" {
     void __nethuns_free_base(nethuns_socket_t *s);
 
     //
-    // TYPE nethuns_tstamp_get_sec(nethuns_pkthdr_t *hdr)
-    // TYPE nethuns_tstamp_get_usec(nethuns_pkthdr_t *hdr)
-    // TYPE nethuns_tstamp_get_nsec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_sec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_usec(nethuns_pkthdr_t *hdr)
+    // TYPE nethuns_tstamp_nsec(nethuns_pkthdr_t *hdr)
     //
     // TYPE nethuns_snaplen(nethuns_pkthdr_t *hdr)
     // TYPE nethuns_len(nethuns_pkthdr_t *hdr)
@@ -85,29 +85,29 @@ extern "C" {
 
 #define nethuns_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_base(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+    __atomic_store_n(&nethuns_get_ring_slot(&nethuns_base(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
 } while (0)
 
 
-inline uint16_t
+static inline uint16_t
 nethuns_vlan_vid(uint16_t tci)
 {
     return (tci & ((1<<13)-1));
 }
 
-inline uint16_t
+static inline uint16_t
 nethuns_vlan_pcp(uint16_t tci)
 {
     return (tci >> 13) & 7;
 }
 
-inline bool
+static inline bool
 nethuns_vlan_dei(uint16_t tci)
 {
     return (tci >> 12) & 1;
 }
 
-inline uint16_t
+static inline uint16_t
 nethuns_pktvlan_tpid(const uint8_t *payload)
 {
     struct ether_header const *eth = (struct ether_header const *)payload;
@@ -116,8 +116,7 @@ nethuns_pktvlan_tpid(const uint8_t *payload)
     return 0;
 }
 
-
-inline uint16_t
+static inline uint16_t
 nethuns_pktvlan_tci(const uint8_t *payload)
 {
     struct ether_header const *eth = (struct ether_header const *)payload;
@@ -126,14 +125,13 @@ nethuns_pktvlan_tci(const uint8_t *payload)
     return 0;
 }
 
-
-inline uint16_t
+static inline uint16_t
 nethuns_vlan_tpid(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
 {
     return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tpid(hdr) : nethuns_pktvlan_tpid(payload);
 }
 
-inline uint16_t
+static inline uint16_t
 nethuns_vlan_tci(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
 {
     return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tci(hdr) : nethuns_pktvlan_tci(payload);

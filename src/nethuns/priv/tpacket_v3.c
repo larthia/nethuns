@@ -505,7 +505,7 @@ nethuns_dump_rings_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 
 
 int
-nethuns_get_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_stats *stats)
+nethuns_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_stats *stats)
 {
     struct tpacket_stats_v3 _stats;
     socklen_t len;

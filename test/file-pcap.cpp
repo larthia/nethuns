@@ -8,8 +8,8 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
     int i = 0;
 
-    printf("%u:%u snap:%u len:%u offload{tci:%x tpid:%x} packet{tci:%x pid:%x} => [tci:%x tpid:%x vid:%d] rxhash:0x%x| ", nethuns_tstamp_get_sec(hdr)
-                                                                                     , nethuns_tstamp_get_nsec(hdr)
+    printf("%u:%u snap:%u len:%u offload{tci:%x tpid:%x} packet{tci:%x pid:%x} => [tci:%x tpid:%x vid:%d] rxhash:0x%x| ", nethuns_tstamp_sec(hdr)
+                                                                                     , nethuns_tstamp_nsec(hdr)
                                                                                      , nethuns_snaplen(hdr)
                                                                                      , nethuns_len(hdr)
                                                                                      , nethuns_offvlan_tci(hdr)
@@ -72,7 +72,7 @@ try
 
             if (nethuns_is_valid(pkt_id))
             {
-                std::cerr << nethuns_tstamp_get_sec(pkthdr) << ":" << nethuns_tstamp_get_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
+                std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
 
             nethuns_release(p, pkt_id);

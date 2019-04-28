@@ -57,7 +57,7 @@ nethuns_make_ring(size_t nslots, size_t pktsize, struct nethuns_ring *r)
 
 static inline
 struct nethuns_ring_slot *
-nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
+nethuns_get_ring_slot(struct nethuns_ring *ring, size_t n)
 {
     return (struct nethuns_ring_slot *)
             ((char *)ring->ring + (n % ring->size) * (sizeof(struct nethuns_ring_slot) + ring->pktsize));
@@ -68,7 +68,7 @@ static inline
 struct nethuns_ring_slot *
 nethuns_ring_next(struct nethuns_ring *ring)
 {
-    return nethuns_ring_get_slot(ring,ring->head++);
+    return nethuns_get_ring_slot(ring,ring->head++);
 }
 
 
@@ -80,9 +80,9 @@ nethuns_ring_free_id(struct nethuns_ring *ring, nethuns_free_id_t cb, void *user
 {
     int n = 0;
 
-    while (ring->tail != ring->head && !__atomic_load_n(&nethuns_ring_get_slot(ring, ring->tail)->inuse, __ATOMIC_ACQUIRE))
+    while (ring->tail != ring->head && !__atomic_load_n(&nethuns_get_ring_slot(ring, ring->tail)->inuse, __ATOMIC_ACQUIRE))
     {
-        cb(nethuns_ring_get_slot(ring, ring->tail)->id, user);
+        cb(nethuns_get_ring_slot(ring, ring->tail)->id, user);
         ring->tail++;
     }
 
