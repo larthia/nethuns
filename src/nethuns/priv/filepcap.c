@@ -198,8 +198,8 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     nethuns_tstamp_set_sec ((&slot->pkthdr), header.ts.tv_sec);
     nethuns_tstamp_set_usec((&slot->pkthdr), header.ts.tv_usec);
 
-    nethuns_len     ((&slot->pkthdr)) = header.len;
-    nethuns_snaplen ((&slot->pkthdr)) = bytes;
+    nethuns_set_len (&slot->pkthdr, header.len);
+    nethuns_set_snaplen (&slot->pkthdr, bytes);
 
     if (header.caplen > caplen)
     {
