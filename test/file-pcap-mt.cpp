@@ -73,7 +73,7 @@ try
         pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
         if (nethuns_is_valid(pkt_id))
         {
-            struct nethuns_packet hdr { frame, pkthdr, nethuns_base(p), pkt_id };
+            struct nethuns_packet hdr { frame, pkthdr, nethuns_data(p), pkt_id };
             while (!queue.push(hdr))
             { };
         }

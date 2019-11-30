@@ -44,7 +44,7 @@ typedef struct nethuns_pcap_socket nethuns_pcap_t;
 
 struct nethuns_pcap_socket
 {
-    struct nethuns_socket_base      base;
+    struct nethuns_socket_data      base;
 #ifdef NETHUNS_USE_NATIVE_FILEPCAP_READER
     FILE *              r;
 #else

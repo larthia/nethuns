@@ -131,7 +131,7 @@ try
         if ((id = nethuns_recv(s, &pkthdr, &frame)))
         {
             total_rcv++;
-            struct nethuns_packet p { frame, pkthdr, nethuns_base(s), id };
+            struct nethuns_packet p { frame, pkthdr, nethuns_data(s), id };
 
             while (!queue.push(p))
             { };

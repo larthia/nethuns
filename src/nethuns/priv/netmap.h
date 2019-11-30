@@ -10,7 +10,7 @@
 
 struct nethuns_socket_netmap
 {
-    struct nethuns_socket_base base;
+    struct nethuns_socket_data base;
     struct nm_desc *p;
 };
 

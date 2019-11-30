@@ -70,12 +70,12 @@ extern "C" {
 
 
 #ifdef __cplusplus
-#define nethuns_base(_sock)     (reinterpret_cast<struct nethuns_socket_base *>(_sock))
+#define nethuns_data(_sock)     (reinterpret_cast<struct nethuns_socket_data *>(_sock))
 #else
-#define nethuns_base(_sock)     ((struct nethuns_socket_base *)(_sock))
+#define nethuns_data(_sock)     ((struct nethuns_socket_data *)(_sock))
 #endif
 
-#define nethuns_error(_sock)    ({nethuns_base(_sock)->errbuf;})
+#define nethuns_error(_sock)    ({nethuns_data(_sock)->errbuf;})
 
 
 #define nethuns_is_valid(_n)    ((_n + 1) > 1)
@@ -85,7 +85,7 @@ extern "C" {
 
 #define nethuns_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_get_ring_slot(&nethuns_base(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+    __atomic_store_n(&nethuns_get_ring_slot(&nethuns_data(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
 } while (0)
 
 

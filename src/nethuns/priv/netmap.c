@@ -42,9 +42,9 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 {
     if (s)
     {
-        if (nethuns_base(s)->clear_promisc)
+        if (nethuns_data(s)->clear_promisc)
         {
-            __nethuns_clear_if_promisc(s, nethuns_base(s)->devname);
+            __nethuns_clear_if_promisc(s, nethuns_data(s)->devname);
         }
 
         nm_close(s->p);
@@ -60,7 +60,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
 {
     char nm_dev[128];
 
-    nethuns_base(s)->queue = queue;
+    nethuns_data(s)->queue = queue;
 
     if (queue == NETHUNS_ANY_QUEUE)
     {
@@ -68,7 +68,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     }
     else
     {
-        snprintf(nm_dev, 128, "netmap:%s-%d", dev, nethuns_base(s)->queue);
+        snprintf(nm_dev, 128, "netmap:%s-%d", dev, nethuns_data(s)->queue);
     }
 
     s->p = nm_open(nm_dev, NULL, 0, NULL);
@@ -78,11 +78,11 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         return -1;
     }
 
-    nethuns_base(s)->devname = strdup(dev);
+    nethuns_data(s)->devname = strdup(dev);
 
-    if (nethuns_base(s)->opt.promisc)
+    if (nethuns_data(s)->opt.promisc)
     {
-        if (__nethuns_set_if_promisc(s, nethuns_base(s)->devname) < 0)
+        if (__nethuns_set_if_promisc(s, nethuns_data(s)->devname) < 0)
             return -1;
     }
 

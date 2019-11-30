@@ -47,7 +47,7 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
 
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
-        nethuns_perror(nethuns_base(s)->errbuf, "ioctl: could not open socket");
+        nethuns_perror(nethuns_data(s)->errbuf, "ioctl: could not open socket");
         return -1;
     }
 
@@ -60,7 +60,7 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
     rv = ioctl(fd, what, &ifr);
     if (rv < 0)
     {
-        nethuns_perror(nethuns_base(s)->errbuf, "ioctl");
+        nethuns_perror(nethuns_data(s)->errbuf, "ioctl");
         close (fd);
         return -1;
     }
@@ -76,8 +76,8 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
 void
 __nethuns_free_base(nethuns_socket_t *s)
 {
-    free(nethuns_base(s)->devname);
-    free(nethuns_base(s)->ring.ring);
+    free(nethuns_data(s)->devname);
+    free(nethuns_data(s)->ring.ring);
 }
 
 
@@ -93,7 +93,7 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
         flags |= IFF_PROMISC;
         if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
             return -1;
-        nethuns_base(s)->clear_promisc = true;
+        nethuns_data(s)->clear_promisc = true;
     }
 
     return 0;
