@@ -16,6 +16,7 @@
 extern "C" {
 #endif
 
+
     nethuns_socket_t * nethuns_open(struct nethuns_socket_options *opt, char *errbuf);
 
     int nethuns_bind(nethuns_socket_t * s, const char *dev, int queue);
@@ -68,6 +69,11 @@ extern "C" {
 
     const char * nethuns_version();
 
+    // filter functions
+    //
+
+    void nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx);
+    void nethuns_clear_filter(nethuns_socket_t * s);
 
 #ifdef __cplusplus
 #define nethuns_data(_sock)     (reinterpret_cast<struct nethuns_socket_data *>(_sock))

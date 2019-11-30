@@ -69,21 +69,41 @@ nethuns_set_len_netmap(struct nm_pkthdr *hdr, uint32_t v) {
     hdr->len = v;
 }
 
+
+#ifndef __cplusplus
 static inline uint32_t
 nethuns_rxhash_netmap(struct nm_pkthdr const *hdr) {
+    (void)hdr;
     return 0;
 }
 
 static inline uint16_t
 nethuns_offvlan_tpid_netmap(struct nm_pkthdr const *hdr) {
+    (void)hdr;
     return 0;
 }
 
 static inline uint16_t
 nethuns_offvlan_tci_netmap(struct nm_pkthdr const *hdr) {
+    (void)hdr;
+    return 0;
+}
+#else
+static inline uint32_t
+nethuns_rxhash_netmap(struct nm_pkthdr const *) {
     return 0;
 }
 
+static inline uint16_t
+nethuns_offvlan_tpid_netmap(struct nm_pkthdr const *) {
+    return 0;
+}
+
+static inline uint16_t
+nethuns_offvlan_tci_netmap(struct nm_pkthdr const *) {
+    return 0;
+}
+#endif
 
 #ifdef __cplusplus
 }

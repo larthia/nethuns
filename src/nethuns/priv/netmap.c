@@ -121,18 +121,23 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
         //
     }
 
-    bytes = MIN(caplen, header.caplen);
+    if (!nethuns_data(s)->filter || nethuns_data(s)->filter(nethuns_data(s)->filter_ctx, &header, pkt))
+    {
+        bytes = MIN(caplen, header.caplen);
 
-    memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
-    memcpy(slot->packet, pkt, bytes);
-    slot->pkthdr.caplen = bytes;
+        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+        memcpy(slot->packet, pkt, bytes);
+        slot->pkthdr.caplen = bytes;
 
-    __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
-    *pkthdr  = &slot->pkthdr;
-    *payload =  slot->packet;
+        *pkthdr  = &slot->pkthdr;
+        *payload =  slot->packet;
 
-    return ++s->base.ring.head;
+        return ++s->base.ring.head;
+    }
+
+    return 0;
 }
 
 

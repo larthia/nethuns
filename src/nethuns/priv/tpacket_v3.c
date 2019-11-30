@@ -293,19 +293,21 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             *pkthdr    = s->rx_ppd;
             *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
 
-            s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+            if (!nethuns_data(s)->filter || nethuns_data(s)->filter(nethuns_data(s)->filter_ctx, *pkthdr, *pkt))
+            {
+                s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-            slot = nethuns_ring_next(&s->base.ring);
-            slot->id = s->rx_block_idx;
-            __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+                slot = nethuns_ring_next(&s->base.ring);
+                slot->id = s->rx_block_idx;
+                __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
-            return s->base.ring.head;
+                return s->base.ring.head;
+            }
         }
-        else /* discard this packet */
-        {
-            s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
-            return 0;
-        }
+
+        /* discard this packet */
+        s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+        return 0;
     }
 
     nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);

@@ -74,6 +74,22 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
 
 
 void
+nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx)
+{
+    nethuns_data(s)->filter = filter;
+    nethuns_data(s)->filter_ctx = ctx;
+}
+
+
+void
+nethuns_clear_filter(nethuns_socket_t * s)
+{
+    nethuns_data(s)->filter = NULL;
+    nethuns_data(s)->filter_ctx = NULL;
+}
+
+
+void
 __nethuns_free_base(nethuns_socket_t *s)
 {
     free(nethuns_data(s)->devname);

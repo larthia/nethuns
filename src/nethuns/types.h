@@ -10,6 +10,8 @@
 #define NETHUNS_ANY_QUEUE       (-1)
 
 
+typedef int (*nethuns_filter_t)(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt);
+
 enum nethuns_capture_dir
 {
     nethuns_in
@@ -40,6 +42,9 @@ struct nethuns_socket_data
     char                         *devname;
     int                           queue;
     bool                          clear_promisc;
+
+    nethuns_filter_t              filter;
+    void *                        filter_ctx;
 };
 
 
