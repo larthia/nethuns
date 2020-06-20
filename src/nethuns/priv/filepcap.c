@@ -95,7 +95,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             fh.magic != NAVTEL_TCPDUMP_MAGIC &&
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {
-            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header unsupported (%x)", fh.magic);
+            nethuns_perror(errbuf, "pcap_open: magic pcap_file_header not supported (%x)", fh.magic);
             fclose(pr);
             free(pcap->base.ring.ring);
             free(pcap);
@@ -194,7 +194,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
     const unsigned char *ppkt = pcap_next(p->r, &header);
     if (ppkt == NULL) {
-        nethuns_perror(p->base.errbuf, "pcap_read: could not read packet!");
+        nethuns_perror(p->base.errbuf, "pcap_next: could not read packet (%s)", pcap_geterr(p->r));
         return  (uint64_t)-1;
     }
 
