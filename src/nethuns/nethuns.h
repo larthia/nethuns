@@ -16,7 +16,6 @@
 extern "C" {
 #endif
 
-
     nethuns_socket_t * nethuns_open(struct nethuns_socket_options *opt, char *errbuf);
 
     int nethuns_bind(nethuns_socket_t * s, const char *dev, int queue);
@@ -84,9 +83,16 @@ extern "C" {
 #define nethuns_error(_sock)    ({nethuns_data(_sock)->errbuf;})
 
 
-#define nethuns_is_valid(_n)    ((_n + 1) > 1)
+#define nethuns_is_valid(_n)    ((_n + 2) > 2)
 #define nethuns_is_null(_n)     ((_n) == 0)
+
+#define nethuns_is_ok(_n)       ((_n + 2) >= 2)
 #define nethuns_is_err(_n)      ((_n) == (uint64_t)-1)
+#define nethuns_is_eof(_n)      ((_n) == (uint64_t)-2)
+
+
+#define NETHUNS_ERROR           ((uint64_t)-1)
+#define NETHUNS_EOF             ((uint64_t)-2)
 
 
 #define nethuns_release(_sock, _pktid) do \
