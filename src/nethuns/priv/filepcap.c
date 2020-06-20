@@ -174,8 +174,6 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     unsigned int caplen = p->base.opt.packetsize;
     unsigned int bytes;
 
-    struct pcap_pkthdr header;
-
     struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&p->base.ring, p->base.ring.head);
 
 #if 1
@@ -191,19 +189,28 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
             return 0;
     }
 #endif
+    struct pcap_pkthdr *pcaphdr;
 
-    const unsigned char *ppkt = pcap_next(p->r, &header);
-    if (ppkt == NULL) {
+    const unsigned char *ppkt;
+    int ret = pcap_next_ex(p->r, &pcaphdr, &ppkt);
+    switch(ret) 
+    {
+    case 0: return 0;
+    case PCAP_ERROR: {
         nethuns_perror(p->base.errbuf, "pcap_next: could not read packet (%s)", pcap_geterr(p->r));
-        return  (uint64_t)-1;
+        return  NETHUNS_ERROR;
+    }
+    case PCAP_ERROR_BREAK: {
+        return NETHUNS_EOF; 
+    }
     }
 
-    bytes = MIN(caplen, header.caplen);
+    bytes = MIN(caplen, pcaphdr->caplen);
 
-    nethuns_tstamp_set_sec ((&slot->pkthdr), header.ts.tv_sec);
-    nethuns_tstamp_set_usec((&slot->pkthdr), header.ts.tv_usec);
+    nethuns_tstamp_set_sec ((&slot->pkthdr), pcaphdr->ts.tv_sec);
+    nethuns_tstamp_set_usec((&slot->pkthdr), pcaphdr->ts.tv_usec);
 
-    nethuns_set_len (&slot->pkthdr, header.len);
+    nethuns_set_len (&slot->pkthdr, pcaphdr->len);
     nethuns_set_snaplen (&slot->pkthdr, bytes);
 
     memcpy(slot->packet, ppkt, bytes);
