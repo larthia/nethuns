@@ -29,7 +29,7 @@ set(NETHUNS_DEP)
 set(NETHUNS_SRC src/nethuns/nethuns.c 
                 src/nethuns/priv/filepcap.c)
 
-if (NETHUNS_NATIVE_FILEPCAP_READER)
+if (NETHUNS_NATIVE_PCAPFILE_READER)
     message("Nethuns: using native pcapfile reader!")
 else()
     list(APPEND NETHUNS_DEP -lpcap)

@@ -25,7 +25,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 {
     struct nethuns_pcap_socket *pcap;
 
-#ifdef NETHUNS_USE_NATIVE_FILEPCAP_READER
+#ifdef NETHUNS_USE_NATIVE_PCAPFILE_READER
     FILE * pr = NULL;
 #else
     pcap_t * pr = NULL;
@@ -57,7 +57,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 
     if (!mode)
     {
-#ifndef NETHUNS_USE_NATIVE_FILEPCAP_READER
+#ifndef NETHUNS_USE_NATIVE_PCAPFILE_READER
         char perr[PCAP_ERRBUF_SIZE];
         pr = pcap_open_offline(filename, perr);
         if (!pr) {
@@ -150,7 +150,7 @@ int
 nethuns_pcap_close(nethuns_pcap_t *p)
 {
     if (p->r) {
-#ifdef NETHUNS_USE_NATIVE_FILEPCAP_READER
+#ifdef NETHUNS_USE_NATIVE_PCAPFILE_READER
         fclose(p->r);
 #else
         pcap_close(p->r);
@@ -167,7 +167,7 @@ nethuns_pcap_close(nethuns_pcap_t *p)
 }
 
 
-#ifndef NETHUNS_USE_NATIVE_FILEPCAP_READER
+#ifndef NETHUNS_USE_NATIVE_PCAPFILE_READER
 uint64_t
 nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
@@ -226,7 +226,6 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     struct nethuns_pcap_pkthdr header;
 
     struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&p->base.ring, p->base.ring.head);
-
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
@@ -249,7 +248,6 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     }
 
     bytes = MIN(caplen, header.caplen);
-
     if (fread(slot->packet, 1, bytes, p->r) != bytes)
     {
         nethuns_perror(p->base.errbuf, "pcap_read: could not read packet!");
