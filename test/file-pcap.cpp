@@ -77,10 +77,12 @@ try
 
             nethuns_release(p, pkt_id);
         }
-        while (!nethuns_is_err(pkt_id));
+        while (nethuns_is_ok(pkt_id));
+
+        if (nethuns_is_err(pkt_id))
+            std::cerr << "err: " << nethuns_error(p) << std::endl;
 
         nethuns_pcap_close(p);
-
     }
     else if (strcmp(argv[1], "capture") == 0)
     {
