@@ -14,8 +14,14 @@ include (Nethuns.cmake)
 set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")   
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 
+set (CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 add_definitions(-D_GNU_SOURCE)
 include_directories(/usr/local/include/ src)
+
+if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src)
+endif()
 
 option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 
@@ -29,12 +35,12 @@ set(NETHUNS_DEP)
 set(NETHUNS_SRC src/nethuns/nethuns.c 
                 src/nethuns/priv/filepcap.c)
 
-if (NETHUNS_NATIVE_PCAPFILE_READER)
-    message("Nethuns: using native pcapfile reader!")
+if (NETHUNS_BUILTIN_PCAP_READER)
+    message("Nethuns: using built-in pcap file reader!")
 else()
     list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND NETHUNS_LIB -lpcap)
-    message("Nethuns: using libpcap to read pcapfile!")
+    message("Nethuns: using libpcap to read files!")
 endif()
 
 list(APPEND NETHUNS_LIB -pthread)
@@ -47,6 +53,16 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
 
     list(APPEND NETHUNS_SRC src/nethuns/priv/netmap.c)
     
+elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
+
+    ADD_CUSTOM_TARGET(
+  	libbfp.a ALL
+  	COMMAND ${CMAKE_MAKE_PROGRAM}
+  	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src
+	COMMENT "Libbpf makefile target" )
+
+    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp.c)
+
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
     list(APPEND NETHUNS_SRC src/nethuns/priv/devpcap.c)
@@ -62,9 +78,13 @@ endif()
 add_library(nethuns_static STATIC ${NETHUNS_SRC})
 add_library(nethuns SHARED ${NETHUNS_SRC})
 
-target_link_libraries(nethuns ${NETHUNS_DEP})
-target_link_libraries(nethuns_static ${NETHUNS_DEP})
+if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
+    add_dependencies(nethuns_static libbpf.a)
+    add_dependencies(nethuns libbpf.a)
+endif()
 
+target_link_libraries(nethuns PUBLIC ${NETHUNS_DEP})
+target_link_libraries(nethuns_static PUBLIC ${NETHUNS_DEP})
 
 link_directories(${nethuns_BINARY_DIR})
 

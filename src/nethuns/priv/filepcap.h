@@ -4,7 +4,7 @@
 #include <linux/if_packet.h>
 #endif
 
-#ifndef NETHUNS_USE_NATIVE_PCAPFILE_READER
+#ifndef NETHUNS_USE_BUILTIN_PCAP_READER
 #include <pcap/pcap.h>
 #endif
 
@@ -45,7 +45,7 @@ typedef struct nethuns_pcap_socket nethuns_pcap_t;
 struct nethuns_pcap_socket
 {
     struct nethuns_socket_data      base;
-#ifdef NETHUNS_USE_NATIVE_PCAPFILE_READER
+#ifdef NETHUNS_USE_BUILTIN_PCAP_READER
     FILE *              r;
 #else
     pcap_t *            r;
