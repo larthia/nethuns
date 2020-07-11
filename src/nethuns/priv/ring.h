@@ -22,6 +22,8 @@ struct nethuns_ring_slot
     struct nm_pkthdr        pkthdr;
 #elif defined (NETHUNS_USE_DEVPCAP)
     struct pcap_pkthdr      pkthdr;
+#elif defined (NETHUNS_USE_XDP)
+    int pkthdr;
 #endif
     uint64_t                id;
     int                     inuse;

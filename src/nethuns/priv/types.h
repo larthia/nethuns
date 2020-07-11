@@ -1,6 +1,5 @@
 #pragma once
 
-
 #if defined (NETHUNS_USE_TPACKET_V3)
 
 typedef struct nethuns_socket_tpacket_v3 nethuns_socket_t;
@@ -19,6 +18,11 @@ typedef struct nm_pkthdr                 nethuns_pkthdr_t;
 #include <pcap/pcap.h>
 
 typedef struct nethuns_socket_devpcap    nethuns_socket_t;
+typedef struct pcap_pkthdr               nethuns_pkthdr_t;
+
+#elif defined (NETHUNS_USE_XDP)
+
+typedef struct nethuns_socket_xdp    	 nethuns_socket_t;
 typedef struct pcap_pkthdr               nethuns_pkthdr_t;
 
 #else

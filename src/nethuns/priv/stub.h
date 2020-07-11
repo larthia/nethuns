@@ -99,6 +99,39 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_devpcap(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_devpcap(__VA_ARGS__)
 
+#elif defined (NETHUNS_USE_XDP)
+
+#include "xdp.h"
+
+#define nethuns_open(...)           nethuns_open_xdp(__VA_ARGS__)
+#define nethuns_close(...)          nethuns_close_xdp(__VA_ARGS__)
+#define nethuns_bind(...)           nethuns_bind_xdp(__VA_ARGS__)
+#define nethuns_fd(...)             nethuns_fd_xdp(__VA_ARGS__)
+#define nethuns_recv(...)           nethuns_recv_xdp(__VA_ARGS__)
+#define nethuns_flush(...)          nethuns_flush_xdp(__VA_ARGS__)
+#define nethuns_send(...)           nethuns_send_xdp(__VA_ARGS__)
+#define nethuns_fanout(...)         nethuns_fanout_xdp(__VA_ARGS__)
+
+#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_xdp(__VA_ARGS__)
+#define nethuns_tstamp_usec(...)    nethuns_tstamp_usec_xdp(__VA_ARGS__)
+#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_xdp(__VA_ARGS__)
+#define nethuns_tstamp_set_sec(...)     nethuns_tstamp_set_sec_xdp(__VA_ARGS__)
+#define nethuns_tstamp_set_usec(...)    nethuns_tstamp_set_usec_xdp(__VA_ARGS__)
+#define nethuns_tstamp_set_nsec(...)    nethuns_tstamp_set_nsec_xdp(__VA_ARGS__)
+
+#define nethuns_snaplen(...)        nethuns_snaplen_xdp(__VA_ARGS__)
+#define nethuns_len(...)            nethuns_len_xdp(__VA_ARGS__)
+#define nethuns_set_snaplen(...)    nethuns_set_snaplen_xdp(__VA_ARGS__)
+#define nethuns_set_len(...)        nethuns_set_len_xdp(__VA_ARGS__)
+
+#define nethuns_dump_rings(...)     nethuns_dump_rings_xdp(__VA_ARGS__)
+#define nethuns_stats(...)          nethuns_stats_xdp(__VA_ARGS__)
+
+#define nethuns_rxhash(...)         nethuns_rxhash_xdp(__VA_ARGS__)
+
+#define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_xdp(__VA_ARGS__)
+#define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_xdp(__VA_ARGS__)
+
 #else
 
 #error "Nethuns: socket type not specified!"
