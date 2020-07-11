@@ -14,22 +14,22 @@ include (Nethuns.cmake)
 set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")   
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 
+
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_definitions(-D_GNU_SOURCE)
 include_directories(/usr/local/include/ src)
 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
-	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src)
-endif()
-
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/)
+endif() 
 option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 
 #
 # define the list of library to link...
 #
 
-set(NETHUNS_LIB nethuns)
 set(NETHUNS_DEP)
 
 set(NETHUNS_SRC src/nethuns/nethuns.c 
@@ -39,11 +39,12 @@ if (NETHUNS_BUILTIN_PCAP_READER)
     message("Nethuns: using built-in pcap file reader!")
 else()
     list(APPEND NETHUNS_DEP -lpcap)
-    list(APPEND NETHUNS_LIB -lpcap)
+
+    list(APPEND OTHER_LIB -lpcap)
     message("Nethuns: using libpcap to read files!")
 endif()
 
-list(APPEND NETHUNS_LIB -pthread)
+list(APPEND OTHER_LIB -pthread)
 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 
@@ -54,37 +55,44 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
     list(APPEND NETHUNS_SRC src/nethuns/priv/netmap.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
+    
+    find_package(ZLIB)
 
-    ADD_CUSTOM_TARGET(
-  	libbfp.a ALL
+    set(LIBBPF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src/libbpf.a)
+
+    add_custom_target(
+  	build_libbpf ALL
   	COMMAND ${CMAKE_MAKE_PROGRAM}
   	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src
 	COMMENT "Libbpf makefile target" )
 
+    add_library(libbpf STATIC IMPORTED)
+
+    set_property(TARGET libbpf APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+    set_target_properties(libbpf PROPERTIES IMPORTED_LOCATION_NOCONFIG "${LIBBPF_LIBRARY}")
+
+    add_dependencies(libbpf build_libbpf)
+
     list(APPEND NETHUNS_SRC src/nethuns/priv/xdp.c)
+    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp/common_libbpf.c)
+    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp/common_user_bpf_xdp.c)
+
+    list(APPEND NETHUNS_DEP libbpf)
+    list(APPEND NETHUNS_DEP -lelf)
+    list(APPEND NETHUNS_DEP ZLIB::ZLIB)
 
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
     list(APPEND NETHUNS_SRC src/nethuns/priv/devpcap.c)
     list(APPEND NETHUNS_DEP -lpcap)
-    list(APPEND NETHUNS_LIB -lpcap)
+    list(APPEND OTHER_LIB -lpcap)
 
 endif()
 
-#
-# Build the Nethuns library
-#
 
-add_library(nethuns_static STATIC ${NETHUNS_SRC})
-add_library(nethuns SHARED ${NETHUNS_SRC})
+add_library(nethuns STATIC ${NETHUNS_SRC})
 
-if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
-    add_dependencies(nethuns_static libbpf.a)
-    add_dependencies(nethuns libbpf.a)
-endif()
-
-target_link_libraries(nethuns PUBLIC ${NETHUNS_DEP})
-target_link_libraries(nethuns_static PUBLIC ${NETHUNS_DEP})
+target_link_libraries(nethuns ${NETHUNS_DEP})
 
 link_directories(${nethuns_BINARY_DIR})
 
@@ -110,16 +118,16 @@ if (NETHUNS_BUILD_TESTS)
     add_executable(pcap-meter-mt      test/meter-pcap-mt.cpp)
 
 
-    target_link_libraries(nethuns-test       ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-send       ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-forward    ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-forward-mt ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-file-pcap  ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-file-pcap-mt  ${NETHUNS_LIB} -lnethuns -pthread)
-    target_link_libraries(nethuns-meter      ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-meter-mt   ${NETHUNS_LIB} -lnethuns)
-    target_link_libraries(nethuns-filter     ${NETHUNS_LIB} -lnethuns)
+    target_link_libraries(nethuns-test       	${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-send       	${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-forward    	${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-forward-mt 	${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-file-pcap  	${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-file-pcap-mt  ${OTHER_LIB} nethuns -pthread)
 
+    target_link_libraries(nethuns-meter      ${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-meter-mt   ${OTHER_LIB} nethuns)
+    target_link_libraries(nethuns-filter     ${OTHER_LIB} nethuns)
 
     target_link_libraries(pcap-forward      -lpcap  -pthread)
     target_link_libraries(pcap-forward-mt   -lpcap  -pthread)
@@ -129,7 +137,6 @@ if (NETHUNS_BUILD_TESTS)
 endif()
 
 install_targets(/lib nethuns)
-install_targets(/lib nethuns_static)
 
 install_files(/include/nethuns      FILES src/nethuns/nethuns.h src/nethuns/types.h)
 install_files(/include/nethuns/priv FILES src/nethuns/nethuns.h src/nethuns/priv/compiler.h

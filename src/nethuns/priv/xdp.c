@@ -9,14 +9,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <bpf.h>
-#include <xsk.h>
+#include <src/bpf.h>
+#include <src/xsk.h>
+
+#include "xdp/common_user_bpf_xdp.h"
+#include "xdp/common_libbpf.h"
+
 
 
 struct nethuns_socket_xdp *
 nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_xdp *sock;
+
+    xdp_link_detach(-1, 0, 0);
 
     sock = calloc(1, sizeof(struct nethuns_socket_xdp));
     if (!sock)
