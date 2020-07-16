@@ -4,6 +4,11 @@
 
 #include "../types.h"
 #include "compiler.h"
+#include "xdp_pkthdr.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct nethuns_socket_xdp
 {
@@ -11,80 +16,69 @@ struct nethuns_socket_xdp
     //pcap_t  *p;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static inline uint32_t
-nethuns_tstamp_sec_xdp(struct pcap_pkthdr const *hdr) {
-
-	return 0;
-    // return (uint32_t)hdr->ts.tv_sec;
+nethuns_tstamp_sec_xdp(struct xdp_pkthdr const *hdr) {
+    return (uint32_t)hdr->sec;
 }
 static inline uint32_t
-nethuns_tstamp_usec_xdp(struct pcap_pkthdr const *hdr) {
-	return 0;
-    // return (uint32_t)hdr->ts.tv_usec;
+nethuns_tstamp_usec_xdp(struct xdp_pkthdr const *hdr) {
+    return (uint32_t)hdr->nsec/1000;
 }
 
 static inline uint32_t
-nethuns_tstamp_nsec_xdp(struct pcap_pkthdr const *hdr) {
-	return 0;
-    // return (uint32_t)hdr->ts.tv_usec * 1000;
+nethuns_tstamp_nsec_xdp(struct xdp_pkthdr const *hdr) {
+    return (uint32_t)hdr->nsec;
 }
 
 static inline
-void nethuns_tstamp_set_sec_xdp(struct pcap_pkthdr *hdr, uint32_t v) {
-    // hdr->ts.tv_sec = v;
+void nethuns_tstamp_set_sec_xdp(struct xdp_pkthdr *hdr, uint32_t v) {
+    hdr->sec = v;
 }
 
 static inline
-void nethuns_tstamp_set_usec_xdp(struct pcap_pkthdr *hdr, uint32_t v) {
-    // hdr->ts.tv_usec = v;
+void nethuns_tstamp_set_usec_xdp(struct xdp_pkthdr *hdr, uint32_t v) {
+    hdr->nsec = v * 1000;
 }
 
 static inline
-void nethuns_tstamp_set_nsec_xdp(struct pcap_pkthdr *hdr, uint32_t v) {
-    // hdr->ts.tv_usec = v/1000;
+void nethuns_tstamp_set_nsec_xdp(struct xdp_pkthdr *hdr, uint32_t v) {
+    hdr->nsec = v;
 }
 
 static inline uint32_t
-nethuns_snaplen_xdp(struct pcap_pkthdr const *hdr) {
-	return 0;
-    // return hdr->caplen;
+nethuns_snaplen_xdp(struct xdp_pkthdr const *hdr) {
+    return hdr->snaplen;
 }
 
 static inline uint32_t
-nethuns_len_xdp(struct pcap_pkthdr const *hdr) {
-	return 0;
-    // return hdr->len;
+nethuns_len_xdp(struct xdp_pkthdr const *hdr) {
+    return hdr->len;
 }
 
 static inline void
-nethuns_set_snaplen_xdp(struct pcap_pkthdr *hdr, uint32_t v) {
-    // hdr->caplen = v;
+nethuns_set_snaplen_xdp(struct xdp_pkthdr *hdr, uint32_t v) {
+    hdr->snaplen = v;
 }
 
 static inline void
-nethuns_set_len_xdp(struct pcap_pkthdr *hdr, uint32_t v) {
-    // hdr->len = v;
+nethuns_set_len_xdp(struct xdp_pkthdr *hdr, uint32_t v) {
+    hdr->len = v;
 }
 
 static inline uint32_t
-nethuns_rxhash_xdp(__maybe_unused struct pcap_pkthdr const *hdr)  {
+nethuns_rxhash_xdp(__maybe_unused struct xdp_pkthdr const *hdr)  {
     return 0;
 }
 
 static inline uint16_t
-nethuns_offvlan_tpid_xdp(__maybe_unused struct pcap_pkthdr const *hdr) {
+nethuns_offvlan_tpid_xdp(__maybe_unused struct xdp_pkthdr const *hdr) {
     return 0;
 }
 
 static inline uint16_t
-nethuns_offvlan_tci_xdp(__maybe_unused struct pcap_pkthdr const *hdr) {
+nethuns_offvlan_tci_xdp(__maybe_unused struct xdp_pkthdr const *hdr) {
     return 0;
 }
-
 
 #ifdef __cplusplus
 }

@@ -3,12 +3,17 @@
 #ifdef NETHUNS_USE_TPACKET_V3
 #include <linux/if_packet.h>
 #endif
+
 #ifdef NETHUNS_USE_NETMAP
 #define NETMAP_WITH_LIBS
 #include <net/netmap_user.h>
 #endif
 #ifdef NETHUNS_USE_DEVPCAP
 #include <pcap/pcap.h>
+#endif
+
+#ifdef NETHUNS_USE_XDP
+#include "xdp_pkthdr.h"
 #endif
 
 #include <stdlib.h>
@@ -23,7 +28,7 @@ struct nethuns_ring_slot
 #elif defined (NETHUNS_USE_DEVPCAP)
     struct pcap_pkthdr      pkthdr;
 #elif defined (NETHUNS_USE_XDP)
-    int pkthdr;
+    struct xdp_pkthdr       pkthdr;
 #endif
     uint64_t                id;
     int                     inuse;

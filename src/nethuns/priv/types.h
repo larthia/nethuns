@@ -22,8 +22,10 @@ typedef struct pcap_pkthdr               nethuns_pkthdr_t;
 
 #elif defined (NETHUNS_USE_XDP)
 
+#include "xdp_pkthdr.h"
+
 typedef struct nethuns_socket_xdp    	 nethuns_socket_t;
-typedef struct pcap_pkthdr               nethuns_pkthdr_t;
+typedef struct xdp_pkthdr                nethuns_pkthdr_t;
 
 #else
 
