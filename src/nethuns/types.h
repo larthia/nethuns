@@ -33,7 +33,7 @@ struct nethuns_socket_options
 };
 
 
-struct nethuns_socket_data
+struct nethuns_socket_base
 {
     char   errbuf[NETHUNS_ERRBUF_SIZE];
 
@@ -48,7 +48,7 @@ struct nethuns_socket_data
 };
 
 
-typedef struct nethuns_socket_data  nethuns_socket_data_t;
+typedef struct nethuns_socket_base  nethuns_socket_base_t;
 
 
 struct nethuns_stats
@@ -64,7 +64,7 @@ struct nethuns_packet
 {
     uint8_t const                 *payload;
     const nethuns_pkthdr_t        *pkthdr;
-    nethuns_socket_data_t         *sock;
+    nethuns_socket_base_t         *sock;
     uint64_t                       id;
 };
 

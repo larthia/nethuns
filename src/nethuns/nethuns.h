@@ -75,12 +75,12 @@ extern "C" {
     void nethuns_clear_filter(nethuns_socket_t * s);
 
 #ifdef __cplusplus
-#define nethuns_data(_sock)     (reinterpret_cast<struct nethuns_socket_data *>(_sock))
+#define nethuns_socket(_sock)     (reinterpret_cast<struct nethuns_socket_base *>(_sock))
 #else
-#define nethuns_data(_sock)     ((struct nethuns_socket_data *)(_sock))
+#define nethuns_socket(_sock)     ((struct nethuns_socket_base *)(_sock))
 #endif
 
-#define nethuns_error(_sock)    ({nethuns_data(_sock)->errbuf;})
+#define nethuns_error(_sock)    ({nethuns_socket(_sock)->errbuf;})
 
 
 #define nethuns_is_valid(_n)    ((_n + 2) > 2)
@@ -97,7 +97,7 @@ extern "C" {
 
 #define nethuns_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_get_ring_slot(&nethuns_data(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+    __atomic_store_n(&nethuns_get_ring_slot(&nethuns_socket(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
 } while (0)
 
 

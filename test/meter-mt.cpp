@@ -89,7 +89,7 @@ try
 
         if ((id = nethuns_recv(s, &pkthdr, &frame)))
         {
-            struct nethuns_packet p { frame, pkthdr, nethuns_data(s), id };
+            struct nethuns_packet p { frame, pkthdr, nethuns_socket(s), id };
 
             while (!queue.push(p))
             { };

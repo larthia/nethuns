@@ -8,7 +8,7 @@
 
 struct nethuns_socket_devpcap
 {
-    struct nethuns_socket_data base;
+    struct nethuns_socket_base base;
     pcap_t  *p;
 };
 

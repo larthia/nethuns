@@ -31,7 +31,7 @@ struct ring_v3
 
 struct nethuns_socket_tpacket_v3
 {
-    struct nethuns_socket_data base;
+    struct nethuns_socket_base base;
 
     struct ring_v3  rx_ring;
     struct ring_v3  tx_ring;

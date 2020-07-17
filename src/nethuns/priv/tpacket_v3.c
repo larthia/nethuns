@@ -172,9 +172,9 @@ int nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (s)
     {
-        if (nethuns_data(s)->clear_promisc)
+        if (nethuns_socket(s)->clear_promisc)
         {
-            __nethuns_clear_if_promisc(s, nethuns_data(s)->devname);
+            __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
         }
         free(s->tx_ring.rd);
         free(s->rx_ring.rd);
@@ -195,11 +195,11 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
 
     if (queue != NETHUNS_ANY_QUEUE)
     {
-        nethuns_perror(nethuns_data(s)->errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        nethuns_perror(nethuns_socket(s)->errbuf, "open: only ANY_QUEUE is currently supported by this device");
         return -1;
     }
 
-    nethuns_data(s)->queue = NETHUNS_ANY_QUEUE;
+    nethuns_socket(s)->queue = NETHUNS_ANY_QUEUE;
 
     memset(&addr, 0, sizeof(addr));
 
@@ -220,11 +220,11 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
 
     /* save device name.. */
 
-    nethuns_data(s)->devname = strdup(dev);
+    nethuns_socket(s)->devname = strdup(dev);
 
     /* set promisc interface */
 
-    if (nethuns_data(s)->opt.promisc)
+    if (nethuns_socket(s)->opt.promisc)
     {
         if (__nethuns_set_if_promisc(s, dev) < 0)
             return -1;
@@ -293,7 +293,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             *pkthdr    = s->rx_ppd;
             *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
 
-            if (!nethuns_data(s)->filter || nethuns_data(s)->filter(nethuns_data(s)->filter_ctx, *pkthdr, *pkt))
+            if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, *pkthdr, *pkt))
             {
                 s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
