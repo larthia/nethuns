@@ -205,7 +205,7 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
 
     addr.sll_family   = AF_PACKET;
     addr.sll_protocol = ntohs(ETH_P_ALL);
-    addr.sll_ifindex  = (int)if_nametoindex(dev);
+    nethuns_socket(s)->ifindex = addr.sll_ifindex = (int)if_nametoindex(dev);
 
     if (!addr.sll_ifindex) {
         nethuns_perror(s->base.errbuf, "if_nametoindex %s", dev);

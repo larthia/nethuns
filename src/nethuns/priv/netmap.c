@@ -86,7 +86,6 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
             return -1;
     }
 
-
     sleep(2);
     return 0;
 }
