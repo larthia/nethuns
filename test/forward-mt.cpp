@@ -39,6 +39,7 @@ int consumer(std::string dev)
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 20
     ,   .dir             = nethuns_in_out
+    ,   .mode 		 = nethuns_cap_default
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
@@ -103,6 +104,7 @@ try
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 20
     ,   .dir             = nethuns_in_out
+    ,   .mode            = nethuns_cap_default
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true

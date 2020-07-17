@@ -62,6 +62,7 @@ try
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 0
     ,   .dir             = nethuns_in_out
+    ,   .mode            = nethuns_cap_default
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
