@@ -9,20 +9,75 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <src/libbpf.h>
 #include <src/bpf.h>
 #include <src/xsk.h>
 
-#include "xdp/common_user_bpf_xdp.h"
-#include "xdp/common_libbpf.h"
+#include <linux/if_link.h>
+#include <linux/if_xdp.h>
 
+
+static int 
+load_xdp_program(struct nethuns_socket_xdp *sock)
+{
+    struct bpf_prog_load_attr prog_load_attr = {
+        .prog_type      = BPF_PROG_TYPE_XDP,
+        .file           = "/etc/nethuns/net_xdp.o"
+    };
+
+    int prog_fd;
+
+    if (bpf_prog_load_xattr(&prog_load_attr, &sock->obj, &prog_fd)) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: could not load program");
+        return -1;
+    }
+
+    if (prog_fd < 0) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: no program found: %s", strerror(prog_fd));
+        return -1;
+    }
+
+    if (bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, prog_fd, sock->xdp_flags) < 0) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_set_link_fd: set link xpd failed");
+        return -1;
+    }
+
+    // retrieve the actual xdp program id...
+    //
+    if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &sock->prog_id, sock->xdp_flags)) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link_id: get link xpd failed");
+	return -1;
+    }
+
+    return 0;
+}
+
+
+static int 
+unload_xdp_program(struct nethuns_socket_xdp *sock)
+{
+    uint32_t curr_prog_id = 0;
+
+    if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &curr_prog_id, sock->xdp_flags)) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link: could get xdp id");
+        return -1;
+    }
+
+    if (sock->prog_id == curr_prog_id)
+	bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, -1, sock->xdp_flags);
+    else if (!curr_prog_id)
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: could get find a prog id on interface '%d'", nethuns_socket(sock)->ifindex);
+    else
+        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: program on interface '%d' changed.", nethuns_socket(sock)->ifindex);
+
+    return 0;
+}
 
 
 struct nethuns_socket_xdp *
 nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_xdp *sock;
-
-    xdp_link_detach(-1, 0, 0);
 
     sock = calloc(1, sizeof(struct nethuns_socket_xdp));
     if (!sock)
@@ -38,6 +93,33 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
+    /* set defualt xdp_flags */
+
+    sock->xdp_flags = 0; // or safer XDP_FLAGS_UPDATE_IF_NOEXIST;
+    sock->xdp_bind_flags = XDP_USE_NEED_WAKEUP;
+
+    switch(opt->mode)
+    {
+    case nethuns_cap_default: {
+    	sock->xdp_flags |= XDP_FLAGS_SKB_MODE;
+    	sock->xdp_bind_flags |= XDP_COPY;
+    } break;
+    case nethuns_cap_skb_mode: {
+    	sock->xdp_flags |= XDP_FLAGS_SKB_MODE;
+    	sock->xdp_bind_flags |= XDP_COPY;
+    } break;
+    case nethuns_cap_drv_mode: {
+    	sock->xdp_flags |= XDP_FLAGS_DRV_MODE;
+    	sock->xdp_bind_flags |= XDP_COPY;
+    } break;
+    case nethuns_cap_drv_mode_zero_copy: {
+    	sock->xdp_flags |= XDP_FLAGS_DRV_MODE;
+    	sock->xdp_bind_flags |= XDP_ZEROCOPY;
+    }
+    }
+
+    nethuns_socket(sock)->ifindex = 0;
+
     /* set a single consumer by default */
 
     sock->base.opt = *opt;
@@ -51,10 +133,12 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
 {
     if (s)
     {
-        // pcap_close(s->p);
+	// TODO: socket delete
+	// TODO: umem delete
+	
+	unload_xdp_program(s);
 
         __nethuns_free_base(s);
-
         free(s);
     }
     return 0;
@@ -71,7 +155,12 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
         return -1;
     }
 
-    nethuns_socket(s)->queue = NETHUNS_ANY_QUEUE;
+    nethuns_socket(s)->queue   = NETHUNS_ANY_QUEUE;
+    nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
+
+    if (load_xdp_program(s) < 0) {
+	return -1;
+    }
 
     // s->p = pcap_create(dev, errbuf);
     // if (!s->p) {

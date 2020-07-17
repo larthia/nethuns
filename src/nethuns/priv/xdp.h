@@ -13,8 +13,13 @@ extern "C" {
 struct nethuns_socket_xdp
 {
     struct nethuns_socket_base base;
-    //pcap_t  *p;
+
+    uint32_t xdp_flags;
+    uint32_t xdp_bind_flags;
+    uint32_t prog_id;
+    struct bpf_object *obj; 
 };
+
 
 static inline uint32_t
 nethuns_tstamp_sec_xdp(struct xdp_pkthdr const *hdr) {
