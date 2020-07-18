@@ -10,7 +10,6 @@
 #include "stub.h"
 #include "compiler.h"
 
-#include "pcap.h"
 #include "ring.h"
 
 #define TCPDUMP_MAGIC           0xa1b2c3d4

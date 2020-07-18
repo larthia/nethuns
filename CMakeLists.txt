@@ -23,6 +23,7 @@ include_directories(/usr/local/include/ src)
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/uapi)
 endif() 
 option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 
@@ -75,6 +76,7 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
     add_dependencies(libbpf build_libbpf)
 
     list(APPEND NETHUNS_SRC src/nethuns/priv/xdp.c)
+    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp/xsk_ext.c)
 
     list(APPEND NETHUNS_DEP libbpf)
     list(APPEND NETHUNS_DEP -lelf)

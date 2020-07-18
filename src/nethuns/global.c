@@ -1,15 +1,31 @@
 #include "global.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#if defined (NETHUNS_USE_XDP)
+#include <sys/resource.h>
+#endif
 
 struct nethuns_global __nethuns_global;
 
 
 void __attribute__ ((constructor)) 
 nethuns_global_init() {
+
+    struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
+
     pthread_mutex_init(&__nethuns_global.m, NULL);
     fprintf(stderr, "nethuns: initializing...\n");
+
     hcreate_r(64, &__nethuns_global.netinfo);
+
+#if defined (NETHUNS_USE_XDP)
+   if (setrlimit(RLIMIT_MEMLOCK, &r)) {
+		fprintf(stderr, "nethuns: setrlimit(RLIMIT_MEMLOCK) \"%s\"\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+#endif
 }
 
 void __attribute__ ((destructor))

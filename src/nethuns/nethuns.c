@@ -108,13 +108,13 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
     
-    nethuns_lock_netinfo();
+    nethuns_lock_global();
 
     info = nethuns_lookup_netinfo(devname);
     if (info == NULL) {
         info = nethuns_create_netinfo(devname);
         if (info == NULL) {
-            nethuns_unlock_netinfo();
+            nethuns_unlock_global();
             return -1;
         }
 
@@ -131,7 +131,7 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
         if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
         {
             info->promisc_refcnt--;
-            nethuns_unlock_netinfo();
+            nethuns_unlock_global();
             return -1;
         }
     }
@@ -141,7 +141,7 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
     else 
         fprintf(stderr, "nethuns: device %s (already) promisc mode set\n", devname);
 
-    nethuns_unlock_netinfo();
+    nethuns_unlock_global();
     return 0;
 }
 
@@ -156,7 +156,7 @@ __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
     
-    nethuns_lock_netinfo();
+    nethuns_lock_global();
     
     info = nethuns_lookup_netinfo(devname);
     if (info != NULL) {
@@ -168,12 +168,13 @@ __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
     if (do_clear) {
         flags &= ~IFF_PROMISC;
         if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0) {
-            nethuns_unlock_netinfo();
+            nethuns_unlock_global();
             return -1;
         }
         fprintf(stderr, "nethuns: device %s promisc mode unset\n", devname);
     }
-    nethuns_unlock_netinfo();
+
+    nethuns_unlock_global();
     return 0;
 }
 

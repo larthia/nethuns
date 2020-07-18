@@ -4,19 +4,20 @@
 #include "ring.h"
 
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <net/if.h>
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <linux/bpf.h>
 #include <src/libbpf.h>
-#include <src/bpf.h>
-#include <src/xsk.h>
 
 #include <linux/if_link.h>
 #include <linux/if_xdp.h>
 
+#include "xdp/xsk_ext.h"
 
 static int
 load_xdp_program(struct nethuns_socket_xdp *sock)
@@ -121,7 +122,34 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 
     nethuns_socket(sock)->ifindex = 0;
 
-    /* set a single consumer by default */
+    nethuns_lock_global();
+
+    if (!__nethuns_global.umem_refcnt++) {
+
+        // TODO: support for HUGE pages
+        // -> opt_umem_flags |= XDP_UMEM_UNALIGNED_CHUNK_FLAG;
+
+        __nethuns_global.total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
+
+        __nethuns_global.bufs = mmap(NULL, __nethuns_global.total_mem,
+                                     PROT_READ | PROT_WRITE,
+                                     MAP_PRIVATE | MAP_ANONYMOUS /* | MAP_HUGETLB */, -1, 0);
+        if (__nethuns_global.bufs == MAP_FAILED) {
+            nethuns_perror(errbuf, "open: XDP bufs mmap failed");
+            free(sock);
+            return NULL;
+	    }
+        
+	    __nethuns_global.umem = xsk_configure_umem(__nethuns_global.bufs, __nethuns_global.total_mem, opt->packetsize);
+        if (! __nethuns_global.umem) {
+            nethuns_perror(errbuf, "open: XDP configure umem failed!");
+            munmap(__nethuns_global.bufs, __nethuns_global.total_mem);
+            free(sock);
+            return NULL;
+        }
+    }
+
+    nethuns_unlock_global();
 
     sock->base.opt = *opt;
 
@@ -137,6 +165,13 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
 	    // TODO: umem delete
 
 	    unload_xdp_program(s);
+
+        nethuns_lock_global();
+        if (!--__nethuns_global.umem_refcnt) {
+            xsk_umem__delete(__nethuns_global.umem->umem);
+            munmap(__nethuns_global.bufs, __nethuns_global.total_mem);
+        }
+        nethuns_unlock_global();
 
         if (nethuns_socket(s)->opt.promisc)
         {
