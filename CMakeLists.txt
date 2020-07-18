@@ -75,8 +75,6 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
     add_dependencies(libbpf build_libbpf)
 
     list(APPEND NETHUNS_SRC src/nethuns/priv/xdp.c)
-    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp/common_libbpf.c)
-    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp/common_user_bpf_xdp.c)
 
     list(APPEND NETHUNS_DEP libbpf)
     list(APPEND NETHUNS_DEP -lelf)
