@@ -133,10 +133,15 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
 {
     if (s)
     {
-	// TODO: socket delete
-	// TODO: umem delete
+	    // TODO: socket delete
+	    // TODO: umem delete
 
-	unload_xdp_program(s);
+	    unload_xdp_program(s);
+
+        if (nethuns_socket(s)->opt.promisc)
+        {
+            __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
+        }
 
         __nethuns_free_base(s);
         free(s);
@@ -160,6 +165,15 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 
     if (load_xdp_program(s) < 0) {
 	return -1;
+    }
+
+
+    nethuns_socket(s)->devname = strdup(dev);
+
+    if (nethuns_socket(s)->opt.promisc)
+    {
+        if (__nethuns_set_if_promisc(s, dev) < 0)
+            return -1;
     }
 
     // s->p = pcap_create(dev, errbuf);

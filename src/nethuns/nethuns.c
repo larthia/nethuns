@@ -103,6 +103,7 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
     struct nethuns_net_info *info;
+    bool do_promisc;
 
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
@@ -122,7 +123,10 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 
     info->promisc_refcnt++;
 
-    if (!(flags & IFF_PROMISC)) {
+    do_promisc = !(flags & IFF_PROMISC);
+
+    if (do_promisc)
+    {
         flags |= IFF_PROMISC;
         if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
         {
@@ -131,8 +135,12 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
             return -1;
         }
     }
-        
-    fprintf(stderr, "nethuns: device %s promisc mode set\n", devname);
+
+    if (do_promisc)
+        fprintf(stderr, "nethuns: device %s promisc mode set\n", devname);
+    else 
+        fprintf(stderr, "nethuns: device %s (already) promisc mode set\n", devname);
+
     nethuns_unlock_netinfo();
     return 0;
 }
