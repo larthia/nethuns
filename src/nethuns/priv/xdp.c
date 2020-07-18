@@ -17,7 +17,7 @@
 #include <linux/if_xdp.h>
 
 
-static int 
+static int
 load_xdp_program(struct nethuns_socket_xdp *sock)
 {
     struct bpf_prog_load_attr prog_load_attr = {
@@ -53,7 +53,7 @@ load_xdp_program(struct nethuns_socket_xdp *sock)
 }
 
 
-static int 
+static int
 unload_xdp_program(struct nethuns_socket_xdp *sock)
 {
     uint32_t curr_prog_id = 0;
@@ -112,7 +112,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     	sock->xdp_flags |= XDP_FLAGS_DRV_MODE;
     	sock->xdp_bind_flags |= XDP_COPY;
     } break;
-    case nethuns_cap_drv_mode_zero_copy: {
+    case nethuns_cap_zero_copy: {
     	sock->xdp_flags |= XDP_FLAGS_DRV_MODE;
     	sock->xdp_bind_flags |= XDP_ZEROCOPY;
     }

@@ -25,7 +25,7 @@ enum nethuns_capture_mode
     nethuns_cap_default
   , nethuns_cap_skb_mode
   , nethuns_cap_drv_mode
-  , nethuns_cap_drv_mode_zero_copy
+  , nethuns_cap_zero_copy
 };
 
 
