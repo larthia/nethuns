@@ -33,7 +33,6 @@ nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
     /* set a single consumer by default */
 
     sock->base.opt = *opt;
-    sock->base.clear_promisc = false;
     return sock;
 }
 
@@ -42,7 +41,7 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 {
     if (s)
     {
-        if (nethuns_socket(s)->clear_promisc)
+        if (nethuns_socket(s)->opt.promisc)
         {
             __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
         }

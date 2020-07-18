@@ -4,6 +4,7 @@
 #include "ring.h"
 
 #include <sys/ioctl.h>
+#include <net/if.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -123,7 +124,6 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     /* set a single consumer by default */
 
     sock->base.opt = *opt;
-    sock->base.clear_promisc = false;
 
     return sock;
 }
@@ -135,7 +135,7 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
     {
 	// TODO: socket delete
 	// TODO: umem delete
-	
+
 	unload_xdp_program(s);
 
         __nethuns_free_base(s);

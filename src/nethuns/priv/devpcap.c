@@ -33,7 +33,6 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
     /* set a single consumer by default */
 
     sock->base.opt = *opt;
-    sock->base.clear_promisc = false;
 
     return sock;
 }

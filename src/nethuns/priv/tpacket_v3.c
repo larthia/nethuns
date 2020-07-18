@@ -162,8 +162,6 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->tx_pfd.events     = POLLOUT | POLLERR;
     sock->tx_pfd.revents    = 0;
 
-    sock->base.clear_promisc = false;
-
     return sock;
 }
 
@@ -172,7 +170,7 @@ int nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (s)
     {
-        if (nethuns_socket(s)->clear_promisc)
+        if (nethuns_socket(s)->opt.promisc)
         {
             __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
         }

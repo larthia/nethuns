@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "nethuns.h"
+#include "global.h"
 
 
 void
@@ -101,17 +102,38 @@ int
 __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
+    struct nethuns_net_info *info;
 
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
+    
+    nethuns_lock_netinfo();
+
+    info = nethuns_lookup_netinfo(devname);
+    if (info == NULL) {
+        info = nethuns_create_netinfo(devname);
+        if (info == NULL) {
+            nethuns_unlock_netinfo();
+            return -1;
+        }
+
+        info->promisc_refcnt = (flags & IFF_PROMISC) ? 1 : 0;
+    }
+
+    info->promisc_refcnt++;
 
     if (!(flags & IFF_PROMISC)) {
         flags |= IFF_PROMISC;
         if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
+        {
+            info->promisc_refcnt--;
+            nethuns_unlock_netinfo();
             return -1;
-        nethuns_socket(s)->clear_promisc = true;
+        }
     }
-
+        
+    fprintf(stderr, "nethuns: device %s promisc mode set\n", devname);
+    nethuns_unlock_netinfo();
     return 0;
 }
 
@@ -120,14 +142,30 @@ int
 __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
+    struct nethuns_net_info *info;
+    bool do_clear = false;
+
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
+    
+    nethuns_lock_netinfo();
+    
+    info = nethuns_lookup_netinfo(devname);
+    if (info != NULL) {
+        if(--info->promisc_refcnt <= 0) {
+            do_clear = true;
+        }
+    }
 
-    flags &= ~IFF_PROMISC;
-    if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0)
-        return -1;
-
-    fprintf(stderr, "clear promisc!\n");
+    if (do_clear) {
+        flags &= ~IFF_PROMISC;
+        if (nethuns_ioctl_if(s, devname, SIOCSIFFLAGS, &flags) < 0) {
+            nethuns_unlock_netinfo();
+            return -1;
+        }
+        fprintf(stderr, "nethuns: device %s promisc mode unset\n", devname);
+    }
+    nethuns_unlock_netinfo();
     return 0;
 }
 

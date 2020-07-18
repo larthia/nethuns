@@ -7,6 +7,13 @@
 #include "priv/compiler.h"
 #include "priv/stub.h"
 #include "types.h"
+#include "global.h"
+
+
+#define NETHUNS_INIT                                \
+    void (*__nethuns_init)() = nethuns_global_init; \
+    void (*__nethuns_fini)() = nethuns_global_fini;
+
 
 #define NETHUNS_ETH_P_8021Q     0x8100
 #define NETHUNS_ETH_P_8021AD    0x88A8

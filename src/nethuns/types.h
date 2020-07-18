@@ -51,8 +51,7 @@ struct nethuns_socket_base
     struct nethuns_ring           ring;
     char                         *devname;
     int                           queue;
-    int 		          ifindex;
-    bool                          clear_promisc;
+    int 		                  ifindex;
 
     nethuns_filter_t              filter;
     void *                        filter_ctx;
