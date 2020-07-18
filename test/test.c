@@ -1,5 +1,8 @@
 #include <nethuns/nethuns.h>
 #include <stdio.h>
+#include <unistd.h>
+
+NETHUNS_INIT;
 
 void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
@@ -66,7 +69,7 @@ main(int argc, char *argv[])
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    for(;;)
+    for(int i =0; i < 20000; i++)
     {
         uint64_t pkt_id;
 
@@ -75,8 +78,10 @@ main(int argc, char *argv[])
             dump_packet(pkthdr, frame);
             nethuns_release(s, pkt_id);
         }
+	usleep(1);
     }
 
+    printf("done.\n");
     nethuns_close(s);
     return 0;
 }
