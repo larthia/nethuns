@@ -10,10 +10,8 @@
 struct nethuns_global __nethuns_global;
 
 
-void __attribute__ ((constructor)) 
+void __attribute__ ((constructor))
 nethuns_global_init() {
-
-    struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 
     pthread_mutex_init(&__nethuns_global.m, NULL);
     fprintf(stderr, "nethuns: initializing...\n");
@@ -24,10 +22,14 @@ nethuns_global_init() {
     }
 
 #if defined (NETHUNS_USE_XDP)
-   if (setrlimit(RLIMIT_MEMLOCK, &r)) {
-		fprintf(stderr, "nethuns: setrlimit(RLIMIT_MEMLOCK) \"%s\"\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+    {
+        struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
+
+        if (setrlimit(RLIMIT_MEMLOCK, &r)) {
+		    fprintf(stderr, "nethuns: setrlimit(RLIMIT_MEMLOCK) \"%s\"\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+	    }
+    }
 #endif
 }
 
