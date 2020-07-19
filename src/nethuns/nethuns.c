@@ -102,7 +102,7 @@ int
 __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
-    struct nethuns_net_info *info;
+    struct nethuns_netinfo *info;
     bool do_promisc;
 
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
@@ -150,7 +150,7 @@ int
 __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
 {
     uint32_t flags;
-    struct nethuns_net_info *info;
+    struct nethuns_netinfo *info;
     bool do_clear = false;
 
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)

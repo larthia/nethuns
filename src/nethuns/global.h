@@ -6,20 +6,20 @@
 #define _GNU_SOURCE
 #endif
 
-#include <search.h>
+#include "priv/hashmap.h"
 
 #if defined (NETHUNS_USE_XDP)
 #include <linux/bpf.h>
 #endif
 
-struct nethuns_net_info {
+struct nethuns_netinfo {
     int promisc_refcnt;
 };
 
 struct nethuns_global
 {
     pthread_mutex_t m;
-    struct hsearch_data netinfo;
+    struct hashmap_s netinfo;
 
 #if defined (NETHUNS_USE_XDP)
     struct xsk_umem_info *umem;
@@ -46,5 +46,5 @@ void nethuns_unlock_global()
     pthread_mutex_unlock(&__nethuns_global.m);
 }
 
-struct nethuns_net_info *nethuns_lookup_netinfo(const char *);
-struct nethuns_net_info *nethuns_create_netinfo(const char *);
+struct nethuns_netinfo *nethuns_lookup_netinfo(const char *);
+struct nethuns_netinfo *nethuns_create_netinfo(const char *);

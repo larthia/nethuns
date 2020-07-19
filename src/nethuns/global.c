@@ -18,7 +18,10 @@ nethuns_global_init() {
     pthread_mutex_init(&__nethuns_global.m, NULL);
     fprintf(stderr, "nethuns: initializing...\n");
 
-    hcreate_r(64, &__nethuns_global.netinfo);
+    if (hashmap_create(64, &__nethuns_global.netinfo)) {
+		fprintf(stderr, "nethuns: could not create netinfo hashmap\n");
+		exit(EXIT_FAILURE);
+    }
 
 #if defined (NETHUNS_USE_XDP)
    if (setrlimit(RLIMIT_MEMLOCK, &r)) {
@@ -31,34 +34,22 @@ nethuns_global_init() {
 void __attribute__ ((destructor))
 nethuns_global_fini() {
     fprintf(stderr, "nethuns: cleanup...\n");
-    hdestroy_r(&__nethuns_global.netinfo);
+    hashmap_destroy(&__nethuns_global.netinfo);
 }
 
-struct nethuns_net_info *
+struct nethuns_netinfo *
 nethuns_lookup_netinfo(const char *dev)
 {
-    ENTRY pair;
-    ENTRY *ret;
-    pair.key = (char *)dev;
-
-    if (hsearch_r(pair, FIND, &ret, &__nethuns_global.netinfo) < 0) {
-        return NULL;
-    }
-
-    if (ret == NULL)
-        return NULL;
-    return ret->data;
+    return  hashmap_get(&__nethuns_global.netinfo, dev, strlen(dev));
 }
 
-struct nethuns_net_info *
+struct nethuns_netinfo *
 nethuns_create_netinfo(const char *dev)
 {
-    ENTRY pair;
-    ENTRY *ret;
-    pair.key = (char *)dev;
-    pair.data = calloc(sizeof(struct nethuns_net_info), 1);
-    if (hsearch_r(pair, ENTER, &ret, &__nethuns_global.netinfo) < 0) {
+    void * data = calloc(sizeof(struct nethuns_netinfo), 1);
+    if (hashmap_put(&__nethuns_global.netinfo, dev, strlen(dev), data) != 0) {
+        free(data);
         return NULL;
     }
-    return ret->data;
+    return data;
 }
