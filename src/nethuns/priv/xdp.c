@@ -140,7 +140,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
             return NULL;
 	    }
         
-	    __nethuns_global.umem = xsk_configure_umem(__nethuns_global.bufs, __nethuns_global.total_mem, opt->packetsize);
+	    __nethuns_global.umem = xsk_configure_umem(sock, __nethuns_global.bufs, __nethuns_global.total_mem, opt->packetsize);
         if (! __nethuns_global.umem) {
             nethuns_perror(errbuf, "open: XDP configure umem failed!");
             munmap(__nethuns_global.bufs, __nethuns_global.total_mem);

@@ -7,7 +7,11 @@
 #include <nethuns/priv/xdp.h>
 #include <nethuns/nethuns.h>
 
-struct xsk_umem_info *xsk_configure_umem(void *buffer, size_t size, size_t frame_size)
+struct xsk_umem_info *xsk_configure_umem(
+	  struct nethuns_socket_xdp *sock
+	, void *buffer
+	, size_t size
+	, size_t frame_size)
 {
 	struct xsk_umem_info *umem;
 	struct xsk_umem_config cfg = {
@@ -22,11 +26,13 @@ struct xsk_umem_info *xsk_configure_umem(void *buffer, size_t size, size_t frame
 
 	umem = calloc(1, sizeof(*umem));
 	if (!umem) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config_umem: could not allocate memory");
 		return NULL;
     }
 
 	ret = xsk_umem__create(&umem->umem, buffer, size, &umem->fq, &umem->cq, &cfg);
 	if (ret) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config_umem: could not create umem");
         return NULL;
     }
 
@@ -34,21 +40,30 @@ struct xsk_umem_info *xsk_configure_umem(void *buffer, size_t size, size_t frame
 	return umem;
 }
 
-int xsk_populate_fill_ring(struct xsk_umem_info *umem, size_t frame_size)
+
+int xsk_populate_fill_ring(
+	  struct nethuns_socket_xdp *sock
+	, struct xsk_umem_info *umem
+	, size_t frame_size)
 {
 	int ret, i;
 	uint32_t idx;
 
 	ret = xsk_ring_prod__reserve(&umem->fq,
 				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
-	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS)
+
+	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_populate_fill_ring: could not reserve for ring prod");
 		return -ret;
+	}
+
 	for (i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
 		*xsk_ring_prod__fill_addr(&umem->fq, idx++) =
 			i * frame_size;
 	xsk_ring_prod__submit(&umem->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
 	return 0;
 }
+
 
 struct xsk_socket_info *
 xsk_configure_socket(
