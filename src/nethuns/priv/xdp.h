@@ -17,6 +17,7 @@ struct nethuns_socket_xdp
     uint32_t xdp_flags;
     uint32_t xdp_bind_flags;
     uint32_t prog_id;
+
     struct bpf_object *obj; 
 };
 
