@@ -35,7 +35,7 @@ set(NETHUNS_DEP)
 
 set(NETHUNS_SRC src/nethuns/nethuns.c 
 		src/nethuns/global.c
-                src/nethuns/sockets/filepcap.c)
+                src/nethuns/sockets/pcap_reader.c)
 
 if (NETHUNS_BUILTIN_PCAP_READER)
     message("Nethuns: using built-in pcap file reader!")
@@ -84,7 +84,7 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
-    list(APPEND NETHUNS_SRC src/nethuns/sockets/devpcap.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
     list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND OTHER_LIB -lpcap)
 
@@ -141,8 +141,8 @@ install_targets(/lib nethuns)
 
 install_files(/include/nethuns         FILES src/nethuns/nethuns.h src/nethuns/types.h)
 install_files(/include/nethuns/sockets FILES src/nethuns/nethuns.h src/nethuns/sockets/compiler.h
-                                                                src/nethuns/sockets/devpcap.h
-                                                                src/nethuns/sockets/filepcap.h
+                                                                src/nethuns/sockets/libpcap.h
+                                                                src/nethuns/sockets/pcap_reader.h
                                                                 src/nethuns/sockets/netmap.h
                                                                 src/nethuns/sockets/tpacket_v3.h
                                                                 src/nethuns/sockets/ring.h

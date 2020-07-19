@@ -1,6 +1,6 @@
 #pragma once
 
-#include "filepcap.h"
+#include "pcap_reader.h"
 
 #ifdef NETHUNS_USE_TPACKET_V3
 
@@ -68,36 +68,36 @@
 
 #elif defined (NETHUNS_USE_DEVPCAP)
 
-#include "devpcap.h"
+#include "libpcap.h"
 
-#define nethuns_open(...)           nethuns_open_devpcap(__VA_ARGS__)
-#define nethuns_close(...)          nethuns_close_devpcap(__VA_ARGS__)
-#define nethuns_bind(...)           nethuns_bind_devpcap(__VA_ARGS__)
-#define nethuns_fd(...)             nethuns_fd_devpcap(__VA_ARGS__)
-#define nethuns_recv(...)           nethuns_recv_devpcap(__VA_ARGS__)
-#define nethuns_flush(...)          nethuns_flush_devpcap(__VA_ARGS__)
-#define nethuns_send(...)           nethuns_send_devpcap(__VA_ARGS__)
-#define nethuns_fanout(...)         nethuns_fanout_devpcap(__VA_ARGS__)
+#define nethuns_open(...)           nethuns_open_libpcap(__VA_ARGS__)
+#define nethuns_close(...)          nethuns_close_libpcap(__VA_ARGS__)
+#define nethuns_bind(...)           nethuns_bind_libpcap(__VA_ARGS__)
+#define nethuns_fd(...)             nethuns_fd_libpcap(__VA_ARGS__)
+#define nethuns_recv(...)           nethuns_recv_libpcap(__VA_ARGS__)
+#define nethuns_flush(...)          nethuns_flush_libpcap(__VA_ARGS__)
+#define nethuns_send(...)           nethuns_send_libpcap(__VA_ARGS__)
+#define nethuns_fanout(...)         nethuns_fanout_libpcap(__VA_ARGS__)
 
-#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_devpcap(__VA_ARGS__)
-#define nethuns_tstamp_usec(...)    nethuns_tstamp_usec_devpcap(__VA_ARGS__)
-#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_devpcap(__VA_ARGS__)
-#define nethuns_tstamp_set_sec(...)     nethuns_tstamp_set_sec_devpcap(__VA_ARGS__)
-#define nethuns_tstamp_set_usec(...)    nethuns_tstamp_set_usec_devpcap(__VA_ARGS__)
-#define nethuns_tstamp_set_nsec(...)    nethuns_tstamp_set_nsec_devpcap(__VA_ARGS__)
+#define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_libpcap(__VA_ARGS__)
+#define nethuns_tstamp_usec(...)    nethuns_tstamp_usec_libpcap(__VA_ARGS__)
+#define nethuns_tstamp_nsec(...)    nethuns_tstamp_nsec_libpcap(__VA_ARGS__)
+#define nethuns_tstamp_set_sec(...)     nethuns_tstamp_set_sec_libpcap(__VA_ARGS__)
+#define nethuns_tstamp_set_usec(...)    nethuns_tstamp_set_usec_libpcap(__VA_ARGS__)
+#define nethuns_tstamp_set_nsec(...)    nethuns_tstamp_set_nsec_libpcap(__VA_ARGS__)
 
-#define nethuns_snaplen(...)        nethuns_snaplen_devpcap(__VA_ARGS__)
-#define nethuns_len(...)            nethuns_len_devpcap(__VA_ARGS__)
-#define nethuns_set_snaplen(...)    nethuns_set_snaplen_devpcap(__VA_ARGS__)
-#define nethuns_set_len(...)        nethuns_set_len_devpcap(__VA_ARGS__)
+#define nethuns_snaplen(...)        nethuns_snaplen_libpcap(__VA_ARGS__)
+#define nethuns_len(...)            nethuns_len_libpcap(__VA_ARGS__)
+#define nethuns_set_snaplen(...)    nethuns_set_snaplen_libpcap(__VA_ARGS__)
+#define nethuns_set_len(...)        nethuns_set_len_libpcap(__VA_ARGS__)
 
-#define nethuns_dump_rings(...)     nethuns_dump_rings_devpcap(__VA_ARGS__)
-#define nethuns_stats(...)          nethuns_stats_devpcap(__VA_ARGS__)
+#define nethuns_dump_rings(...)     nethuns_dump_rings_libpcap(__VA_ARGS__)
+#define nethuns_stats(...)          nethuns_stats_libpcap(__VA_ARGS__)
 
-#define nethuns_rxhash(...)         nethuns_rxhash_devpcap(__VA_ARGS__)
+#define nethuns_rxhash(...)         nethuns_rxhash_libpcap(__VA_ARGS__)
 
-#define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_devpcap(__VA_ARGS__)
-#define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_devpcap(__VA_ARGS__)
+#define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_libpcap(__VA_ARGS__)
+#define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_libpcap(__VA_ARGS__)
 
 #elif defined (NETHUNS_USE_XDP)
 

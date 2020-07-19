@@ -17,7 +17,7 @@ typedef struct nm_pkthdr                 nethuns_pkthdr_t;
 
 #include <pcap/pcap.h>
 
-typedef struct nethuns_socket_devpcap    nethuns_socket_t;
+typedef struct nethuns_socket_libpcap    nethuns_socket_t;
 typedef struct pcap_pkthdr               nethuns_pkthdr_t;
 
 #elif defined (NETHUNS_USE_XDP)

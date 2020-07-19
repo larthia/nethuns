@@ -2,7 +2,7 @@
 #include "../util/macro.h"
 #include "../util/compiler.h"
 
-#include "devpcap.h"
+#include "libpcap.h"
 #include "ring.h"
 
 #include <pcap/pcap.h>
@@ -13,12 +13,12 @@
 #include <string.h>
 
 
-struct nethuns_socket_devpcap *
-nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
+struct nethuns_socket_libpcap *
+nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
 {
-    struct nethuns_socket_devpcap *sock;
+    struct nethuns_socket_libpcap *sock;
 
-    sock = calloc(1, sizeof(struct nethuns_socket_devpcap));
+    sock = calloc(1, sizeof(struct nethuns_socket_libpcap));
     if (!sock)
     {
         nethuns_perror(errbuf, "open: could not allocate socket");
@@ -40,7 +40,7 @@ nethuns_open_devpcap(struct nethuns_socket_options *opt, char *errbuf)
 }
 
 
-int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
+int nethuns_close_libpcap(struct nethuns_socket_libpcap *s)
 {
     if (s)
     {
@@ -54,7 +54,7 @@ int nethuns_close_devpcap(struct nethuns_socket_devpcap *s)
 }
 
 
-int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev, int queue)
+int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int queue)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -148,7 +148,7 @@ int nethuns_bind_devpcap(struct nethuns_socket_devpcap *s, const char *dev, int 
 
 
 uint64_t
-nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
+nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     unsigned int caplen = nethuns_socket(s)->opt.packetsize;
     unsigned int bytes;
@@ -198,21 +198,21 @@ nethuns_recv_devpcap(struct nethuns_socket_devpcap *s, nethuns_pkthdr_t const **
 
 
 int
-nethuns_send_devpcap(struct nethuns_socket_devpcap *s, uint8_t const *packet, unsigned int len)
+nethuns_send_libpcap(struct nethuns_socket_libpcap *s, uint8_t const *packet, unsigned int len)
 {
     return pcap_inject(s->p, packet, len);
 }
 
 
 int
-nethuns_flush_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
+nethuns_flush_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 {
     return 0;
 }
 
 
 int
-nethuns_stats_devpcap(struct nethuns_socket_devpcap *s, struct nethuns_stats *stats)
+nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stats *stats)
 {
     struct pcap_stat ps;
     if (pcap_stats(s->p, &ps) == -1)
@@ -229,20 +229,20 @@ nethuns_stats_devpcap(struct nethuns_socket_devpcap *s, struct nethuns_stats *st
 
 
 int
-nethuns_fanout_devpcap(__maybe_unused struct nethuns_socket_devpcap *s, __maybe_unused int group, __maybe_unused const char *fanout)
+nethuns_fanout_libpcap(__maybe_unused struct nethuns_socket_libpcap *s, __maybe_unused int group, __maybe_unused const char *fanout)
 {
     return -1;
 }
 
 
-int nethuns_fd_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
+int nethuns_fd_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 {
     return -1;
 }
 
 
 void
-nethuns_dump_rings_devpcap(__maybe_unused struct nethuns_socket_devpcap *s)
+nethuns_dump_rings_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 {
 }
 
