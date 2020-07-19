@@ -18,8 +18,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_definitions(-D_GNU_SOURCE)
-include_directories(/usr/local/include/ src)
-
+include_directories(/usr/local/include/ src) 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/)
@@ -139,14 +138,5 @@ endif()
 
 install_targets(/lib nethuns)
 
-install_files(/include/nethuns         FILES src/nethuns/nethuns.h src/nethuns/types.h)
-install_files(/include/nethuns/sockets FILES src/nethuns/nethuns.h src/nethuns/sockets/compiler.h
-                                                                src/nethuns/sockets/libpcap.h
-                                                                src/nethuns/sockets/pcap_reader.h
-                                                                src/nethuns/sockets/netmap.h
-                                                                src/nethuns/sockets/tpacket_v3.h
-                                                                src/nethuns/sockets/ring.h
-                                                                src/nethuns/sockets/types.h
-                                                                src/nethuns/sockets/stub.h)
+install(DIRECTORY src/nethuns/ DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h")
 
-                                                            
