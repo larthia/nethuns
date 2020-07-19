@@ -1,5 +1,6 @@
 #include "../nethuns.h"
-#include "compiler.h"
+#include "../util/compiler.h"
+#include "../util/macro.h"
 #include "netmap.h"
 #include "ring.h"
 

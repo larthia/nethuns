@@ -4,7 +4,7 @@
 #include <src/xsk.h>
 
 #include "xsk_ext.h"
-#include <nethuns/priv/xdp.h>
+#include <nethuns/sockets/xdp.h>
 #include <nethuns/nethuns.h>
 
 struct xsk_umem_info *xsk_configure_umem(

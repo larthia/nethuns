@@ -35,7 +35,7 @@ set(NETHUNS_DEP)
 
 set(NETHUNS_SRC src/nethuns/nethuns.c 
 		src/nethuns/global.c
-                src/nethuns/priv/filepcap.c)
+                src/nethuns/sockets/filepcap.c)
 
 if (NETHUNS_BUILTIN_PCAP_READER)
     message("Nethuns: using built-in pcap file reader!")
@@ -50,11 +50,11 @@ list(APPEND OTHER_LIB -pthread)
 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 
-    list(APPEND NETHUNS_SRC src/nethuns/priv/tpacket_v3.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/tpacket_v3.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
 
-    list(APPEND NETHUNS_SRC src/nethuns/priv/netmap.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/netmap.c)
     
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
     
@@ -75,8 +75,8 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 
     add_dependencies(libbpf build_libbpf)
 
-    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp.c)
-    list(APPEND NETHUNS_SRC src/nethuns/priv/xdp/xsk_ext.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp/xsk_ext.c)
 
     list(APPEND NETHUNS_DEP libbpf)
     list(APPEND NETHUNS_DEP -lelf)
@@ -84,7 +84,7 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
-    list(APPEND NETHUNS_SRC src/nethuns/priv/devpcap.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/devpcap.c)
     list(APPEND NETHUNS_DEP -lpcap)
     list(APPEND OTHER_LIB -lpcap)
 
@@ -139,14 +139,14 @@ endif()
 
 install_targets(/lib nethuns)
 
-install_files(/include/nethuns      FILES src/nethuns/nethuns.h src/nethuns/types.h)
-install_files(/include/nethuns/priv FILES src/nethuns/nethuns.h src/nethuns/priv/compiler.h
-                                                                src/nethuns/priv/devpcap.h
-                                                                src/nethuns/priv/filepcap.h
-                                                                src/nethuns/priv/netmap.h
-                                                                src/nethuns/priv/tpacket_v3.h
-                                                                src/nethuns/priv/ring.h
-                                                                src/nethuns/priv/types.h
-                                                                src/nethuns/priv/stub.h)
+install_files(/include/nethuns         FILES src/nethuns/nethuns.h src/nethuns/types.h)
+install_files(/include/nethuns/sockets FILES src/nethuns/nethuns.h src/nethuns/sockets/compiler.h
+                                                                src/nethuns/sockets/devpcap.h
+                                                                src/nethuns/sockets/filepcap.h
+                                                                src/nethuns/sockets/netmap.h
+                                                                src/nethuns/sockets/tpacket_v3.h
+                                                                src/nethuns/sockets/ring.h
+                                                                src/nethuns/sockets/types.h
+                                                                src/nethuns/sockets/stub.h)
 
                                                             

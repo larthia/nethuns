@@ -6,10 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../util/compiler.h"
+#include "../util/macro.h"
 #include "../nethuns.h"
 #include "stub.h"
-#include "compiler.h"
-
 #include "ring.h"
 
 #define TCPDUMP_MAGIC           0xa1b2c3d4

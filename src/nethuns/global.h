@@ -6,7 +6,7 @@
 #define _GNU_SOURCE
 #endif
 
-#include "priv/hashmap.h"
+#include "util/hashmap.h"
 
 #if defined (NETHUNS_USE_XDP)
 #include <linux/bpf.h>

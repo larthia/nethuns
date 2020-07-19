@@ -4,8 +4,8 @@
 #include <netinet/if_ether.h>
 #include <net/ethernet.h>
 
-#include "priv/compiler.h"
-#include "priv/stub.h"
+#include "util/compiler.h"
+#include "sockets/stub.h"
 #include "types.h"
 #include "global.h"
 

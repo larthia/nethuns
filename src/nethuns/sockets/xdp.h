@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "../types.h"
-#include "compiler.h"
+#include "../util/compiler.h"
 #include "xdp_pkthdr.h"
 
 #ifdef __cplusplus

@@ -4,7 +4,8 @@
 #include <pcap/pcap.h>
 
 #include "../types.h"
-#include "compiler.h"
+#include "../util/compiler.h"
+#include "../util/macro.h"
 
 struct nethuns_socket_devpcap
 {

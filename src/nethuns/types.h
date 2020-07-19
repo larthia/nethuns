@@ -1,7 +1,7 @@
 #pragma once
 
-#include "priv/ring.h"
-#include "priv/types.h"
+#include "sockets/ring.h"
+#include "sockets/types.h"
 #include <stdint.h>
 #include <stdbool.h>
 

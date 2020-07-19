@@ -1,5 +1,7 @@
 #include "../nethuns.h"
-#include "compiler.h"
+#include "../util/macro.h"
+#include "../util/compiler.h"
+
 #include "devpcap.h"
 #include "ring.h"
 
