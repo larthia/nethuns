@@ -167,10 +167,12 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
 	    unload_xdp_program(s);
 
         nethuns_lock_global();
+
         if (!--__nethuns_global.umem_refcnt) {
             xsk_umem__delete(__nethuns_global.umem->umem);
             munmap(__nethuns_global.bufs, __nethuns_global.total_mem);
         }
+
         nethuns_unlock_global();
 
         if (nethuns_socket(s)->opt.promisc)

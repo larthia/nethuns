@@ -25,3 +25,4 @@ struct xsk_socket_info {
 };
 
 struct xsk_umem_info *xsk_configure_umem(void *buffer, size_t size, size_t frame_size);
+int xsk_populate_fill_ring(struct xsk_umem_info *umem, size_t frame_size);
