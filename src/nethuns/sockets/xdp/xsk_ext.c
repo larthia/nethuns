@@ -7,7 +7,8 @@
 #include <nethuns/sockets/xdp.h>
 #include <nethuns/nethuns.h>
 
-struct xsk_umem_info *xsk_configure_umem(
+struct xsk_umem_info *
+xsk_configure_umem(
 	  struct nethuns_socket_xdp *sock
 	, void *buffer
 	, size_t size
@@ -41,8 +42,9 @@ struct xsk_umem_info *xsk_configure_umem(
 }
 
 
-int xsk_populate_fill_ring(
-	  struct nethuns_socket_xdp *sock
+int 
+xsk_populate_fill_ring(
+	struct nethuns_socket_xdp *sock
 	, struct xsk_umem_info *umem
 	, size_t frame_size)
 {

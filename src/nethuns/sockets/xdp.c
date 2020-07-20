@@ -48,7 +48,7 @@ load_xdp_program(struct nethuns_socket_xdp *sock)
     //
     if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &sock->prog_id, sock->xdp_flags)) {
         nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link_id: get link xpd failed");
-	return -1;
+	    return -1;
     }
 
     return 0;
@@ -141,6 +141,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 	    }
         
 	    __nethuns_global.umem = xsk_configure_umem(sock, __nethuns_global.bufs, __nethuns_global.total_mem, opt->packetsize);
+
         if (! __nethuns_global.umem) {
             nethuns_perror(errbuf, "open: XDP configure umem failed!");
             munmap(__nethuns_global.bufs, __nethuns_global.total_mem);
@@ -150,6 +151,8 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     }
 
     nethuns_unlock_global();
+
+
 
     sock->base.opt = *opt;
 
@@ -201,7 +204,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
 
     if (load_xdp_program(s) < 0) {
-	return -1;
+	    return -1;
     }
 
 
