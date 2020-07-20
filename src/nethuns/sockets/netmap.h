@@ -81,7 +81,7 @@ nethuns_offvlan_tpid_netmap(__maybe_unused struct nm_pkthdr const *hdr) {
 }
 
 static inline uint16_t
-nethuns_offvlan_tci_netmap(__maybe_unused nm_pkthdr const *hdr) {
+nethuns_offvlan_tci_netmap(__maybe_unused struct nm_pkthdr const *hdr) {
     return 0;
 }
 
