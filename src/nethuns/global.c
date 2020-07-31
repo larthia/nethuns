@@ -14,9 +14,10 @@ void __attribute__ ((constructor))
 nethuns_global_init() {
 
     pthread_mutex_init(&__nethuns_global.m, NULL);
+
     fprintf(stderr, "nethuns: initializing...\n");
 
-    if (hashmap_create(64, &__nethuns_global.netinfo)) {
+    if (hashmap_create(64, &__nethuns_global.netinfo_map)) {
 		fprintf(stderr, "nethuns: could not create netinfo hashmap\n");
 		exit(EXIT_FAILURE);
     }
@@ -36,20 +37,24 @@ nethuns_global_init() {
 void __attribute__ ((destructor))
 nethuns_global_fini() {
     fprintf(stderr, "nethuns: cleanup...\n");
-    hashmap_destroy(&__nethuns_global.netinfo);
+    hashmap_destroy(&__nethuns_global.netinfo_map);
 }
 
 struct nethuns_netinfo *
 nethuns_lookup_netinfo(const char *dev)
 {
-    return  hashmap_get(&__nethuns_global.netinfo, dev, strlen(dev));
+    return  hashmap_get(&__nethuns_global.netinfo_map, dev, strlen(dev));
 }
 
 struct nethuns_netinfo *
 nethuns_create_netinfo(const char *dev)
 {
-    void * data = calloc(sizeof(struct nethuns_netinfo), 1);
-    if (hashmap_put(&__nethuns_global.netinfo, dev, strlen(dev), data) != 0) {
+    void * data = malloc(sizeof(struct nethuns_netinfo));
+    nethuns_netinfo_init(data);
+
+    if (hashmap_put(&__nethuns_global.netinfo_map, dev, strlen(dev), data) != 0)
+    {
+        nethuns_netinfo_fini(data);
         free(data);
         return NULL;
     }

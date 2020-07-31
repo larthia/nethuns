@@ -7,19 +7,35 @@
 #endif
 
 #include "util/hashmap.h"
+#include "util/compiler.h"
 
 #if defined (NETHUNS_USE_XDP)
 #include <linux/bpf.h>
 #endif
 
 struct nethuns_netinfo {
-    int promisc_refcnt;
+    int      promisc_refcnt;
+    int      xdp_prog_refcnt;
+    uint32_t xdp_prog_id;
 };
+
+static inline
+void nethuns_netinfo_init(struct nethuns_netinfo *info)
+{
+    info->promisc_refcnt  = 0;
+    info->xdp_prog_refcnt = 0;
+    info->xdp_prog_id     = 0;
+}
+
+static inline
+void nethuns_netinfo_fini(__maybe_unused struct nethuns_netinfo *info)
+{
+}
 
 struct nethuns_global
 {
     pthread_mutex_t m;
-    struct hashmap_s netinfo;
+    struct hashmap_s netinfo_map;
 };
 
 extern struct nethuns_global __nethuns_global;
