@@ -55,6 +55,7 @@ try
     ,   .promisc         = false
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
+    ,   .xdp_prog        = nullptr 
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

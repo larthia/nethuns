@@ -65,6 +65,7 @@ try
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
+    ,   .xdp_prog        = nullptr
     };
 
     struct nethuns_socket_options out_opt =
@@ -78,6 +79,7 @@ try
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
+    ,   .xdp_prog        = nullptr 
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

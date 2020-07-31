@@ -49,6 +49,7 @@ main(int argc, char *argv[])
     ,   .promisc         = true
     ,   .rxhash          = true
     ,   .tx_qdisc_bypass = false
+    ,   .xdp_prog        = NULL 
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

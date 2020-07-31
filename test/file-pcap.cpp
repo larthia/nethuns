@@ -53,6 +53,7 @@ try
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
+        ,   .xdp_prog        = nullptr 
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -100,6 +101,7 @@ try
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
+        ,   .xdp_prog        = nullptr 
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
