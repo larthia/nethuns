@@ -20,38 +20,57 @@
 #include "xdp/xsk_ext.h"
 
 static int
-load_xdp_program(struct nethuns_socket_xdp *sock)
+load_xdp_program(struct nethuns_socket_xdp *sock, const char *dev)
 {
-    struct bpf_prog_load_attr prog_load_attr = {
-        .prog_type      = BPF_PROG_TYPE_XDP,
-        .file           = "/etc/nethuns/net_xdp.o"
-    };
+    nethuns_lock_global();
 
-    int prog_fd;
-
-    if (bpf_prog_load_xattr(&prog_load_attr, &sock->obj, &prog_fd)) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: could not load program");
-        return -1;
+    struct nethuns_netinfo *info = nethuns_lookup_netinfo(dev);
+    if (info == NULL) {
+        info = nethuns_create_netinfo(dev);
+        if (info == NULL) {
+            goto err;
+        }
     }
 
-    if (prog_fd < 0) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: no program found: %s", strerror(prog_fd));
-        return -1;
+    if (info->xdp_prog_refcnt++ == 0) {
+
+        struct bpf_prog_load_attr prog_load_attr = {
+            .prog_type      = BPF_PROG_TYPE_XDP,
+            .file           = nethuns_socket(sock)->opt.xdp_prog,
+        };
+
+        int prog_fd;
+
+        if (bpf_prog_load_xattr(&prog_load_attr, &sock->obj, &prog_fd)) {
+            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: could not load program");
+            goto err;
+        }
+
+        if (prog_fd < 0) {
+            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: no program found: %s", strerror(prog_fd));
+            goto err;
+        }
+
+        if (bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, prog_fd, sock->xdp_flags) < 0) {
+            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_set_link_fd: set link xpd failed");
+            goto err;
+        }
+
+        // retrieve the actual xdp program id...
+        //
+
+        if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &info->xdp_prog_id, sock->xdp_flags))
+        {
+            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link_id: get link xpd failed");
+            goto err;
+        }
     }
 
-    if (bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, prog_fd, sock->xdp_flags) < 0) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_set_link_fd: set link xpd failed");
-        return -1;
-    }
-
-    // retrieve the actual xdp program id...
-    //
-    if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &sock->prog_id, sock->xdp_flags)) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link_id: get link xpd failed");
-	    return -1;
-    }
-
+    nethuns_unlock_global();
     return 0;
+err:
+    nethuns_unlock_global();
+    return -1;
 }
 
 
@@ -60,19 +79,38 @@ unload_xdp_program(struct nethuns_socket_xdp *sock)
 {
     uint32_t curr_prog_id = 0;
 
-    if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &curr_prog_id, sock->xdp_flags)) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link: could get xdp id");
-        return -1;
+    nethuns_lock_global();
+
+    struct nethuns_netinfo *info = nethuns_lookup_netinfo(nethuns_socket(sock)->devname);
+    if (info != NULL) { 
+        if (--info->xdp_prog_refcnt == 0) 
+        {
+            if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &curr_prog_id, sock->xdp_flags)) {
+                nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link: could get xdp id");
+                goto err;
+            }
+
+            if (info->xdp_prog_id == curr_prog_id) {
+	            bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, -1, sock->xdp_flags);
+
+            } else if (!curr_prog_id) {
+                nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: could get find a prog id on dev '%s'", nethuns_socket(sock)->devname);
+                goto err;
+            } else {
+                nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: program on dev '%s' changed?", nethuns_socket(sock)->devname);
+                goto err;
+            }
+        }
+    } else {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "unload_xdp_program: could not find dev '%s'", nethuns_socket(sock)->devname);
+        goto err;
     }
 
-    if (sock->prog_id == curr_prog_id)
-	bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, -1, sock->xdp_flags);
-    else if (!curr_prog_id)
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: could get find a prog id on interface '%d'", nethuns_socket(sock)->ifindex);
-    else
-        nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: program on interface '%d' changed.", nethuns_socket(sock)->ifindex);
-
+    nethuns_unlock_global();
     return 0;
+  err:
+    nethuns_unlock_global();
+    return -1;
 }
 
 
@@ -130,6 +168,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     sock->bufs = mmap(NULL, sock->total_mem,
                                  PROT_READ | PROT_WRITE,
                                  MAP_PRIVATE | MAP_ANONYMOUS /* | MAP_HUGETLB */, -1, 0);
+
     if (sock->bufs == MAP_FAILED) {
         nethuns_perror(errbuf, "open: XDP bufs mmap failed");
         free(sock);
@@ -188,8 +227,10 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     nethuns_socket(s)->queue   = NETHUNS_ANY_QUEUE;
     nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
 
-    if (load_xdp_program(s) < 0) {
-	    return -1;
+    if (nethuns_socket(s)->opt.xdp_prog) {
+        if (load_xdp_program(s, dev) < 0) {
+    	    return -1;
+        }
     }
 
     nethuns_socket(s)->devname = strdup(dev);
