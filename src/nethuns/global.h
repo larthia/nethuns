@@ -20,13 +20,6 @@ struct nethuns_global
 {
     pthread_mutex_t m;
     struct hashmap_s netinfo;
-
-#if defined (NETHUNS_USE_XDP)
-    struct xsk_umem_info *umem;
-    void *bufs;
-    int umem_refcnt;
-    size_t total_mem;
-#endif
 };
 
 extern struct nethuns_global __nethuns_global;

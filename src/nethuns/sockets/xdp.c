@@ -122,69 +122,54 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 
     nethuns_socket(sock)->ifindex = 0;
 
-    nethuns_lock_global();
+    // TODO: support for HUGE pages
+    // -> opt_umem_flags |= XDP_UMEM_UNALIGNED_CHUNK_FLAG;
 
-    if (!__nethuns_global.umem_refcnt++) {
+    sock->total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
 
-        // TODO: support for HUGE pages
-        // -> opt_umem_flags |= XDP_UMEM_UNALIGNED_CHUNK_FLAG;
-
-        __nethuns_global.total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
-
-        __nethuns_global.bufs = mmap(NULL, __nethuns_global.total_mem,
-                                     PROT_READ | PROT_WRITE,
-                                     MAP_PRIVATE | MAP_ANONYMOUS /* | MAP_HUGETLB */, -1, 0);
-        if (__nethuns_global.bufs == MAP_FAILED) {
-            nethuns_perror(errbuf, "open: XDP bufs mmap failed");
-            free(sock);
-            return NULL;
-	    }
-        
-	    __nethuns_global.umem = xsk_configure_umem(sock, __nethuns_global.bufs, __nethuns_global.total_mem, opt->packetsize);
-
-        if (! __nethuns_global.umem) {
-            nethuns_perror(errbuf, "open: XDP configure umem failed!");
-            munmap(__nethuns_global.bufs, __nethuns_global.total_mem);
-            free(sock);
-            return NULL;
-        }
+    sock->bufs = mmap(NULL, sock->total_mem,
+                                 PROT_READ | PROT_WRITE,
+                                 MAP_PRIVATE | MAP_ANONYMOUS /* | MAP_HUGETLB */, -1, 0);
+    if (sock->bufs == MAP_FAILED) {
+        nethuns_perror(errbuf, "open: XDP bufs mmap failed");
+        free(sock);
+        return NULL;
     }
 
-    nethuns_unlock_global();
+	sock->umem = xsk_configure_umem(sock, sock->bufs, sock->total_mem, opt->packetsize);
 
+    if (!sock->umem) {
+        nethuns_perror(errbuf, "open: XDP configure umem failed!");
+        munmap(sock->bufs, sock->total_mem);
+        free(sock);
+        return NULL;
+    }
 
-
-    sock->base.opt = *opt;
+    nethuns_socket(sock)->opt = *opt;
 
     return sock;
 }
 
 
-int nethuns_close_xdp(struct nethuns_socket_xdp *s)
+int nethuns_close_xdp(struct nethuns_socket_xdp *sock)
 {
-    if (s)
+    if (sock)
     {
 	    // TODO: socket delete
 	    // TODO: umem delete
 
-	    unload_xdp_program(s);
+	    unload_xdp_program(sock); // TODO ????
 
-        nethuns_lock_global();
+        xsk_umem__delete(sock->umem->umem);
+        munmap(sock->bufs, sock->total_mem);
 
-        if (!--__nethuns_global.umem_refcnt) {
-            xsk_umem__delete(__nethuns_global.umem->umem);
-            munmap(__nethuns_global.bufs, __nethuns_global.total_mem);
-        }
-
-        nethuns_unlock_global();
-
-        if (nethuns_socket(s)->opt.promisc)
+        if (nethuns_socket(sock)->opt.promisc)
         {
-            __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
+            __nethuns_clear_if_promisc(sock, nethuns_socket(sock)->devname);
         }
 
-        __nethuns_free_base(s);
-        free(s);
+        __nethuns_free_base(sock);
+        free(sock);
     }
     return 0;
 }
@@ -206,7 +191,6 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     if (load_xdp_program(s) < 0) {
 	    return -1;
     }
-
 
     nethuns_socket(s)->devname = strdup(dev);
 

@@ -5,6 +5,7 @@
 #include "../types.h"
 #include "../util/compiler.h"
 #include "xdp_pkthdr.h"
+#include "xdp/xsk_ext.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,9 +19,14 @@ struct nethuns_socket_xdp
     uint32_t xdp_bind_flags;
     uint32_t prog_id;
 
-    struct bpf_object *obj; 
-};
+    struct bpf_object *obj;
 
+    struct xsk_socket_info *xsk;
+
+    struct xsk_umem_info *umem;
+    void *bufs;
+    size_t total_mem;
+};
 
 static inline uint32_t
 nethuns_tstamp_sec_xdp(struct xdp_pkthdr const *hdr) {
