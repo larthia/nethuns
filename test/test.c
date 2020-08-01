@@ -42,7 +42,7 @@ main(int argc, char *argv[])
     struct nethuns_socket_options opt =
     {
         .numblocks       = 4
-    ,   .numpackets      = 65536
+    ,   .numpackets      = 4096 
     ,   .packetsize      = 2048
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
@@ -63,7 +63,8 @@ main(int argc, char *argv[])
         return -1;
     }
 
-    if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
+    //if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
+    if (nethuns_bind(s, argv[1], 0) < 0)
     {
         fprintf(stderr, "%s\n", nethuns_error(s));
         return -1;
@@ -81,7 +82,8 @@ main(int argc, char *argv[])
             dump_packet(pkthdr, frame);
             nethuns_release(s, pkt_id);
         }
-	usleep(1);
+	
+        usleep(1);
     }
 
     printf("done.\n");
