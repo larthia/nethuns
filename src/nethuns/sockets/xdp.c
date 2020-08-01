@@ -253,8 +253,6 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
 
 int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 {
-    char errbuf[1024];
-
     if (queue == NETHUNS_ANY_QUEUE)
     {
         nethuns_perror(nethuns_socket(s)->errbuf, "bind: ANY_QUEUE is currently not supported by this device");
