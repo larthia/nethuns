@@ -422,16 +422,35 @@ nethuns_flush_xdp(__maybe_unused struct nethuns_socket_xdp *s)
 int
 nethuns_stats_xdp(struct nethuns_socket_xdp *s, struct nethuns_stats *stats)
 {
-    // struct pcap_stat ps;
-    // if (pcap_stats(s->p, &ps) == -1)
-    // {
-    //     return -1;
-    // }
+    struct xdp_statistics xdp_stats;
 
-    stats->packets = 0;
-    stats->drops   = 0;
-    stats->ifdrops = 0;
-    stats->freeze  = 0;
+    if (likely(s->xsk != NULL))
+    {
+        socklen_t len = sizeof(xdp_stats);
+
+        stats->rx_packets = __atomic_load_n(&s->xsk->rx_npkts, __ATOMIC_RELAXED);
+        stats->tx_packets = __atomic_load_n(&s->xsk->tx_npkts, __ATOMIC_RELAXED);
+
+        if (getsockopt(xsk_socket__fd(s->xsk->xsk), SOL_XDP, XDP_STATISTICS, &xdp_stats, &len) == 0) {
+            stats->rx_dropped = xdp_stats.rx_dropped;
+            stats->rx_invalid = xdp_stats.rx_invalid_descs;
+            stats->tx_invalid = xdp_stats.tx_invalid_descs;
+        } else {
+            stats->rx_dropped = 0;
+            stats->rx_invalid = 0;
+            stats->tx_invalid = 0;
+        }
+    }
+    else {
+        stats->rx_packets = 0;
+        stats->tx_packets = 0;
+        stats->rx_invalid = 0;
+        stats->tx_invalid = 0;
+        stats->rx_dropped = 0;
+    }
+
+    stats->rx_if_dropped = 0;
+    stats->freeze        = 0;
     return 0;
 }
 

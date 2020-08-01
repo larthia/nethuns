@@ -220,10 +220,13 @@ nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stats *st
         return -1;
     }
 
-    stats->packets = ps.ps_recv;
-    stats->drops   = ps.ps_drop;
-    stats->ifdrops = ps.ps_ifdrop;
-    stats->freeze  = 0;
+    stats->rx_packets    = ps.ps_recv;
+    stats->tx_packets    = 0;
+    stats->rx_dropped    = ps.ps_drop;
+    stats->rx_if_dropped = ps.ps_ifdrop;
+    stats->rx_invalid    = 0;
+    stats->tx_invalid    = 0;
+    stats->freeze        = 0;
     return 0;
 }
 

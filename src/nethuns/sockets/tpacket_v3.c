@@ -517,8 +517,13 @@ nethuns_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_sta
         return -1;
     }
 
-    stats->packets = _stats.tp_packets;
-    stats->drops   = _stats.tp_drops;
-    stats->freeze  = _stats.tp_freeze_q_cnt;
+    stats->rx_packets    = _stats.tp_packets;
+    stats->rx_dropped    = _stats.tp_drops;
+    stats->freeze        = _stats.tp_freeze_q_cnt;
+    stats->tx_packets    = 0;
+    stats->rx_if_dropped = 0;
+    stats->rx_invalid    = 0;
+    stats->tx_invalid    = 0;
+
     return 0;
 }

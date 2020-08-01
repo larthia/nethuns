@@ -157,10 +157,13 @@ nethuns_flush_netmap(struct nethuns_socket_netmap *s)
 int
 nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stats *stats)
 {
-    stats->packets = s->p->st.ps_recv;
-    stats->drops   = s->p->st.ps_drop;
-    stats->ifdrops = s->p->st.ps_ifdrop;
-    stats->freeze  = 0;
+    stats->rx_packets    = s->p->st.ps_recv;
+    stats->tx_packets    = 0;
+    stats->rx_dropped    = s->p->st.ps_drop;
+    stats->rx_if_dropped = s->p->st.ps_ifdrop;
+    stats->rx_invalid    = 0;
+    stats->tx_invalid    = 0;
+    stats->freeze        = 0;
     return 0;
 }
 

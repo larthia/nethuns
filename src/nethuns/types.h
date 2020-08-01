@@ -71,9 +71,12 @@ typedef struct nethuns_socket_base  nethuns_socket_base_t;
 
 struct nethuns_stats
 {
-    uint64_t     packets;
-    uint64_t     drops;
-    uint64_t     ifdrops;
+    uint64_t     rx_packets;
+    uint64_t     tx_packets;
+    uint64_t     rx_dropped;
+    uint64_t     rx_if_dropped;
+    uint64_t     rx_invalid;        // xdp only
+    uint64_t     tx_invalid;        // xdp only
     uint64_t     freeze;
 };
 
