@@ -241,7 +241,7 @@ int nethuns_fd_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 
 
 static int
-__nethuns_blocks_free(uint64_t blockid, void *user)
+__nethuns_blocks_free(__maybe_unused struct nethuns_ring_slot *slot,  uint64_t blockid, void *user)
 {
     struct nethuns_socket_tpacket_v3 * s = (struct nethuns_socket_tpacket_v3 *)user;
     uint64_t rid = s->rx_block_idx_rls;
@@ -269,7 +269,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
                 || (s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)  /* virtual ring is full   */
                 ))
     {
-        nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
+        nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
         // poll(&s->rx_pfd, 1, -1);
         return 0;
     }
@@ -310,7 +310,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         return 0;
     }
 
-    nethuns_ring_free_id(&s->base.ring, __nethuns_blocks_free, s);
+    nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
 
     s->rx_block_idx++;
     s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;

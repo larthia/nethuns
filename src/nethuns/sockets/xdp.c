@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <linux/bpf.h>
 #include <src/libbpf.h>
@@ -282,82 +283,19 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
             return -1;
     }
 
-    // s->p = pcap_create(dev, errbuf);
-    // if (!s->p) {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", errbuf);
-    //     return -1;
-    // }
+    return 0;
+}
 
-    // if (pcap_set_immediate_mode(s->p, 1) != 0)
-    // {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-    //     return -1;
-    // }
 
-    // if (pcap_set_buffer_size(s->p, (int)(nethuns_socket(s)->opt.numblocks * nethuns_socket(s)->opt.numpackets * nethuns_socket(s)->opt.packetsize)) != 0)
-    // {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-    //     return -1;
-    // }
+static int
+__nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t id, void *user)
+{
+    struct nethuns_socket_xdp *s = (struct nethuns_socket_xdp *)user;
+    printf("SLOT FREED!\n");
 
-    // if (nethuns_socket(s)->opt.promisc)
-    // {
-    //     if (pcap_set_promisc(s->p, 1) != 0)
-    //     {
-    //         nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-    //         return -1;
-    //     }
-    // }
-
-    // if (pcap_set_snaplen(s->p, (int)nethuns_socket(s)->opt.packetsize) != 0)
-    // {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-    //     return -1;
-    // }
-
-    // if (pcap_set_timeout(s->p, (int)nethuns_socket(s)->opt.timeout_ms) != 0)
-    // {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-    //     return -1;
-    // }
-
-    // if (pcap_activate(s->p) != 0)
-    // {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
-    //     return -1;
-    // }
-
-    // if (pcap_setnonblock(s->p, 1, errbuf) < 0)
-    // {
-    //     nethuns_perror(s->base.errbuf, "bind: %s", errbuf);
-    //     return -1;
-    // }
-
-    // switch (nethuns_socket(s)->opt.dir)
-    // {
-    //     case nethuns_in: {
-    //         if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
-    //         {
-    //             nethuns_perror(s->base.errbuf, "bind: dir_in %s", pcap_geterr(s->p));
-    //             return -1;
-    //         }
-    //     } break;
-    //     case nethuns_out: {
-    //         if (pcap_setdirection(s->p, PCAP_D_OUT) < 0)
-    //         {
-    //             nethuns_perror(s->base.errbuf, "bind: dir_out %s", pcap_geterr(s->p));
-    //             return -1;
-    //         }
-    //     } break;
-    //     case nethuns_in_out:
-    //     {
-    //         if (pcap_setdirection(s->p, PCAP_D_INOUT) < 0)
-    //         {
-    //             nethuns_perror(s->base.errbuf, "bind: dir_inout %s", pcap_geterr(s->p));
-    //             return -1;
-    //         }
-    //     }
-    // }
+    *xsk_ring_prod__fill_addr(&s->xsk->umem->fq, slot->idx_fq) = slot->orig;
+    xsk_ring_prod__submit(&s->xsk->umem->fq, 1);
+    xsk_ring_cons__release(&s->xsk->rx, 1);
 
     return 0;
 }
@@ -367,38 +305,76 @@ uint64_t
 nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     unsigned int caplen = nethuns_socket(s)->opt.packetsize;
-    unsigned int bytes;
     const uint8_t *ppayload;
+    uint32_t idx_rx = 0, idx_fq = 0;
+    int rcvd, ret;
 
-    // struct pcap_pkthdr header;
+    nethuns_ring_free_slots(&s->base.ring, __nethuns_xdp_free_slots, s);
 
     struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
-
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
     }
 
-    // ppayload = pcap_next(s->p, &header);
+    // retrieve the pointer to the packet
+    //
 
-    // bytes = MIN(caplen, header.caplen);
+    rcvd = xsk_ring_cons__peek(&s->xsk->rx, 1, &idx_rx);
+    if (rcvd == 0)  {
+        return 0;
+    }
 
-    // if (ppayload)
-    // {
-    //     if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload))
-    //     {
-    //         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
-    //         memcpy(slot->packet, ppayload, bytes);
-    //         slot->pkthdr.caplen = bytes;
+    ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
+    while (ret != rcvd) {
+		if (ret < 0) {
+            nethuns_perror(s->base.errbuf, "recv: prod__reserve: %s", strerror(errno));
+            return -1;
+        }
 
-    //         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+		if (xsk_ring_prod__needs_wakeup(&s->xsk->umem->fq)) {
+            // ret = poll(fds, num_socks, opt_timeout);
+            pthread_yield();
+        }
 
-    //         *pkthdr  = &slot->pkthdr;
-    //         *payload =  slot->packet;
+		ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
+	}
 
-    //         return ++s->base.ring.head;
-    //     }
-    // }
+	uint64_t addr = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->addr;
+	uint32_t len = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->len;
+	uint64_t orig = xsk_umem__extract_addr(addr);
+
+	addr = xsk_umem__add_offset_to_addr(addr);
+	unsigned char *pkt = xsk_umem__get_data(s->xsk->umem->buffer, addr);
+
+    __atomic_add_fetch(&s->xsk->rx_npkts, rcvd, __ATOMIC_RELAXED);
+
+    // get timestamp...
+    struct timespec tp;
+    clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
+
+    struct xdp_pkthdr header = {
+        .sec     = (int32_t)tp.tv_sec
+      , .nsec    = (int32_t)tp.tv_nsec
+      , .len     = len 
+      , .snaplen = len 
+    };
+
+    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload))
+    {
+        printf("GOT A PACKET!\n");
+        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+
+        slot->orig   = orig;
+        slot->idx_fq = idx_fq;
+        slot->packet = pkt;
+    
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+        *pkthdr  = &slot->pkthdr;
+        *payload =  slot->packet;
+        return ++s->base.ring.head;
+    }
 
     return 0;
 }

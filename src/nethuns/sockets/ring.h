@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "../util/macro.h"
+#include "../util/compiler.h"
+
 struct nethuns_ring_slot
 {
 #if defined (NETHUNS_USE_TPACKET_V3)
@@ -29,11 +32,18 @@ struct nethuns_ring_slot
     struct pcap_pkthdr      pkthdr;
 #elif defined (NETHUNS_USE_XDP)
     struct xdp_pkthdr       pkthdr;
+    uint64_t                orig;
+    int32_t                 idx_fq;
 #endif
     uint64_t                id;
     int                     inuse;
     unsigned char           pad[2];
+
+#if defined (NETHUNS_USE_XDP)
+    unsigned char           *packet;
+#else
     unsigned char           packet[];
+#endif
 };
 
 
@@ -73,6 +83,26 @@ nethuns_get_ring_slot(struct nethuns_ring *ring, size_t n)
 
 
 static inline
+size_t
+nethuns_count_free_slot(struct nethuns_ring *ring, size_t n)
+{
+    size_t last = n + MIN(ring->size - 1, (size_t)32);
+    size_t total = 0;
+    for (size_t x = n; x < last; x++)
+    {
+        struct nethuns_ring_slot *s = nethuns_get_ring_slot(ring, x);
+        if (likely(!__atomic_load_n(&s->inuse, __ATOMIC_ACQUIRE))) {
+            total++;
+        }
+        else {
+            break;
+        }
+    }
+
+    return total;
+}
+
+static inline
 struct nethuns_ring_slot *
 nethuns_ring_next(struct nethuns_ring *ring)
 {
@@ -80,18 +110,20 @@ nethuns_ring_next(struct nethuns_ring *ring)
 }
 
 
-typedef int(*nethuns_free_id_t)(uint64_t id, void *user);
+typedef int(*nethuns_free_slot_t)(struct nethuns_ring_slot *slot, uint64_t id, void *user);
 
 
 static inline int
-nethuns_ring_free_id(struct nethuns_ring *ring, nethuns_free_id_t cb, void *user)
+nethuns_ring_free_slots(struct nethuns_ring *ring, nethuns_free_slot_t cb, void *user)
 {
     int n = 0;
 
-    while (ring->tail != ring->head && !__atomic_load_n(&nethuns_get_ring_slot(ring, ring->tail)->inuse, __ATOMIC_ACQUIRE))
+    struct nethuns_ring_slot *slot = nethuns_get_ring_slot(ring, ring->tail);
+
+    while (ring->tail != ring->head && !__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
-        cb(nethuns_get_ring_slot(ring, ring->tail)->id, user);
-        ring->tail++;
+        cb(slot, nethuns_get_ring_slot(ring, ring->tail)->id, user);
+        slot = nethuns_get_ring_slot(ring, ++ring->tail);
     }
 
     return n;
