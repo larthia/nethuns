@@ -45,7 +45,8 @@ main(int argc, char *argv[])
     ,   .numpackets      = 65536
     ,   .packetsize      = 2048
     ,   .dir             = nethuns_in_out
-    ,   .mode            = nethuns_cap_default
+    ,   .capture         = nethuns_cap_default
+    ,   .mode            = nethuns_socket_rx_tx
     ,   .promisc         = true
     ,   .rxhash          = true
     ,   .tx_qdisc_bypass = false

@@ -29,6 +29,13 @@ enum nethuns_capture_mode
 };
 
 
+enum nethuns_socket_mode
+{
+    nethuns_socket_rx_tx
+ ,  nethuns_socket_rx_only
+ ,  nethuns_socket_tx_only
+};
+
 struct nethuns_socket_options
 {
     unsigned int                numblocks;
@@ -36,7 +43,8 @@ struct nethuns_socket_options
     unsigned int                packetsize;
     unsigned int                timeout_ms;
     enum nethuns_capture_dir    dir;
-    enum nethuns_capture_mode 	mode;
+    enum nethuns_capture_mode 	capture;
+    enum nethuns_socket_mode 	mode;
     bool                        promisc;
     bool                        rxhash;
     bool                        tx_qdisc_bypass;

@@ -49,7 +49,8 @@ try
         ,   .packetsize      = 2048
         ,   .timeout_ms      = 0
         ,   .dir             = nethuns_in_out
-        ,   .mode            = nethuns_cap_default
+        ,   .capture         = nethuns_cap_default
+        ,   .mode            = nethuns_socket_rx_tx
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
