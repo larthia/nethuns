@@ -146,7 +146,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     s->xdp_flags = 0; // or safer XDP_FLAGS_UPDATE_IF_NOEXIST;
     s->xdp_bind_flags = XDP_USE_NEED_WAKEUP;
 
-    switch(opt->mode)
+    switch(opt->capture)
     {
     case nethuns_cap_default: {
     	s->xdp_flags |= XDP_FLAGS_SKB_MODE;
@@ -228,7 +228,7 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
     if (s)
     {
         if (s->xsk)  {
-            xsk_socket__delete(s->xsk);
+            xsk_socket__delete(s->xsk->xsk);
         }
 
         xsk_umem__delete(s->umem->umem);
