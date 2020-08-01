@@ -510,7 +510,8 @@ int
 nethuns_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_stat *stats)
 {
     struct tpacket_stats_v3 _stats;
-    socklen_t len;
+    socklen_t len = sizeof(_stats);
+
     if (getsockopt(s->fd, SOL_PACKET, PACKET_STATISTICS, &_stats, &len) < 0)
     {
         nethuns_perror(s->base.errbuf, "stats");
