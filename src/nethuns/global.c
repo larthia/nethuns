@@ -7,6 +7,8 @@
 #include <sys/resource.h>
 #endif
 
+#include <nethuns/nethuns.h>
+
 struct nethuns_global __nethuns_global;
 
 
