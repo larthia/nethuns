@@ -155,7 +155,7 @@ nethuns_flush_netmap(struct nethuns_socket_netmap *s)
 
 
 int
-nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stats *stats)
+nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stat *stats)
 {
     stats->rx_packets    = s->p->st.ps_recv;
     stats->tx_packets    = 0;

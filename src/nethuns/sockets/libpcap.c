@@ -212,7 +212,7 @@ nethuns_flush_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 
 
 int
-nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stats *stats)
+nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stat *stats)
 {
     struct pcap_stat ps;
     if (pcap_stats(s->p, &ps) == -1)

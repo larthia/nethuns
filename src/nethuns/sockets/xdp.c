@@ -420,7 +420,7 @@ nethuns_flush_xdp(__maybe_unused struct nethuns_socket_xdp *s)
 
 
 int
-nethuns_stats_xdp(struct nethuns_socket_xdp *s, struct nethuns_stats *stats)
+nethuns_stats_xdp(struct nethuns_socket_xdp *s, struct nethuns_stat *stats)
 {
     struct xdp_statistics xdp_stats;
 

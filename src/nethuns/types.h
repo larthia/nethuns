@@ -69,7 +69,7 @@ struct nethuns_socket_base
 typedef struct nethuns_socket_base  nethuns_socket_base_t;
 
 
-struct nethuns_stats
+struct nethuns_stat
 {
     uint64_t     rx_packets;
     uint64_t     tx_packets;
