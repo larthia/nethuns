@@ -6,26 +6,10 @@
 #include <chrono>
 #include <iostream>
 
-void dump_packet(nethuns_pkthdr_t *hdr, unsigned char *frame)
-{
-    int i = 0;
-
-    printf("%u:%u snap:%u len:%u ", nethuns_tstamp_sec(hdr)
-                                  , nethuns_tstamp_nsec(hdr)
-                                  , nethuns_snaplen(hdr)
-                                  , nethuns_len(hdr));
-    for(; i < 14; i++)
-    {
-        printf("%02x ", frame[i]);
-    }
-
-    printf("\n");
-}
-
 
 std::atomic_long total;
 
-void meter()
+void meter(nethuns_socket_t *s)
 {
     auto now = std::chrono::system_clock::now();
     for(;;)
@@ -33,7 +17,12 @@ void meter()
         now += std::chrono::seconds(1);
         std::this_thread::sleep_until(now);
         auto x = total.exchange(0);
-        std::cout << "pkt/sec: " << x << std::endl;
+
+	nethuns_stat stats;
+
+    	nethuns_stats(s, &stats);
+
+    	std::cout << "pkt/sec: " << x << " { rx:" << stats.rx_packets << " tx:" << stats.tx_packets << " drop:" << stats.rx_dropped << " ifdrop:" << stats.rx_if_dropped << " rx_inv:" << stats.rx_invalid << " tx_inv:" << stats.tx_invalid << " freeze:" << stats.freeze << " }" << std::endl;
     }
 }
 
@@ -60,7 +49,7 @@ try
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
-    ,   .xdp_prog        = nullptr 
+    ,   .xdp_prog        = "/etc/nethuns/net_xdp.o" 
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -75,13 +64,16 @@ try
         throw std::runtime_error(nethuns_error(s));
     }
 
-    std::thread(meter).detach();
+    std::thread(meter, s).detach();
 
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
     uint64_t total2 = 0;
-    for(;;)
+
+    auto start = std::chrono::system_clock::now();
+
+    for (;;)
     {
         uint64_t pkt_id;
 
@@ -97,6 +89,10 @@ try
             }
 
             nethuns_release(s, pkt_id);
+        }
+
+        if ((std::chrono::system_clock::now() - start) > std::chrono::seconds(5)) {
+            break;
         }
     }
 

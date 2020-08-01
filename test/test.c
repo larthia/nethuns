@@ -63,8 +63,7 @@ main(int argc, char *argv[])
         return -1;
     }
 
-    //if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
-    if (nethuns_bind(s, argv[1], 0) < 0)
+    if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
         fprintf(stderr, "%s\n", nethuns_error(s));
         return -1;
