@@ -30,7 +30,7 @@ struct xsk_umem_info *
 xsk_configure_umem(struct nethuns_socket_xdp *sock, void *buffer, size_t size, size_t frame_size);
 
 int 
-xsk_populate_fill_ring(struct nethuns_socket_xdp *sock, struct xsk_umem_info *umem, size_t frame_size);
+xsk_populate_fill_ring(struct nethuns_socket_xdp *sock, size_t frame_size);
 
 struct xsk_socket_info *
-xsk_configure_socket(struct nethuns_socket_xdp *sock, struct xsk_umem_info *umem, uint32_t xdp_flags, uint32_t xdp_bind_flags, const char *dev, int ifindex, int queue, uint32_t *prog_id, bool rx, bool tx);
+xsk_configure_socket(struct nethuns_socket_xdp *sock, bool rx, bool tx);

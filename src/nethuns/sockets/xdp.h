@@ -25,6 +25,9 @@ struct nethuns_socket_xdp
     struct xsk_umem_info *umem;
     void *bufs;
     size_t total_mem;
+
+    bool rx;
+    bool tx;
 };
 
 static inline uint32_t

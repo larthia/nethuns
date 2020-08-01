@@ -44,14 +44,13 @@ xsk_configure_umem(
 
 int 
 xsk_populate_fill_ring(
-	struct nethuns_socket_xdp *sock
-	, struct xsk_umem_info *umem
+	  struct nethuns_socket_xdp *sock
 	, size_t frame_size)
 {
 	int ret, i;
 	uint32_t idx;
 
-	ret = xsk_ring_prod__reserve(&umem->fq,
+	ret = xsk_ring_prod__reserve(&sock->umem->fq,
 				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
 
 	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS) {
@@ -60,9 +59,9 @@ xsk_populate_fill_ring(
 	}
 
 	for (i = 0; i < XSK_RING_PROD__DEFAULT_NUM_DESCS; i++)
-		*xsk_ring_prod__fill_addr(&umem->fq, idx++) =
+		*xsk_ring_prod__fill_addr(&sock->umem->fq, idx++) =
 			i * frame_size;
-	xsk_ring_prod__submit(&umem->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
+	xsk_ring_prod__submit(&sock->umem->fq, XSK_RING_PROD__DEFAULT_NUM_DESCS);
 	return 0;
 }
 
@@ -70,13 +69,6 @@ xsk_populate_fill_ring(
 struct xsk_socket_info *
 xsk_configure_socket(
 	  struct nethuns_socket_xdp *sock
-	, struct xsk_umem_info *umem
-	, uint32_t xdp_flags
-	, uint32_t xdp_bind_flags
-	, const char *dev
-	, int ifindex 
-	, int queue
-	, uint32_t *prog_id
 	, bool rx
 	, bool tx)
 {
@@ -90,27 +82,20 @@ xsk_configure_socket(
 	if (!xsk)
 		return NULL;
 
-	xsk->umem = umem;
+	xsk->umem = sock->umem;
 	cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 	cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
 	cfg.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD; 
 
-	cfg.xdp_flags = xdp_flags;
-	cfg.bind_flags = xdp_bind_flags;
+	cfg.xdp_flags = sock->xdp_flags;
+	cfg.bind_flags = sock->xdp_bind_flags;
 
 	rxr = rx ? &xsk->rx : NULL;
 	txr = tx ? &xsk->tx : NULL;
 
-	ret = xsk_socket__create(&xsk->xsk, dev, queue, umem->umem,
-				 rxr, txr, &cfg);
+	ret = xsk_socket__create(&xsk->xsk, nethuns_socket(sock)->devname, nethuns_socket(sock)->queue, sock->umem->umem, rxr, txr, &cfg);
 	if (ret) {
         nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config: could not create socket");
-		return NULL;
-	}
-
-	ret = bpf_get_link_xdp_id(ifindex, prog_id, xdp_flags);
-	if (ret) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config: could not link to xdp program");
 		return NULL;
 	}
 

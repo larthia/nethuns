@@ -20,7 +20,7 @@
 #include "xdp/xsk_ext.h"
 
 static int
-load_xdp_program(struct nethuns_socket_xdp *sock, const char *dev)
+load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
 {
     nethuns_lock_global();
 
@@ -36,34 +36,34 @@ load_xdp_program(struct nethuns_socket_xdp *sock, const char *dev)
 
         struct bpf_prog_load_attr prog_load_attr = {
             .prog_type      = BPF_PROG_TYPE_XDP,
-            .file           = nethuns_socket(sock)->opt.xdp_prog,
+            .file           = nethuns_socket(s)->opt.xdp_prog,
         };
 
         int prog_fd;
 
-        nethuns_fprintf(stderr, "bpf_prog_load: loading %s program...\n", nethuns_socket(sock)->opt.xdp_prog);
+        nethuns_fprintf(stderr, "bpf_prog_load: loading %s program...\n", nethuns_socket(s)->opt.xdp_prog);
 
-        if (bpf_prog_load_xattr(&prog_load_attr, &sock->obj, &prog_fd)) {
-            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: could not load %s program", nethuns_socket(sock)->opt.xdp_prog);
+        if (bpf_prog_load_xattr(&prog_load_attr, &s->obj, &prog_fd)) {
+            nethuns_perror(nethuns_socket(s)->errbuf, "bpf_prog_load: could not load %s program", nethuns_socket(s)->opt.xdp_prog);
             goto err;
         }
 
         if (prog_fd < 0) {
-            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog_load: no program found: %s", strerror(prog_fd));
+            nethuns_perror(nethuns_socket(s)->errbuf, "bpf_prog_load: no program found: %s", strerror(prog_fd));
             goto err;
         }
 
-        if (bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, prog_fd, sock->xdp_flags) < 0) {
-            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_set_link_fd: set link xpd failed");
+        if (bpf_set_link_xdp_fd(nethuns_socket(s)->ifindex, prog_fd, s->xdp_flags) < 0) {
+            nethuns_perror(nethuns_socket(s)->errbuf, "bpf_set_link_fd: set link xpd failed");
             goto err;
         }
 
         // retrieve the actual xdp program id...
         //
 
-        if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &info->xdp_prog_id, sock->xdp_flags))
+        if (bpf_get_link_xdp_id(nethuns_socket(s)->ifindex, &info->xdp_prog_id, s->xdp_flags))
         {
-            nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link_id: get link xpd failed");
+            nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link_id: get link xpd failed");
             goto err;
         }
         
@@ -79,38 +79,38 @@ err:
 
 
 static int
-unload_xdp_program(struct nethuns_socket_xdp *sock)
+unload_xdp_program(struct nethuns_socket_xdp *s)
 {
     uint32_t curr_prog_id = 0;
 
     nethuns_lock_global();
 
-    struct nethuns_netinfo *info = nethuns_lookup_netinfo(nethuns_socket(sock)->devname);
+    struct nethuns_netinfo *info = nethuns_lookup_netinfo(nethuns_socket(s)->devname);
     if (info != NULL) { 
         if (--info->xdp_prog_refcnt == 0) 
         {
-            nethuns_fprintf(stderr, "bpf_prog_load: unloading %s program...\n", nethuns_socket(sock)->opt.xdp_prog);
+            nethuns_fprintf(stderr, "bpf_prog_load: unloading %s program...\n", nethuns_socket(s)->opt.xdp_prog);
 
-            if (bpf_get_link_xdp_id(nethuns_socket(sock)->ifindex, &curr_prog_id, sock->xdp_flags)) {
-                nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_get_link: could get xdp id");
+            if (bpf_get_link_xdp_id(nethuns_socket(s)->ifindex, &curr_prog_id, s->xdp_flags)) {
+                nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link: could get xdp id");
                 goto err;
             }
 
             if (info->xdp_prog_id == curr_prog_id) {
-	            bpf_set_link_xdp_fd(nethuns_socket(sock)->ifindex, -1, sock->xdp_flags);
+	            bpf_set_link_xdp_fd(nethuns_socket(s)->ifindex, -1, s->xdp_flags);
 
             } else if (!curr_prog_id) {
-                nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: could get find a prog id on dev '%s'", nethuns_socket(sock)->devname);
+                nethuns_perror(nethuns_socket(s)->errbuf, "bpf_prog: could get find a prog id on dev '%s'", nethuns_socket(s)->devname);
                 goto err;
             } else {
-                nethuns_perror(nethuns_socket(sock)->errbuf, "bpf_prog: program on dev '%s' changed?", nethuns_socket(sock)->devname);
+                nethuns_perror(nethuns_socket(s)->errbuf, "bpf_prog: program on dev '%s' changed?", nethuns_socket(s)->devname);
                 goto err;
             }
             
             nethuns_fprintf(stderr, "bpf_prog_load: done\n");
         }
     } else {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "unload_xdp_program: could not find dev '%s'", nethuns_socket(sock)->devname);
+        nethuns_perror(nethuns_socket(s)->errbuf, "unload_xdp_program: could not find dev '%s'", nethuns_socket(s)->devname);
         goto err;
     }
 
@@ -125,98 +125,127 @@ unload_xdp_program(struct nethuns_socket_xdp *sock)
 struct nethuns_socket_xdp *
 nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 {
-    struct nethuns_socket_xdp *sock;
+    struct nethuns_socket_xdp *s;
 
-    sock = calloc(1, sizeof(struct nethuns_socket_xdp));
-    if (!sock)
+    s = calloc(1, sizeof(struct nethuns_socket_xdp));
+    if (!s)
     {
         nethuns_perror(errbuf, "open: could not allocate socket");
         return NULL;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.ring) < 0)
     {
         nethuns_perror(errbuf, "open: failed to allocate ring");
-        free(sock);
+        free(s);
         return NULL;
     }
 
     /* set defualt xdp_flags */
 
-    sock->xdp_flags = 0; // or safer XDP_FLAGS_UPDATE_IF_NOEXIST;
-    sock->xdp_bind_flags = XDP_USE_NEED_WAKEUP;
+    s->xdp_flags = 0; // or safer XDP_FLAGS_UPDATE_IF_NOEXIST;
+    s->xdp_bind_flags = XDP_USE_NEED_WAKEUP;
 
     switch(opt->mode)
     {
     case nethuns_cap_default: {
-    	sock->xdp_flags |= XDP_FLAGS_SKB_MODE;
-    	sock->xdp_bind_flags |= XDP_COPY;
+    	s->xdp_flags |= XDP_FLAGS_SKB_MODE;
+    	s->xdp_bind_flags |= XDP_COPY;
     } break;
     case nethuns_cap_skb_mode: {
-    	sock->xdp_flags |= XDP_FLAGS_SKB_MODE;
-    	sock->xdp_bind_flags |= XDP_COPY;
+    	s->xdp_flags |= XDP_FLAGS_SKB_MODE;
+    	s->xdp_bind_flags |= XDP_COPY;
     } break;
     case nethuns_cap_drv_mode: {
-    	sock->xdp_flags |= XDP_FLAGS_DRV_MODE;
-    	sock->xdp_bind_flags |= XDP_COPY;
+    	s->xdp_flags |= XDP_FLAGS_DRV_MODE;
+    	s->xdp_bind_flags |= XDP_COPY;
     } break;
     case nethuns_cap_zero_copy: {
-    	sock->xdp_flags |= XDP_FLAGS_DRV_MODE;
-    	sock->xdp_bind_flags |= XDP_ZEROCOPY;
+    	s->xdp_flags |= XDP_FLAGS_DRV_MODE;
+    	s->xdp_bind_flags |= XDP_ZEROCOPY;
     }
     }
 
-    nethuns_socket(sock)->ifindex = 0;
+    nethuns_socket(s)->ifindex = 0;
 
     // TODO: support for HUGE pages
     // -> opt_umem_flags |= XDP_UMEM_UNALIGNED_CHUNK_FLAG;
 
-    sock->total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
+    s->total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
 
-    sock->bufs = mmap(NULL, sock->total_mem,
+    s->bufs = mmap(NULL, s->total_mem,
                                  PROT_READ | PROT_WRITE,
                                  MAP_PRIVATE | MAP_ANONYMOUS /* | MAP_HUGETLB */, -1, 0);
 
-    if (sock->bufs == MAP_FAILED) {
+    if (s->bufs == MAP_FAILED) {
         nethuns_perror(errbuf, "open: XDP bufs mmap failed");
-        free(sock);
-        return NULL;
+        goto err0;
     }
 
-	sock->umem = xsk_configure_umem(sock, sock->bufs, sock->total_mem, opt->packetsize);
+	s->umem = xsk_configure_umem(s, s->bufs, s->total_mem, opt->packetsize);
 
-    if (!sock->umem) {
+    if (!s->umem) {
         nethuns_perror(errbuf, "open: XDP configure umem failed!");
-        munmap(sock->bufs, sock->total_mem);
-        free(sock);
-        return NULL;
+        goto err1;
     }
 
-    nethuns_socket(sock)->opt = *opt;
+    s->rx = false;
+    s->tx = false;
 
-    return sock;
-}
+    if (opt->mode == nethuns_socket_rx_tx || 
+        opt->mode == nethuns_socket_rx_only) {
 
-
-int nethuns_close_xdp(struct nethuns_socket_xdp *sock)
-{
-    if (sock)
-    {
-	    // TODO: socket delete
-	    // TODO: umem delete
-
-	    unload_xdp_program(sock); // TODO ????
-
-        xsk_umem__delete(sock->umem->umem);
-        munmap(sock->bufs, sock->total_mem);
-
-        if (nethuns_socket(sock)->opt.promisc)
-        {
-            __nethuns_clear_if_promisc(sock, nethuns_socket(sock)->devname);
+        // check capture size...
+        if (opt->packetsize > 4096) {
+            nethuns_perror(errbuf, "open: XDP packet size too large!");
+            goto err1;
         }
 
-        __nethuns_free_base(sock);
-        free(sock);
+        s->rx = true;
+        xsk_populate_fill_ring(s, opt->packetsize <= 2048 ? 2048 : 4096);
+    }
+    
+    if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_tx_only) {
+        s->tx = true;
+    }
+
+    // postpone the creation of the socket into bind... 
+
+    s->xsk = NULL;
+
+    nethuns_socket(s)->opt = *opt;
+    return s;
+
+    err1:
+        munmap(s->bufs, s->total_mem);
+    err0:
+        free(s);
+        return NULL;
+    }
+
+int nethuns_close_xdp(struct nethuns_socket_xdp *s)
+{
+    if (s)
+    {
+        if (s->xsk)  {
+            xsk_socket__delete(s->xsk);
+        }
+
+        xsk_umem__delete(s->umem->umem);
+        munmap(s->bufs, s->total_mem);
+
+
+        if (nethuns_socket(s)->opt.xdp_prog) {
+            unload_xdp_program(s);
+        }
+
+        if (nethuns_socket(s)->opt.promisc)
+        {
+            __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
+        }
+
+        __nethuns_free_base(s);
+        free(s);
     }
     return 0;
 }
@@ -226,22 +255,28 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 {
     char errbuf[1024];
 
-    if (queue != NETHUNS_ANY_QUEUE)
+    if (queue == NETHUNS_ANY_QUEUE)
     {
-        nethuns_perror(nethuns_socket(s)->errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        nethuns_perror(nethuns_socket(s)->errbuf, "bind: ANY_QUEUE is currently not supported by this device");
         return -1;
     }
 
-    nethuns_socket(s)->queue   = NETHUNS_ANY_QUEUE;
+    nethuns_socket(s)->queue   = queue;
     nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
+    nethuns_socket(s)->devname = strdup(dev);
+
+    // actually open the xsk socket here...
+
+    s->xsk = xsk_configure_socket(s, s->rx, s->tx);
+    if (!s->xsk) {
+        return -1;
+    }
 
     if (nethuns_socket(s)->opt.xdp_prog) {
         if (load_xdp_program(s, dev) < 0) {
     	    return -1;
         }
     }
-
-    nethuns_socket(s)->devname = strdup(dev);
 
     if (nethuns_socket(s)->opt.promisc)
     {
