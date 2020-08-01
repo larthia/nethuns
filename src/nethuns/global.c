@@ -15,10 +15,10 @@ nethuns_global_init() {
 
     pthread_mutex_init(&__nethuns_global.m, NULL);
 
-    fprintf(stderr, "nethuns: initializing...\n");
+    nethuns_fprintf(stderr, "initializing...\n");
 
     if (hashmap_create(64, &__nethuns_global.netinfo_map)) {
-		fprintf(stderr, "nethuns: could not create netinfo hashmap\n");
+		nethuns_fprintf(stderr, "could not create netinfo hashmap\n");
 		exit(EXIT_FAILURE);
     }
 
@@ -27,7 +27,7 @@ nethuns_global_init() {
         struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 
         if (setrlimit(RLIMIT_MEMLOCK, &r)) {
-		    fprintf(stderr, "nethuns: setrlimit(RLIMIT_MEMLOCK) \"%s\"\n", strerror(errno));
+		    nethuns_fprintf(stderr, "setrlimit(RLIMIT_MEMLOCK) \"%s\"\n", strerror(errno));
 		    exit(EXIT_FAILURE);
 	    }
     }
@@ -36,7 +36,7 @@ nethuns_global_init() {
 
 void __attribute__ ((destructor))
 nethuns_global_fini() {
-    fprintf(stderr, "nethuns: cleanup...\n");
+    nethuns_fprintf(stderr, "cleanup...\n");
     hashmap_destroy(&__nethuns_global.netinfo_map);
 }
 

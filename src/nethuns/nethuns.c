@@ -12,6 +12,17 @@
 
 
 void
+nethuns_fprintf(FILE *out, char *msg, ...)
+{
+    va_list ap;
+    va_start(ap, msg);
+    fprintf(out, "nethuns: ");
+    vfprintf(out, msg, ap);
+    va_end(ap);
+}
+
+
+void
 nethuns_perror(char *buf, char *msg, ...)
 {
     int n;
@@ -22,7 +33,6 @@ nethuns_perror(char *buf, char *msg, ...)
     strcpy(buf, "nethuns: ");
 
     n = vsnprintf(buf+9, NETHUNS_ERRBUF_SIZE-9, msg, ap);
-
     if (errno != 0)
     {
         snprintf(buf+9+n, NETHUNS_ERRBUF_SIZE-9 - n, " (%s)", strerror(errno));
@@ -137,9 +147,9 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
     }
 
     if (do_promisc)
-        fprintf(stderr, "nethuns: device %s promisc mode set\n", devname);
+        nethuns_fprintf(stderr, "device %s promisc mode set\n", devname);
     else 
-        fprintf(stderr, "nethuns: device %s (already) promisc mode set\n", devname);
+        nethuns_fprintf(stderr, "device %s (already) promisc mode set\n", devname);
 
     nethuns_unlock_global();
     return 0;
@@ -171,7 +181,7 @@ __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
             nethuns_unlock_global();
             return -1;
         }
-        fprintf(stderr, "nethuns: device %s promisc mode unset\n", devname);
+        nethuns_fprintf(stderr, "device %s promisc mode unset\n", devname);
     }
 
     nethuns_unlock_global();

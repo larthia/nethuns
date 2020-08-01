@@ -72,6 +72,7 @@ extern "C" {
     //
 
     void nethuns_perror(char *buf, char *format, ...);
+    void nethuns_fprintf(FILE *out, char *msg, ...);
 
     const char * nethuns_version();
 
