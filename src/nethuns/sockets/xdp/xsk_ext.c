@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <src/xsk.h>
 
+#include <linux/bpf.h>
+#include <src/libbpf.h>
+
 #include "xsk_ext.h"
 #include <nethuns/sockets/xdp.h>
 #include <nethuns/nethuns.h>
@@ -85,7 +88,10 @@ xsk_configure_socket(
 	xsk->umem = sock->umem;
 	cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 	cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-	cfg.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD; 
+
+	cfg.libbpf_flags = nethuns_socket(sock)->opt.xdp_prog != NULL 
+						? XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD 
+						: 0;
 
 	cfg.xdp_flags = sock->xdp_flags;
 	cfg.bind_flags = sock->xdp_bind_flags;
