@@ -57,7 +57,7 @@ int consumer(std::string dev)
 
     if (nethuns_bind(out, dev.c_str(), NETHUNS_ANY_QUEUE) < 0)
     {
-        throw std::runtime_error(nethuns_error(out));
+        throw nethuns_exception(out);
     }
 
 
@@ -124,7 +124,7 @@ try
 
     if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
-        throw std::runtime_error(nethuns_error(s));
+        throw nethuns_exception(s);
     }
 
     const unsigned char *frame;

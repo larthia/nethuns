@@ -100,12 +100,12 @@ try
 
     if (nethuns_bind(in, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
-        throw std::runtime_error(nethuns_error(in));
+        throw nethuns_exception(in);
     }
 
     if (nethuns_bind(out, argv[2], NETHUNS_ANY_QUEUE) < 0)
     {
-        throw std::runtime_error(nethuns_error(out));
+        throw nethuns_exception(out);
     }
 
     const unsigned char *frame;
@@ -149,4 +149,3 @@ catch(std::exception &e)
     std::cerr << e.what() << std::endl;
     return 1;
 }
-

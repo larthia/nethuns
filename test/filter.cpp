@@ -83,7 +83,7 @@ try
 
     if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
-        throw std::runtime_error(nethuns_error(s));
+        throw nethuns_exception(s);
     }
 
     std::thread(meter).detach();

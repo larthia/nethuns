@@ -69,7 +69,7 @@ try
 
     if (nethuns_bind(out, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
-        throw std::runtime_error(nethuns_error(out));
+        throw nethuns_exception(out);
     }
 
 

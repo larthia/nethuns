@@ -123,7 +123,7 @@ try
 
         if (nethuns_bind(in, argv[2], NETHUNS_ANY_QUEUE) < 0)
         {
-            throw std::runtime_error(nethuns_error(in));
+            throw nethuns_exception(in);
         }
 
         for(int i = 0; i < 10;)
