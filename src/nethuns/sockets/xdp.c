@@ -328,24 +328,33 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     if (rcvd == 0)  {
         return 0;
     }
+        
+    printf("peeked! %d\n", rcvd);
 
-    ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
+    ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, 1, &idx_fq);
+
     while (ret != rcvd) {
-		if (ret < 0) {
+        if (ret < 0)
+        {
             nethuns_perror(s->base.errbuf, "recv: prod__reserve: %s", strerror(errno));
             return -1;
         }
 
-		if (xsk_ring_prod__needs_wakeup(&s->xsk->umem->fq)) {
-            // ret = poll(fds, num_socks, opt_timeout);
-            pthread_yield();
-        }
+        //if (xsk_ring_prod__needs_wakeup(&s->xsk->umem->fq)) {
+        //    // ret = poll(fds, num_socks, opt_timeout);
+        //}
+
+        pthread_yield();
 
 		ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
-	}
-
+        if (ret == 0) {
+            sleep(1);
+            printf("sleeping..\n");
+        }
+    }
+        
 	uint64_t addr = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->addr;
-	uint32_t len = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->len;
+	uint32_t len  = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->len;
 	uint64_t orig = xsk_umem__extract_addr(addr);
 
 	addr = xsk_umem__add_offset_to_addr(addr);
