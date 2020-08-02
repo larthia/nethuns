@@ -152,6 +152,14 @@ try
 
     return 0;
 }
+catch(nethuns_exception &e)
+{
+    if (e.sock) {
+        nethuns_close(e.sock);
+    }
+    std::cerr << e.what() << std::endl;
+    return 1;
+}
 catch(std::exception &e)
 {
     std::cerr << e.what() << std::endl;
