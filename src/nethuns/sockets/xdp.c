@@ -275,6 +275,10 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
         if (load_xdp_program(s, dev) < 0) {
     	    return -1;
         }
+
+        if (xsk_enter_into_map(s) < 0) {
+            return -1;
+        }
     }
 
     if (nethuns_socket(s)->opt.promisc)

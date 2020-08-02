@@ -101,3 +101,29 @@ xsk_configure_socket(
 
 	return xsk;
 }
+
+int 
+xsk_enter_into_map(struct nethuns_socket_xdp *sock)
+{
+	struct bpf_map *map;
+	int xdp_map;
+
+	map = bpf_object__find_map_by_name(sock->obj, "xsk_map");
+	xdp_map = bpf_map__fd(map);
+	if (xdp_map < 0) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_enter_into_map: could find map: %s", strerror(xdp_map));
+		return -1;
+	}
+
+	int fd = xsk_socket__fd(sock->xsk->xsk);
+	int key, ret;
+
+	key = 0;
+	ret = bpf_map_update_elem(xdp_map, &key, &fd, 0);
+	if (ret) {
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_enter_into_map: bfp_map_update_elem");
+		return -1;
+	}
+
+	return 0;
+}
