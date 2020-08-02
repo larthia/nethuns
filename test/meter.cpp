@@ -59,9 +59,8 @@ try
         throw std::runtime_error(errbuf);
     }
 
-    if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
-    {
-        throw std::runtime_error(nethuns_error(s));
+    if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0) {
+        throw nethuns_exception(s);
     }
 
     std::thread(meter, s).detach();
@@ -99,8 +98,9 @@ try
     nethuns_close(s);
     return 0;
 }
-catch(std::exception &e)
+catch(nethuns_exception &e)
 {
+    nethuns_close(e.sock);
     std::cerr << e.what() << std::endl;
     return 1;
 }
