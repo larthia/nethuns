@@ -54,8 +54,7 @@ try
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
     nethuns_socket_t *s = nethuns_open(&opt, errbuf);
-    if (s == nullptr)
-    {
+    if (s == nullptr) {
         throw std::runtime_error(errbuf);
     }
 
@@ -74,9 +73,13 @@ try
 
     for (;;)
     {
-        uint64_t pkt_id;
+        uint64_t pkt_id = nethuns_recv(s, &pkthdr, &frame);
 
-        if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
+        if (pkt_id == NETHUNS_ERROR) {
+            throw nethuns_exception(s);
+        }
+
+        if (pkt_id > 0) 
         {
             total++;
             total2++;
@@ -100,7 +103,14 @@ try
 }
 catch(nethuns_exception &e)
 {
-    nethuns_close(e.sock);
+    if (e.sock) {
+        nethuns_close(e.sock);
+    }
+    std::cerr << e.what() << std::endl;
+    return 1;
+}
+catch(std::exception &e)
+{
     std::cerr << e.what() << std::endl;
     return 1;
 }
