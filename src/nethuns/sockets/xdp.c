@@ -127,6 +127,7 @@ struct nethuns_socket_xdp *
 nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_xdp *s;
+    int n;
 
     s = calloc(1, sizeof(struct nethuns_socket_xdp));
     if (!s)
@@ -172,6 +173,23 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     // TODO: support for HUGE pages
     // -> opt_umem_flags |= XDP_UMEM_UNALIGNED_CHUNK_FLAG;
 
+    // adjust packet size...
+    //
+
+    static const size_t size_[] = {64, 128, 256, 1024, 2048, 4096};
+    for (n = 0; n < sizeof(size_)/sizeof(size_[0]); n++)
+    {
+        if (opt->packetsize <= size_[n]) {
+            opt->packetsize = size_[n];
+            break;
+        }
+    }
+
+    if (n == sizeof(size_)/sizeof(size_[0])) {
+        nethuns_perror(errbuf, "open: XDP packet size too large!");
+        goto err0;
+    }
+
     s->total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
 
     s->bufs = mmap(NULL, s->total_mem,
@@ -184,7 +202,6 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     }
 
 	s->umem = xsk_configure_umem(s, s->bufs, s->total_mem, opt->packetsize);
-
     if (!s->umem) {
         nethuns_perror(errbuf, "open: XDP configure umem failed!");
         goto err1;
@@ -195,22 +212,15 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 
     if (opt->mode == nethuns_socket_rx_tx || 
         opt->mode == nethuns_socket_rx_only) {
-
-        // check capture size...
-        if (opt->packetsize > 4096) {
-            nethuns_perror(errbuf, "open: XDP packet size too large!");
-            goto err1;
-        }
-
         s->rx = true;
-        xsk_populate_fill_ring(s, opt->packetsize <= 2048 ? 2048 : 4096);
+        xsk_populate_fill_ring(s, opt->packetsize);
     }
     
     if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_tx_only) {
         s->tx = true;
     }
 
-    // postpone the creation of the socket into bind... 
+    // postpone the creation of the socket to bind stage... 
 
     s->xsk = NULL;
 
