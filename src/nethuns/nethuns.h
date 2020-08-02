@@ -160,5 +160,23 @@ nethuns_vlan_tci(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payl
 
 #ifdef __cplusplus
 }
+
+#include <stdexcept>
+
+struct nethuns_exception : public std::runtime_error {
+
+    nethuns_exception(nethuns_socket_t *s, const char *msg)
+    : std::runtime_error(msg)
+    , sock(s)
+    {}
+
+    nethuns_exception(nethuns_socket_t *s)
+    : std::runtime_error(nethuns_error(s))
+    , sock(s)
+    {}
+
+    nethuns_socket_t *sock;
+};
+
 #endif
 
