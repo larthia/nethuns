@@ -145,7 +145,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     /* set defualt xdp_flags */
 
     s->xdp_flags = 0; // or safer XDP_FLAGS_UPDATE_IF_NOEXIST;
-    s->xdp_bind_flags = XDP_USE_NEED_WAKEUP;
+    s->xdp_bind_flags = 0; // XDP_USE_NEED_WAKEUP;
 
     switch(opt->capture)
     {
