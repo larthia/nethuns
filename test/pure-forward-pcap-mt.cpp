@@ -33,17 +33,26 @@ struct pcap_pkt
 boost::lockfree::spsc_queue<pcap_pkt> queue (131072);
 
 
-int consumer()
+int consumer(std::string dev)
 {
+    char errbuf[PCAP_ERRBUF_SIZE];
+    auto out = pcap_open_live(dev.c_str(), 2048, 1, 0, errbuf);
+
     for(;;)
     {
         pcap_pkt pkt;
 
         if (queue.pop(pkt)) {
             total++;
+
+            while (pcap_inject(out, pkt.pkt, pkt.pkthdr.caplen) < 0)
+            { };
+
             free((void *)pkt.pkt);
         }
     }
+
+    pcap_close(out);
 }
 
 
@@ -53,14 +62,14 @@ try
 {
     char errbuf[PCAP_ERRBUF_SIZE];
 
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cerr << "usage: " << argv[0] << " dev" << std::endl;
+        std::cerr << "usage: " << argv[0] << " in out" << std::endl;
         return 0;
     }
 
     std::thread(meter).detach();
-    std::thread(consumer).detach();
+    std::thread(consumer, std::string{argv[2]}).detach();
 
     auto s = pcap_open_live(argv[1], 2048, 1, 0, errbuf);
 
@@ -89,4 +98,3 @@ catch(std::exception &e)
     std::cerr << e.what() << std::endl;
     return 1;
 }
-

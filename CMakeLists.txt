@@ -112,10 +112,10 @@ if (NETHUNS_BUILD_TESTS)
     add_executable(nethuns-forward-mt   test/forward-mt.cpp)
     add_executable(nethuns-meter-mt     test/meter-mt.cpp)
 
-    add_executable(pcap-meter         test/meter-pcap.cpp)
-    add_executable(pcap-forward       test/forward-pcap.cpp)
-    add_executable(pcap-forward-mt    test/forward-pcap-mt.cpp)
-    add_executable(pcap-meter-mt      test/meter-pcap-mt.cpp)
+    add_executable(pure-pcap-meter      test/pure-meter-pcap.cpp)
+    add_executable(pure-pcap-meter-mt   test/pure-meter-pcap-mt.cpp)
+    add_executable(pure-pcap-forward    test/pure-forward-pcap.cpp)
+    add_executable(pure-pcap-forward-mt test/pure-forward-pcap-mt.cpp)
 
 
     target_link_libraries(nethuns-test       	${OTHER_LIB} nethuns)
@@ -129,10 +129,10 @@ if (NETHUNS_BUILD_TESTS)
     target_link_libraries(nethuns-meter-mt   ${OTHER_LIB} nethuns)
     target_link_libraries(nethuns-filter     ${OTHER_LIB} nethuns)
 
-    target_link_libraries(pcap-forward      -lpcap  -pthread)
-    target_link_libraries(pcap-forward-mt   -lpcap  -pthread)
-    target_link_libraries(pcap-meter        -lpcap  -pthread)
-    target_link_libraries(pcap-meter-mt     -lpcap  -pthread)
+    target_link_libraries(pure-pcap-forward      -lpcap  -pthread)
+    target_link_libraries(pure-pcap-forward-mt   -lpcap  -pthread)
+    target_link_libraries(pure-pcap-meter        -lpcap  -pthread)
+    target_link_libraries(pure-pcap-meter-mt     -lpcap  -pthread)
 
 endif()
 
