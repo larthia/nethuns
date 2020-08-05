@@ -72,7 +72,7 @@ main(int argc, char *argv[])
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    for(int i =0; i < 20000; i++)
+    for(int i =0; i < 50000; i++)
     {
         uint64_t pkt_id;
 

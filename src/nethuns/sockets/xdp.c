@@ -176,7 +176,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     // adjust packet size...
     //
 
-    static const size_t size_[] = {64, 128, 256, 1024, 2048, 4096};
+    static const size_t size_[] = {2048, 4096};
     for (n = 0; n < sizeof(size_)/sizeof(size_[0]); n++)
     {
         if (opt->packetsize <= size_[n]) {
@@ -210,10 +210,8 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     s->rx = false;
     s->tx = false;
 
-    if (opt->mode == nethuns_socket_rx_tx || 
-        opt->mode == nethuns_socket_rx_only) {
+    if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_rx_only) {
         s->rx = true;
-        xsk_populate_fill_ring(s, opt->packetsize);
     }
     
     if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_tx_only) {
@@ -276,7 +274,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 
     // actually open the xsk socket here...
 
-    s->xsk = xsk_configure_socket(s, s->rx, s->tx);
+    s->xsk = xsk_configure_socket(s, nethuns_socket(s)->opt.numpackets, nethuns_socket(s)->opt.packetsize, s->rx, s->tx);
     if (!s->xsk) {
         return -1;
     }
@@ -305,12 +303,7 @@ static int
 __nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t id, void *user)
 {
     struct nethuns_socket_xdp *s = (struct nethuns_socket_xdp *)user;
-    printf("SLOT FREED!\n");
-
-    *xsk_ring_prod__fill_addr(&s->xsk->umem->fq, slot->idx_fq) = slot->orig;
-    xsk_ring_prod__submit(&s->xsk->umem->fq, 1);
     xsk_ring_cons__release(&s->xsk->rx, 1);
-
     return 0;
 }
 
@@ -322,6 +315,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     const uint8_t *ppayload;
     uint32_t idx_rx = 0, idx_fq = 0;
     int rcvd, ret;
+    unsigned int i, stock_frames;
 
     nethuns_ring_free_slots(&s->base.ring, __nethuns_xdp_free_slots, s);
 
@@ -339,30 +333,23 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
         return 0;
     }
         
-    printf("peeked! %d\n", rcvd);
+    stock_frames = xsk_prod_nb_free(&s->xsk->umem->fq, xsk_umem_free_frames(s->xsk));
+    if (stock_frames > 0) {
 
-    ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, 1, &idx_fq);
+        ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, stock_frames, &idx_fq);
 
-    while (ret != rcvd) {
-        if (ret < 0)
-        {
-            nethuns_perror(s->base.errbuf, "recv: prod__reserve: %s", strerror(errno));
-            return -1;
-        }
+        while (ret != rcvd) 
+			ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
 
-        //if (xsk_ring_prod__needs_wakeup(&s->xsk->umem->fq)) {
-        //    // ret = poll(fds, num_socks, opt_timeout);
-        //}
+        for (i = 0; i < stock_frames; i++)
+			*xsk_ring_prod__fill_addr(&s->xsk->umem->fq, idx_fq++) =
+				xsk_alloc_umem_frame(s->xsk);
 
-        pthread_yield();
-
-		ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
-        if (ret == 0) {
-            sleep(1);
-            printf("sleeping..\n");
-        }
+		xsk_ring_prod__submit(&s->xsk->umem->fq, stock_frames);
     }
-        
+
+    /* process the packet */
+
 	uint64_t addr = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->addr;
 	uint32_t len  = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->len;
 	uint64_t orig = xsk_umem__extract_addr(addr);
@@ -370,7 +357,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 	addr = xsk_umem__add_offset_to_addr(addr);
 	unsigned char *pkt = xsk_umem__get_data(s->xsk->umem->buffer, addr);
 
-    __atomic_add_fetch(&s->xsk->rx_npkts, rcvd, __ATOMIC_RELAXED);
+    __atomic_add_fetch(&s->xsk->rx_npkts, 1, __ATOMIC_RELAXED);
 
     // get timestamp...
     struct timespec tp;
@@ -385,7 +372,6 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
     if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload))
     {
-        printf("GOT A PACKET!\n");
         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
 
         slot->orig   = orig;
@@ -454,14 +440,14 @@ nethuns_stats_xdp(struct nethuns_socket_xdp *s, struct nethuns_stat *stats)
 }
 
 
-int
-nethuns_fanout_xdp(__maybe_unused struct nethuns_socket_xdp *s, __maybe_unused int group, __maybe_unused const char *fanout)
+int nethuns_fd_xdp(__maybe_unused struct nethuns_socket_xdp *s)
 {
-    return -1;
+    return xsk_socket__fd(s->xsk->xsk);
 }
 
 
-int nethuns_fd_xdp(__maybe_unused struct nethuns_socket_xdp *s)
+int
+nethuns_fanout_xdp(__maybe_unused struct nethuns_socket_xdp *s, __maybe_unused int group, __maybe_unused const char *fanout)
 {
     return -1;
 }

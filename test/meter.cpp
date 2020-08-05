@@ -40,7 +40,7 @@ try
     struct nethuns_socket_options opt =
     {
         .numblocks       = 1
-    ,   .numpackets      = 65536
+    ,   .numpackets      = 4096 
     ,   .packetsize      = 2048
     ,   .timeout_ms      = 0
     ,   .dir             = nethuns_in_out
@@ -49,7 +49,8 @@ try
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
-    ,   .xdp_prog        = "/etc/nethuns/net_xdp.o" 
+    //,   .xdp_prog        = "/etc/nethuns/net_xdp.o" 
+    ,   .xdp_prog        = NULL 
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

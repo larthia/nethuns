@@ -6,9 +6,10 @@
 #include <linux/bpf.h>
 #include <src/libbpf.h>
 
-#include "xsk_ext.h"
 #include <nethuns/sockets/xdp.h>
 #include <nethuns/nethuns.h>
+
+#include "xsk_ext.h"
 
 struct xsk_umem_info *
 xsk_configure_umem(
@@ -57,7 +58,7 @@ xsk_populate_fill_ring(
 				     XSK_RING_PROD__DEFAULT_NUM_DESCS, &idx);
 
 	if (ret != XSK_RING_PROD__DEFAULT_NUM_DESCS) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_populate_fill_ring: could not reserve for ring prod");
+        	nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_populate_fill_ring: could not reserve fill ring");
 		return -ret;
 	}
 
@@ -72,16 +73,16 @@ xsk_populate_fill_ring(
 struct xsk_socket_info *
 xsk_configure_socket(
 	  struct nethuns_socket_xdp *sock
+    , size_t num_frames
+    , size_t frame_size
 	, bool rx
 	, bool tx)
 {
 	struct xsk_socket_config cfg;
 	struct xsk_socket_info *xsk;
-	struct xsk_ring_cons *rxr;
-	struct xsk_ring_prod *txr;
-	int ret;
+	int i, ret, idx;
 
-	xsk = calloc(1, sizeof(*xsk));
+	xsk = calloc(1, sizeof(*xsk) + num_frames * frame_size);
 	if (!xsk)
 		return NULL;
 
@@ -96,16 +97,46 @@ xsk_configure_socket(
 	cfg.xdp_flags = sock->xdp_flags;
 	cfg.bind_flags = sock->xdp_bind_flags;
 
-	rxr = rx ? &xsk->rx : NULL;
-	txr = tx ? &xsk->tx : NULL;
+	ret = xsk_socket__create(&xsk->xsk, nethuns_socket(sock)->devname, nethuns_socket(sock)->queue, sock->umem->umem, 
+			rx ? &xsk->rx : NULL,
+			tx ? &xsk->tx : NULL,
+			&cfg);
 
-	ret = xsk_socket__create(&xsk->xsk, nethuns_socket(sock)->devname, nethuns_socket(sock)->queue, sock->umem->umem, rxr, txr, &cfg);
 	if (ret) {
         nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config: could not create socket");
-		return NULL;
+		goto err;
 	}
 
+	/* Initialize umem frame allocation */
+
+	for (i = 0; i < num_frames; i++)
+		xsk->umem_frame_addr[i] = i * frame_size;
+
+	xsk->umem_frame_free = num_frames;
+
+	/* Stuff the receive path with buffers, we assume we have enough */
+
+	ret = xsk_ring_prod__reserve(&xsk->umem->fq,
+				     XSK_RING_CONS__DEFAULT_NUM_DESCS,
+				     &idx);
+
+	if (ret != XSK_RING_CONS__DEFAULT_NUM_DESCS) {
+		printf("num_frame: %d frame_size:%d ret:%d\n", num_frames, frame_size, ret);
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config: could not reserve slots in fill ring");
+		goto err;
+	}
+
+	for (i = 0; i < XSK_RING_CONS__DEFAULT_NUM_DESCS; i ++)
+		*xsk_ring_prod__fill_addr(&xsk->umem->fq, idx++) =
+			xsk_alloc_umem_frame(xsk);
+
+	xsk_ring_prod__submit(&xsk->umem->fq,
+			      XSK_RING_CONS__DEFAULT_NUM_DESCS);
+
 	return xsk;
+err:
+	free(xsk);
+	return NULL;
 }
 
 int 
