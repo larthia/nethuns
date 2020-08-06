@@ -312,7 +312,6 @@ uint64_t
 nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     unsigned int caplen = nethuns_socket(s)->opt.packetsize;
-    const uint8_t *ppayload;
     uint32_t idx_rx = 0, idx_fq = 0;
     int rcvd, ret;
     unsigned int i, stock_frames;
@@ -360,6 +359,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     __atomic_add_fetch(&s->xsk->rx_npkts, 1, __ATOMIC_RELAXED);
 
     // get timestamp...
+    
     struct timespec tp;
     clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
 
@@ -370,7 +370,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
       , .snaplen = len 
     };
 
-    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload))
+    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt))
     {
         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
 
