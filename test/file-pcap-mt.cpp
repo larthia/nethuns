@@ -1,4 +1,4 @@
-#include <boost/lockfree/spsc_queue.hpp>
+#include <nethuns/queue.h>
 #include <nethuns/nethuns.h>
 #include <iostream>
 #include <string>
@@ -6,23 +6,21 @@
 #include <thread>
 #include <atomic>
 
-boost::lockfree::spsc_queue<struct nethuns_packet> queue (8192);
+nethuns_spsc_queue *queue;
 
 std::atomic_bool stop{false};
 
 int consumer()
 {
-    struct nethuns_packet pkt;
-
     for(;;)
     {
-        if (queue.pop(pkt))
+        auto pkt = reinterpret_cast<nethuns_packet *>(nethuns_spsc_pop(queue));
+        if (pkt)
         {
-            std::cout << "FREE: " << pkt.id << std::endl;
-            nethuns_release(pkt.sock, pkt.id);
+            nethuns_release(pkt->sock, pkt->id);
         }
 
-        if (queue.empty() && stop.load(std::memory_order_relaxed))
+        if (nethuns_spsc_is_empty(queue) && stop.load(std::memory_order_relaxed))
         {
             return 0;
         }
@@ -38,6 +36,11 @@ try
     {
         fprintf(stderr,"usage: %s file\n", argv[0]);
         return 0;
+    }
+
+    queue = nethuns_spsc_init(65536, sizeof(nethuns_packet)); 
+    if (!queue) { 
+        throw std::runtime_error("nethuns_spsc: internal error");
     }
 
     nethuns_pcap_t *p;
@@ -77,7 +80,7 @@ try
         if (nethuns_is_valid(pkt_id))
         {
             struct nethuns_packet hdr { frame, pkthdr, nethuns_socket(p), pkt_id };
-            while (!queue.push(hdr))
+            while (!nethuns_spsc_push(queue, &hdr))
             { };
         }
     }

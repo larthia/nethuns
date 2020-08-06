@@ -1,4 +1,4 @@
-#include <boost/lockfree/spsc_queue.hpp>
+#include <nethuns/queue.h>
 #include <pcap/pcap.h>
 #include <stdio.h>
 
@@ -30,18 +30,16 @@ struct pcap_pkt
 };
 
 
-boost::lockfree::spsc_queue<pcap_pkt> queue (131072);
-
+nethuns_spsc_queue *queue;
 
 int consumer()
 {
     for(;;)
     {
-        pcap_pkt pkt;
-
-        if (queue.pop(pkt)) {
+        auto pkt = reinterpret_cast<pcap_pkt *>(nethuns_spsc_pop(queue));
+        if (pkt) {
             total++;
-            free((void *)pkt.pkt);
+            free((void *)pkt->pkt);
         }
     }
 }
@@ -57,6 +55,11 @@ try
     {
         std::cerr << "usage: " << argv[0] << " dev" << std::endl;
         return 0;
+    }
+
+    queue = nethuns_spsc_init(65536, sizeof(pcap_pkt)); 
+    if (!queue) { 
+        throw std::runtime_error("nethuns_spsc: internal error");
     }
 
     std::thread(meter).detach();
@@ -75,7 +78,7 @@ try
 
             memcpy(p.pkt, frame, pkthdr.caplen);
 
-            while (!queue.push(p))
+            while (!nethuns_spsc_push(queue,&p))
             { };
         }
 

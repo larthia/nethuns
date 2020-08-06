@@ -1,5 +1,7 @@
-#include <boost/lockfree/spsc_queue.hpp>
 #include <nethuns/nethuns.h>
+#include <nethuns/queue.h>
+#include <nethuns/types.h>
+
 #include <stdio.h>
 
 #include <thread>
@@ -22,20 +24,16 @@ void meter()
     }
 }
 
-
-
-boost::lockfree::spsc_queue<struct nethuns_packet> queue (8192);
-
+nethuns_spsc_queue *queue;
 
 int consumer()
 {
     for(;;)
     {
-        struct nethuns_packet pkt;
-
-        if (queue.pop(pkt)) {
+        auto pkt = reinterpret_cast<struct nethuns_packet *>(nethuns_spsc_pop(queue));
+        if (pkt) {
             total++;
-            nethuns_release(pkt.sock, pkt.id);
+            nethuns_release(pkt->sock, pkt->id);
         }
     }
 }
@@ -51,8 +49,12 @@ try
         return 0;
     }
 
-    std::thread(meter).detach();
+    queue = nethuns_spsc_init(65536, sizeof(nethuns_packet));
+    if (!queue) { 
+        throw std::runtime_error("nethuns_spsc: internal error");
+    }
 
+    std::thread(meter).detach();
     std::thread(consumer).detach();
 
     struct nethuns_socket_options opt =
@@ -94,7 +96,7 @@ try
         {
             struct nethuns_packet p { frame, pkthdr, nethuns_socket(s), id };
 
-            while (!queue.push(p))
+            while (!nethuns_spsc_push(queue, &p))
             { };
         }
     }
