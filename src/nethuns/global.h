@@ -39,22 +39,31 @@ struct nethuns_global
     struct hashmap_s netinfo_map;
 };
 
-extern struct nethuns_global __nethuns_global;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern void __attribute__((constructor)) nethuns_global_init();
-extern void __attribute__((destructor)) nethuns_global_fini();
+	extern struct nethuns_global __nethuns_global;
 
-static inline
-void nethuns_lock_global()
-{
-    pthread_mutex_lock(&__nethuns_global.m);
+	extern void __attribute__((constructor)) nethuns_global_init();
+	extern void __attribute__((destructor)) nethuns_global_fini();
+
+	static inline
+	void nethuns_lock_global()
+	{
+	    pthread_mutex_lock(&__nethuns_global.m);
+	}
+	
+	static inline
+	void nethuns_unlock_global()
+	{
+	    pthread_mutex_unlock(&__nethuns_global.m);
+	}
+
+	struct nethuns_netinfo *nethuns_lookup_netinfo(const char *);
+	struct nethuns_netinfo *nethuns_create_netinfo(const char *);
+
+#ifdef __cplusplus
 }
+#endif
 
-static inline
-void nethuns_unlock_global()
-{
-    pthread_mutex_unlock(&__nethuns_global.m);
-}
-
-struct nethuns_netinfo *nethuns_lookup_netinfo(const char *);
-struct nethuns_netinfo *nethuns_create_netinfo(const char *);
