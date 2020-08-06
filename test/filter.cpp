@@ -7,20 +7,26 @@
 #include <iostream>
 
 
-
-void dump_packet(const nethuns_pkthdr_t *hdr, const uint8_t *frame)
+void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
     int i = 0;
 
-    printf("%u:%u snap:%u len:%u ", nethuns_tstamp_sec(hdr)
-                                  , nethuns_tstamp_nsec(hdr)
-                                  , nethuns_snaplen(hdr)
-                                  , nethuns_len(hdr));
+    printf("%u:%u snap:%u len:%u offload{tci:%x tpid:%x} packet{tci:%x pid:%x} => [tci:%x tpid:%x vid:%d] rxhash:0x%x| ", nethuns_tstamp_sec(hdr)
+                                                                                     , nethuns_tstamp_nsec(hdr)
+                                                                                     , nethuns_snaplen(hdr)
+                                                                                     , nethuns_len(hdr)
+                                                                                     , nethuns_offvlan_tci(hdr)
+                                                                                     , nethuns_offvlan_tpid(hdr)
+                                                                                     , nethuns_pktvlan_tci(frame)
+                                                                                     , nethuns_pktvlan_tpid(frame)
+                                                                                     , nethuns_vlan_tci(hdr, frame)
+                                                                                     , nethuns_vlan_tpid(hdr, frame)
+                                                                                     , nethuns_vlan_vid(nethuns_vlan_tci(hdr, frame))
+                                                                                     , nethuns_rxhash(hdr));
     for(; i < 14; i++)
     {
         printf("%02x ", frame[i]);
     }
-
     printf("\n");
 }
 
