@@ -6,7 +6,6 @@
 #include <chrono>
 #include <iostream>
 
-
 void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
     int i = 0;
@@ -23,7 +22,7 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
                                                                                      , nethuns_vlan_tpid(hdr, frame)
                                                                                      , nethuns_vlan_vid(nethuns_vlan_tci(hdr, frame))
                                                                                      , nethuns_rxhash(hdr));
-    for(; i < 14; i++)
+    for(; i < 34; i++)
     {
         printf("%02x ", frame[i]);
     }
