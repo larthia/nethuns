@@ -39,6 +39,14 @@ struct nethuns_pcap_pkthdr
     uint32_t len;                   /* length this packet (off wire) */
 };
 
+struct nethuns_pcap_patched_pkthdr {
+    struct nethuns_timeval ts;	    /* time stamp */
+    uint32_t caplen;		        /* length of portion present */
+    uint32_t len;		            /* length of this packet (off wire) */
+    int		index;
+    unsigned short protocol;
+    unsigned char pkt_type;
+};
 
 typedef struct nethuns_pcap_socket nethuns_pcap_t;
 
@@ -52,5 +60,6 @@ struct nethuns_pcap_socket
 #endif
     FILE *              w;
     uint32_t            snaplen;
+    uint32_t            magic; 
 };
 

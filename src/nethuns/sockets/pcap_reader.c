@@ -90,8 +90,6 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 
         if (fh.magic != TCPDUMP_MAGIC &&
             fh.magic != KUZNETZOV_TCPDUMP_MAGIC &&
-            fh.magic != FMESQUITA_TCPDUMP_MAGIC &&
-            fh.magic != NAVTEL_TCPDUMP_MAGIC &&
             fh.magic != NSEC_TCPDUMP_MAGIC)
         {
             nethuns_perror(errbuf, "pcap_open: magic pcap_file_header not supported (%x)", fh.magic);
@@ -100,6 +98,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
             free(pcap);
             return NULL;
         }
+
+        pcap->magic = fh.magic;
 #endif
     }
     else {
@@ -207,7 +207,12 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     bytes = MIN(caplen, pcaphdr->caplen);
 
     nethuns_tstamp_set_sec ((&slot->pkthdr), pcaphdr->ts.tv_sec);
-    nethuns_tstamp_set_usec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+    if (p->magic == NSEC_TCPDUMP_MAGIC) {
+        nethuns_tstamp_set_nsec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+    }
+    else {
+        nethuns_tstamp_set_usec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+    }
 
     nethuns_set_len (&slot->pkthdr, pcaphdr->len);
     nethuns_set_snaplen (&slot->pkthdr, bytes);
@@ -229,8 +234,6 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     unsigned int bytes;
     size_t n;
 
-    struct nethuns_pcap_pkthdr header;
-
     struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&p->base.ring, p->base.ring.head);
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -246,7 +249,12 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     }
 #endif
 
-    if ((n = fread(&header, sizeof(header), 1, p->r)) != 1)
+    struct nethuns_pcap_patched_pkthdr header;
+
+    if ((n = fread(&header
+                  , p->magic == KUZNETZOV_TCPDUMP_MAGIC ? sizeof(struct nethuns_pcap_patched_pkthdr) : sizeof(struct nethuns_pcap_pkthdr)
+                  , 1
+                  , p->r)) != 1)
     {
         if (feof(p->r)) {
             return NETHUNS_EOF;
@@ -265,7 +273,13 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     }
 
     nethuns_tstamp_set_sec ((&slot->pkthdr), header.ts.tv_sec);
-    nethuns_tstamp_set_usec((&slot->pkthdr), header.ts.tv_usec);
+
+    if (p->magic == NSEC_TCPDUMP_MAGIC) {
+        nethuns_tstamp_set_nsec((&slot->pkthdr), header.ts.tv_usec);
+    }
+    else {
+        nethuns_tstamp_set_usec((&slot->pkthdr), header.ts.tv_usec);
+    }
 
     nethuns_set_len (&slot->pkthdr, header.len);
     nethuns_set_snaplen (&slot->pkthdr, bytes);
