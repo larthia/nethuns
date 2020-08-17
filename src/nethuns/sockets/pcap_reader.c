@@ -248,16 +248,19 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
     if ((n = fread(&header, sizeof(header), 1, p->r)) != 1)
     {
-        if (n)
-            nethuns_perror(p->base.errbuf, "pcap_read: could not read packet hdr!");
-        return  (uint64_t)-1;
+        if (feof(p->r)) {
+            return NETHUNS_EOF;
+        }
+
+        nethuns_perror(p->base.errbuf, "pcap_read: could not read packet hdr!");
+        return  NETHUNS_ERROR;
     }
 
     bytes = MIN(caplen, header.caplen);
     if (fread(slot->packet, 1, bytes, p->r) != bytes)
     {
         nethuns_perror(p->base.errbuf, "pcap_read: could not read packet!");
-        return (uint64_t)-1;
+        return  NETHUNS_ERROR;
     }
 
     nethuns_tstamp_set_sec ((&slot->pkthdr), header.ts.tv_sec);
@@ -272,7 +275,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
         if (fseek(p->r, skip, SEEK_CUR) < 0)
         {
             nethuns_perror(p->base.errbuf, "pcap_read: could not skip bytes!");
-            return (uint64_t)-1;
+            return  NETHUNS_ERROR;
         }
     }
 
