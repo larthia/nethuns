@@ -192,7 +192,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
     const unsigned char *ppkt;
     int ret = pcap_next_ex(p->r, &pcaphdr, &ppkt);
-    switch(ret) 
+    switch(ret)
     {
     case 0: return 0;
     case PCAP_ERROR: {
@@ -200,7 +200,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
         return  NETHUNS_ERROR;
     }
     case PCAP_ERROR_BREAK: {
-        return NETHUNS_EOF; 
+        return NETHUNS_EOF;
     }
     }
 
@@ -257,6 +257,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     }
 
     bytes = MIN(caplen, header.caplen);
+
     if (fread(slot->packet, 1, bytes, p->r) != bytes)
     {
         nethuns_perror(p->base.errbuf, "pcap_read: could not read packet!");

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-NETHUNS_INIT;
 
 void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
@@ -42,7 +41,7 @@ main(int argc, char *argv[])
     struct nethuns_socket_options opt =
     {
         .numblocks       = 4
-    ,   .numpackets      = 4096 
+    ,   .numpackets      = 4096
     ,   .packetsize      = 2048
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
@@ -50,7 +49,7 @@ main(int argc, char *argv[])
     ,   .promisc         = true
     ,   .rxhash          = true
     ,   .tx_qdisc_bypass = false
-    ,   .xdp_prog        = NULL 
+    ,   .xdp_prog        = NULL
    // ,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
     };
 
@@ -81,7 +80,7 @@ main(int argc, char *argv[])
             dump_packet(pkthdr, frame);
             nethuns_release(s, pkt_id);
         }
-	
+
         usleep(1);
     }
 
