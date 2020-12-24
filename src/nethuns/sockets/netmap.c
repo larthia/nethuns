@@ -117,7 +117,9 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     if (unlikely(!pkt))
     {
         ioctl(s->p->fd, NIOCRXSYNC);
-        return 0;
+        pkt = nm_nextpkt(s->p, &header);
+        if (unlikely(!pkt))
+            return 0;
 
         //
         // struct pollfd fds;
