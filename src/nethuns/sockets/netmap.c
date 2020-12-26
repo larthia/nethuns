@@ -99,6 +99,33 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     return 0;
 }
 
+static struct netmap_ring *
+non_empty_ring(struct nmport_d *d)
+{
+    int ri = d->cur_rx_ring;
+
+    do {
+        /* compute current ring to use */
+        struct netmap_ring *ring = NETMAP_RXRING(d->nifp, ri);
+        if (ring->cur != ring->tail) {
+            d->cur_rx_ring = ri;
+            return ring;
+        }
+        ri++;
+        if (ri > d->last_rx_ring)
+            ri = d->first_rx_ring;
+    } while (ri != d->cur_rx_ring);
+    return NULL; /* nothing found */
+}
+
+static int
+__nethuns_blocks_free(struct nethuns_ring_slot *slot,  __maybe_unused uint64_t blockid, __maybe_unused void *user)
+{
+    struct netmap_ring *ring = slot->ring;
+    u_int head = ring->head;
+    ring->head = nm_ring_next(ring, head);
+    return 0;
+}
 
 uint64_t
 nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
@@ -106,20 +133,26 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     unsigned int caplen = s->base.opt.packetsize;
     unsigned int bytes;
     const uint8_t *pkt;
-    struct netmap_pkthdr header;
+    struct netmap_ring *ring;
+    u_int i, idx;
 
     struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
     }
+    if (unlikely((s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)))  /* virtual ring is full   */
+    {
+        nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
+        ioctl(s->p->fd, NIOCRXSYNC);
+    }
 
-    pkt = nm_nextpkt(s->p, &header);
-    if (unlikely(!pkt))
+    ring = non_empty_ring(s->p);
+    if (unlikely(!ring))
     {
         ioctl(s->p->fd, NIOCRXSYNC);
-        pkt = nm_nextpkt(s->p, &header);
-        if (unlikely(!pkt))
+        ring = non_empty_ring(s->p);
+        if (unlikely(!ring))
             return 0;
 
         //
@@ -131,21 +164,31 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
         //
     }
 
-    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt))
-    {
-        bytes = MIN(caplen, header.caplen);
+    i = ring->cur;
+    idx = ring->slot[i].buf_idx;
+    pkt = (const uint8_t *)NETMAP_BUF(ring, idx);
 
-        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
-        memcpy(slot->packet, pkt, bytes);
+    slot->pkthdr.ts = ring->ts;
+    slot->pkthdr.len = slot->pkthdr.caplen = ring->slot[i].len;
+    slot->ring = ring;
+
+    ring->cur = nm_ring_next(ring, i);
+
+    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &slot->pkthdr, pkt))
+    {
+        bytes = MIN(caplen, slot->pkthdr.caplen);
+
         slot->pkthdr.caplen = bytes;
 
         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
         *pkthdr  = &slot->pkthdr;
-        *payload =  slot->packet;
+        *payload =  pkt;
 
         return ++s->base.ring.head;
     }
+
+    nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
 
     return 0;
 }
