@@ -11,6 +11,11 @@ struct nethuns_socket_netmap
 {
     struct nethuns_socket_base base;
     struct nmport_d *p;
+    struct netmap_ring *some_ring;
+    uint32_t *free_ring;
+    uint64_t free_mask;
+    uint64_t free_head;
+    uint64_t free_tail;
 };
 
 #ifdef __cplusplus

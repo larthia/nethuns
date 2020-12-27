@@ -7,4 +7,5 @@ struct netmap_pkthdr {
         struct timeval ts;
 	uint32_t len;
 	uint32_t caplen;
+        uint32_t buf_idx;
 };

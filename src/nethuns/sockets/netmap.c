@@ -45,11 +45,24 @@ nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
 
 int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 {
+    struct netmap_if *nifp;
+    uint32_t idx, *next;
+
     if (s)
     {
         if (nethuns_socket(s)->opt.promisc)
         {
             __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
+        }
+
+        nifp = s->p->nifp;
+        for ( ; s->free_head != s->free_tail; s->free_head++)
+        {
+            idx = s->free_ring[s->free_head & s->free_mask];
+            next = (uint32_t *)NETMAP_BUF(s->some_ring, idx);
+
+            *next = nifp->ni_bufs_head;
+            nifp->ni_bufs_head = idx;
         }
 
         nmport_close(s->p);
@@ -64,8 +77,8 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int queue)
 {
     char nm_dev[128];
-
-    nethuns_socket(s)->queue = queue;
+    uint32_t extra_bufs;
+    uint32_t scan;
 
     if (queue == NETHUNS_ANY_QUEUE)
     {
@@ -76,15 +89,52 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         snprintf(nm_dev, 128, "netmap:%s-%d", dev, nethuns_socket(s)->queue);
     }
 
-    s->p = nmport_open(nm_dev);
+    s->p = nmport_prepare(nm_dev);
     if (!s->p)
     {
         nethuns_perror(s->base.errbuf, "bind: could not open dev: %s", nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
+
     nethuns_socket(s)->queue   = queue;
     nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
+
+    s->p->reg.nr_extra_bufs = s->base.ring.size;
+
+    if (nmport_open_desc(s->p) < 0) {
+        nethuns_perror(s->base.errbuf, "open: could open dev %s (%s)", nethuns_dev_queue_name(dev, queue),
+			strerror(errno));
+        return -1;
+    }
+
+    if (s->p->reg.nr_extra_bufs != s->base.ring.size) {
+        nethuns_perror(s->base.errbuf, "dev %s: cannot obtain %u extra bufs (got %u)",
+			nethuns_dev_queue_name(dev, queue),
+                	s->base.ring.size, s->p->reg.nr_extra_bufs);
+        return -1;
+    }
+
+    s->some_ring = NETMAP_RXRING(s->p->nifp, s->p->first_rx_ring);
+
+    extra_bufs = nethuns_lpow2(s->p->reg.nr_extra_bufs);
+    s->free_ring = calloc(1, sizeof(uint32_t) * extra_bufs);
+    if (!s->free_ring)
+    {
+        nethuns_perror(s->base.errbuf, "dev %s: out-of-memory while allocating free bufs list",
+			nethuns_dev_queue_name(dev, queue));
+        return -1;
+    }
+    s->free_mask = extra_bufs - 1;
+
+    for (scan = s->p->nifp->ni_bufs_head; scan; scan = *(uint32_t *)NETMAP_BUF(s->some_ring, scan))
+    {
+        s->free_ring[s->free_tail & s->free_mask] = scan;
+        s->free_tail++;
+    }
+    s->p->nifp->ni_bufs_head = 0;
+
+
     nethuns_socket(s)->devname = strdup(dev);
 
     if (nethuns_socket(s)->opt.promisc)
@@ -119,11 +169,12 @@ non_empty_ring(struct nmport_d *d)
 }
 
 static int
-__nethuns_blocks_free(struct nethuns_ring_slot *slot,  __maybe_unused uint64_t blockid, __maybe_unused void *user)
+nethuns_blocks_free(struct nethuns_ring_slot *slot,  __maybe_unused uint64_t blockid, __maybe_unused void *user)
 {
-    struct netmap_ring *ring = slot->ring;
-    u_int head = ring->head;
-    ring->head = nm_ring_next(ring, head);
+    struct nethuns_socket_netmap *s = (struct nethuns_socket_netmap *)user;
+
+    s->free_ring[s->free_tail & s->free_mask] = slot->pkthdr.buf_idx;
+    s->free_tail++;
     return 0;
 }
 
@@ -141,10 +192,14 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     {
         return 0;
     }
-    if (unlikely((s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)))  /* virtual ring is full   */
+
+    if (unlikely(s->free_head == s->free_tail))
     {
-        nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
-        ioctl(s->p->fd, NIOCRXSYNC);
+        nethuns_ring_free_slots(&s->base.ring, nethuns_blocks_free, s);
+        if (unlikely(s->free_head == s->free_tail))
+        {
+            return 0;
+        }
     }
 
     ring = non_empty_ring(s->p);
@@ -170,9 +225,13 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 
     slot->pkthdr.ts = ring->ts;
     slot->pkthdr.len = slot->pkthdr.caplen = ring->slot[i].len;
-    slot->ring = ring;
+    slot->pkthdr.buf_idx = idx;
 
-    ring->cur = nm_ring_next(ring, i);
+    ring->slot[i].buf_idx = s->free_ring[s->free_head & s->free_mask];
+    s->free_head++;
+    ring->slot[i].flags |= NS_BUF_CHANGED;
+
+    ring->head = ring->cur = nm_ring_next(ring, i);
 
     if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &slot->pkthdr, pkt))
     {
@@ -188,7 +247,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
         return ++s->base.ring.head;
     }
 
-    nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
+    nethuns_ring_free_slots(&s->base.ring, nethuns_blocks_free, s);
 
     return 0;
 }

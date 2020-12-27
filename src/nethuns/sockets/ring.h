@@ -39,7 +39,6 @@ struct nethuns_ring_slot
     struct tpacket3_hdr     pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
     struct netmap_pkthdr        pkthdr;
-    struct netmap_ring     *ring;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
     struct pcap_pkthdr      pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
