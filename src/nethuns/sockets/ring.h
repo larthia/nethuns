@@ -17,8 +17,7 @@
 #endif
 
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
-#define NETMAP_WITH_LIBS
-#include <net/netmap_user.h>
+#include "netmap_pkthdr.h"
 #endif
 
 
@@ -39,7 +38,7 @@ struct nethuns_ring_slot
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
     struct tpacket3_hdr     pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
-    struct nm_pkthdr        pkthdr;
+    struct netmap_pkthdr        pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
     struct pcap_pkthdr      pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP

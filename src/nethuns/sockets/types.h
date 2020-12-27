@@ -8,11 +8,10 @@ typedef struct tpacket3_hdr              nethuns_pkthdr_t;
 
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
 
-#define NETMAP_WITH_LIBS
-#include <net/netmap_user.h>
+#include <libnetmap.h>
 
 typedef struct nethuns_socket_netmap     nethuns_socket_t;
-typedef struct nm_pkthdr                 nethuns_pkthdr_t;
+typedef struct netmap_pkthdr             nethuns_pkthdr_t;
 
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
 

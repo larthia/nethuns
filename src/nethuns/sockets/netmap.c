@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 struct nethuns_socket_netmap *
@@ -51,7 +52,7 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
             __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
         }
 
-        nm_close(s->p);
+        nmport_close(s->p);
 
         __nethuns_free_base(s);
         free(s);
@@ -75,7 +76,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         snprintf(nm_dev, 128, "netmap:%s-%d", dev, nethuns_socket(s)->queue);
     }
 
-    s->p = nm_open(nm_dev, NULL, 0, NULL);
+    s->p = nmport_open(nm_dev);
     if (!s->p)
     {
         nethuns_perror(s->base.errbuf, "bind: could not open dev: %s", nethuns_dev_queue_name(dev, queue));
@@ -105,7 +106,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     unsigned int caplen = s->base.opt.packetsize;
     unsigned int bytes;
     const uint8_t *pkt;
-    struct nm_pkthdr header;
+    struct netmap_pkthdr header;
 
     struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -153,11 +154,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len)
 {
-    int n = nm_inject(s->p, packet, len);
-    if (likely(n > 0)) {
-        return n;
-    }
-    return -1;
+    return nmport_inject(s->p, packet, len);
 }
 
 
@@ -169,8 +166,9 @@ nethuns_flush_netmap(struct nethuns_socket_netmap *s)
 
 
 int
-nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stat *stats)
+nethuns_stats_netmap(__maybe_unused struct nethuns_socket_netmap *s, __maybe_unused struct nethuns_stat *stats)
 {
+#if 0
     stats->rx_packets    = s->p->st.ps_recv;
     stats->tx_packets    = 0;
     stats->rx_dropped    = s->p->st.ps_drop;
@@ -178,6 +176,7 @@ nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stat *stats
     stats->rx_invalid    = 0;
     stats->tx_invalid    = 0;
     stats->freeze        = 0;
+#endif
     return 0;
 }
 

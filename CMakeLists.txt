@@ -57,6 +57,8 @@ endif()
 
 if (NETHUNS_OPT_NETMAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/netmap.c)
+    list(APPEND NETHUNS_DEP -lnetmap)
+    list(APPEND OTHER_LIB -lnetmap)
     message("Nethuns: netmap ENABLED")	
 endif()
 
