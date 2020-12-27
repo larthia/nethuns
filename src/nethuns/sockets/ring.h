@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "../misc/macro.h"
 #include "../misc/compiler.h"
@@ -60,14 +61,28 @@ struct nethuns_ring_slot
 
 
 static inline
+size_t
+nethuns_lpow2(size_t n)
+{
+    if (n && !(n & (n - 1)))
+        return n;
+    return 1UL << (sizeof(size_t) * CHAR_BIT - __builtin_clzl(n));
+}
+
+static inline
 int
 nethuns_make_ring(size_t nslots, size_t pktsize, struct nethuns_ring *r)
 {
+    size_t ns = nethuns_lpow2(nslots);
+    size_t ss = nethuns_lpow2(sizeof(struct nethuns_ring_slot) + pktsize);
+
     r->size    = nslots;
     r->pktsize = pktsize;
     r->head    = 0;
     r->tail    = 0;
-    r->ring    = (struct nethuns_ring_slot *)calloc(1, nslots * (sizeof(struct nethuns_ring_slot) + pktsize));
+    r->ring    = (struct nethuns_ring_slot *)calloc(1, ns * ss);
+    r->mask    = ns - 1;
+    r->shift   = __builtin_ctzl(ss);
 
     return r->ring ? 0 : -1;
 }
@@ -78,7 +93,7 @@ struct nethuns_ring_slot *
 nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
 {
     return (struct nethuns_ring_slot *)
-            ((char *)ring->ring + (n % ring->size) * (sizeof(struct nethuns_ring_slot) + ring->pktsize));
+            ((char *)ring->ring + ((n & ring->mask) << ring->shift));
 }
 
 

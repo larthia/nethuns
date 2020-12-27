@@ -20,6 +20,9 @@ struct nethuns_ring
     uint64_t head;
     uint64_t tail;
 
+    size_t mask;
+    size_t shift;
+
     struct nethuns_ring_slot *ring;
 };
 
