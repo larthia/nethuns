@@ -54,7 +54,7 @@ try
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
-        ,   .xdp_prog        = nullptr 
+        ,   .xdp_prog        = nullptr
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -73,16 +73,16 @@ try
         {
             pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
 
-            if (nethuns_is_valid(pkt_id))
+            if (nethuns_pktis_valid(pkt_id))
             {
                 std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
 
             nethuns_release(p, pkt_id);
         }
-        while (nethuns_is_ok(pkt_id));
+        while (nethuns_pkt_is_ok(pkt_id));
 
-        if (nethuns_is_err(pkt_id))
+        if (nethuns_pkt_is_err(pkt_id))
             std::cerr << "err: " << nethuns_error(p) << std::endl;
 
         nethuns_pcap_close(p);
@@ -103,7 +103,7 @@ try
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
-        ,   .xdp_prog        = nullptr 
+        ,   .xdp_prog        = nullptr
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -165,4 +165,3 @@ catch(std::exception &e)
     std::cerr << e.what() << std::endl;
     return 1;
 }
-
