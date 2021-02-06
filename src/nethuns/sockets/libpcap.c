@@ -42,7 +42,7 @@ nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
 
 int nethuns_close_libpcap(struct nethuns_socket_libpcap *s)
 {
-    if (s)
+    if (s && s->p)
     {
         pcap_close(s->p);
 
@@ -159,7 +159,7 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
     struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
 
 #if 1
-    if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
+    if (s->p == NULL || __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
     }
@@ -200,7 +200,10 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 int
 nethuns_send_libpcap(struct nethuns_socket_libpcap *s, uint8_t const *packet, unsigned int len)
 {
-    return pcap_inject(s->p, packet, len);
+    if (likely(s->p != NULL)) {
+    	return pcap_inject(s->p, packet, len);
+    }
+    return -1;
 }
 
 
@@ -215,7 +218,7 @@ int
 nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stat *stats)
 {
     struct pcap_stat ps;
-    if (pcap_stats(s->p, &ps) == -1)
+    if (s->p == NULL || pcap_stats(s->p, &ps) == -1)
     {
         return -1;
     }
