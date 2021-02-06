@@ -82,20 +82,21 @@ extern "C" {
     void nethuns_clear_filter(nethuns_socket_t * s);
 
 #ifdef __cplusplus
-#define nethuns_socket(_sock)     (reinterpret_cast<struct nethuns_socket_base *>(_sock))
+#define nethuns_socket(_sock)       (reinterpret_cast<struct nethuns_socket_base *>(_sock))
+#define nethuns_const_socket(_sock) (reinterpret_cast<struct nethuns_socket_base const *>(_sock))
 #else
-#define nethuns_socket(_sock)     ((struct nethuns_socket_base *)(_sock))
+#define nethuns_socket(_sock)       ((struct nethuns_socket_base *)(_sock))
+#define nethuns_const_socket(_sock) ((struct nethuns_socket_base const *)(_sock))
 #endif
 
-#define nethuns_error(_sock)    ({nethuns_socket(_sock)->errbuf;})
+#define nethuns_error(_sock)    ({nethuns_const_socket(_sock)->errbuf;})
 
 
-#define nethuns_is_valid(_n)    ((_n + 2) > 2)
-#define nethuns_is_null(_n)     ((_n) == 0)
-
-#define nethuns_is_ok(_n)       ((_n + 2) >= 2)
-#define nethuns_is_err(_n)      ((_n) == (uint64_t)-1)
-#define nethuns_is_eof(_n)      ((_n) == (uint64_t)-2)
+#define nethuns_pkt_is_valid(_n)    ((_n + 2) > 2)
+#define nethuns_pkt_is_null(_n)     ((_n) == 0)
+#define nethuns_pkt_is_ok(_n)       ((_n + 2) >= 2)
+#define nethuns_pkt_is_err(_n)      ((_n) == (uint64_t)-1)
+#define nethuns_pkt_is_eof(_n)      ((_n) == (uint64_t)-2)
 
 
 #define NETHUNS_ERROR           ((uint64_t)-1)
@@ -178,4 +179,3 @@ struct nethuns_exception : public std::runtime_error {
 };
 
 #endif
-

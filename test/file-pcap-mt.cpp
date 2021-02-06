@@ -38,8 +38,8 @@ try
         return 0;
     }
 
-    queue = nethuns_spsc_init(65536, sizeof(nethuns_packet)); 
-    if (!queue) { 
+    queue = nethuns_spsc_init(65536, sizeof(nethuns_packet));
+    if (!queue) {
         throw std::runtime_error("nethuns_spsc: internal error");
     }
 
@@ -57,7 +57,7 @@ try
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
-        ,   .xdp_prog        = nullptr 
+        ,   .xdp_prog        = nullptr
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -77,14 +77,14 @@ try
     do
     {
         pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
-        if (nethuns_is_valid(pkt_id))
+        if (nethuns_pkt_is_valid(pkt_id))
         {
             struct nethuns_packet hdr { frame, pkthdr, nethuns_socket(p), pkt_id };
             while (!nethuns_spsc_push(queue, &hdr))
             { };
         }
     }
-    while (!nethuns_is_err(pkt_id));
+    while (!nethuns_pkt_is_err(pkt_id));
 
     std::cerr << "head: " << p->base.ring.head << std::endl;
 
@@ -109,4 +109,3 @@ catch(std::exception &e)
     std::cerr << e.what() << std::endl;
     return 1;
 }
-
