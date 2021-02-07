@@ -143,7 +143,11 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len)
 {
-    return nm_inject(s->p, packet, len);
+    int n = nm_inject(s->p, packet, len);
+    if (likely(n > 0)) {
+        return n;
+    }
+    return -1;
 }
 
 

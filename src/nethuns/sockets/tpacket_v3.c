@@ -383,7 +383,7 @@ nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *pack
     __sync_synchronize();
 
     s->tx_frame_idx++;
-    return 1;
+    return len;
 }
 
 
