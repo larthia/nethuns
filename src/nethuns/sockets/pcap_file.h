@@ -38,3 +38,15 @@ struct nethuns_pcap_socket
     uint32_t            snaplen;
     uint32_t            magic;
 };
+
+
+static inline
+int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
+{
+    fwrite(header, sizeof(struct nethuns_pcap_pkthdr), 1, s->w);
+    if (fwrite(packet, 1, len, s->w) != len) {
+        return -1;
+    }
+    fflush(s->w);
+    return len;
+}

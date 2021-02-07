@@ -305,18 +305,8 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
 #endif
 
-
-int
-nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
-{
-    fwrite(header, sizeof(struct nethuns_pcap_pkthdr), 1, s->w);
-    if (fwrite(packet, 1, len, s->w) != len) {
-        return -1;
-    }
-    fflush(s->w);
-    return len;
-}
-
+// static inline
+// int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
 
 int
 nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
