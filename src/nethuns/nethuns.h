@@ -14,8 +14,27 @@
     void (*__nethuns_fini)() = nethuns_global_fini;
 
 
-#define NETHUNS_ETH_P_8021Q     0x8100
-#define NETHUNS_ETH_P_8021AD    0x88A8
+#define NETHUNS_ERROR               ((uint64_t)-1)
+#define NETHUNS_EOF                 ((uint64_t)-2)
+#define NETHUNS_ETH_P_8021Q         0x8100
+#define NETHUNS_ETH_P_8021AD        0x88A8
+
+
+#ifdef __cplusplus
+#define nethuns_socket(_sock)       (reinterpret_cast<struct nethuns_socket_base *>(_sock))
+#define nethuns_const_socket(_sock) (reinterpret_cast<struct nethuns_socket_base const *>(_sock))
+#else
+#define nethuns_socket(_sock)       ((struct nethuns_socket_base *)(_sock))
+#define nethuns_const_socket(_sock) ((struct nethuns_socket_base const *)(_sock))
+#endif
+
+#define nethuns_error(_sock)        ({nethuns_const_socket(_sock)->errbuf;})
+
+#define nethuns_pkt_is_valid(_n)    ((_n + 2) > 2)
+#define nethuns_pkt_is_null(_n)     ((_n) == 0)
+#define nethuns_pkt_is_ok(_n)       ((_n + 2) >= 2)
+#define nethuns_pkt_is_err(_n)      ((_n) == (uint64_t)-1)
+#define nethuns_pkt_is_eof(_n)      ((_n) == (uint64_t)-2)
 
 
 #ifdef __cplusplus
@@ -43,14 +62,13 @@ extern "C" {
 
     int nethuns_stats(nethuns_socket_t * s, struct nethuns_stat *);
 
-
     nethuns_pcap_t * nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
     int nethuns_pcap_close(nethuns_pcap_t * p);
 
     uint64_t nethuns_pcap_read(nethuns_pcap_t * p, const nethuns_pkthdr_t **pkthdr, const uint8_t **pkt);
     int nethuns_pcap_store(nethuns_pcap_t * s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
-    int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
     int nethuns_pcap_rewind(nethuns_pcap_t *p);
+    int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
 
     int nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags);
 
@@ -81,28 +99,6 @@ extern "C" {
 
     void nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx);
     void nethuns_clear_filter(nethuns_socket_t * s);
-
-#ifdef __cplusplus
-#define nethuns_socket(_sock)       (reinterpret_cast<struct nethuns_socket_base *>(_sock))
-#define nethuns_const_socket(_sock) (reinterpret_cast<struct nethuns_socket_base const *>(_sock))
-#else
-#define nethuns_socket(_sock)       ((struct nethuns_socket_base *)(_sock))
-#define nethuns_const_socket(_sock) ((struct nethuns_socket_base const *)(_sock))
-#endif
-
-#define nethuns_error(_sock)    ({nethuns_const_socket(_sock)->errbuf;})
-
-
-#define nethuns_pkt_is_valid(_n)    ((_n + 2) > 2)
-#define nethuns_pkt_is_null(_n)     ((_n) == 0)
-#define nethuns_pkt_is_ok(_n)       ((_n + 2) >= 2)
-#define nethuns_pkt_is_err(_n)      ((_n) == (uint64_t)-1)
-#define nethuns_pkt_is_eof(_n)      ((_n) == (uint64_t)-2)
-
-
-#define NETHUNS_ERROR           ((uint64_t)-1)
-#define NETHUNS_EOF             ((uint64_t)-2)
-
 
 #define nethuns_release(_sock, _pktid) do \
 { \
@@ -157,7 +153,6 @@ nethuns_vlan_tci(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payl
 {
     return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tci(hdr) : nethuns_pktvlan_tci(payload);
 }
-
 
 #ifdef __cplusplus
 }
