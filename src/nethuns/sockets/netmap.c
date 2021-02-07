@@ -185,5 +185,3 @@ void
 nethuns_dump_rings_netmap(__maybe_unused struct nethuns_socket_netmap *s)
 {
 }
-
-

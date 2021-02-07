@@ -67,7 +67,7 @@ load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
             nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link_id: get link xpd failed");
             goto err;
         }
-        
+
         nethuns_fprintf(stderr, "bpf_prog_load: done\n");
     }
 
@@ -87,8 +87,8 @@ unload_xdp_program(struct nethuns_socket_xdp *s)
     nethuns_lock_global();
 
     struct nethuns_netinfo *info = nethuns_lookup_netinfo(nethuns_socket(s)->devname);
-    if (info != NULL) { 
-        if (--info->xdp_prog_refcnt == 0) 
+    if (info != NULL) {
+        if (--info->xdp_prog_refcnt == 0)
         {
             nethuns_fprintf(stderr, "bpf_prog_load: unloading %s program...\n", nethuns_socket(s)->opt.xdp_prog);
 
@@ -107,7 +107,7 @@ unload_xdp_program(struct nethuns_socket_xdp *s)
                 nethuns_perror(nethuns_socket(s)->errbuf, "bpf_prog: program on dev '%s' changed?", nethuns_socket(s)->devname);
                 goto err;
             }
-            
+
             nethuns_fprintf(stderr, "bpf_prog_load: done\n");
         }
     } else {
@@ -213,12 +213,12 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_rx_only) {
         s->rx = true;
     }
-    
+
     if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_tx_only) {
         s->tx = true;
     }
 
-    // postpone the creation of the socket to bind stage... 
+    // postpone the creation of the socket to bind stage...
 
     s->xsk = NULL;
 
@@ -331,13 +331,13 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     if (rcvd == 0)  {
         return 0;
     }
-        
+
     stock_frames = xsk_prod_nb_free(&s->xsk->umem->fq, xsk_umem_free_frames(s->xsk));
     if (stock_frames > 0) {
 
         ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, stock_frames, &idx_fq);
 
-        while (ret != rcvd) 
+        while (ret != rcvd)
 			ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
 
         for (i = 0; i < stock_frames; i++)
@@ -359,15 +359,15 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     __atomic_add_fetch(&s->xsk->rx_npkts, 1, __ATOMIC_RELAXED);
 
     // get timestamp...
-    
+
     struct timespec tp;
     clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
 
     struct xdp_pkthdr header = {
         .sec     = (int32_t)tp.tv_sec
       , .nsec    = (int32_t)tp.tv_nsec
-      , .len     = len 
-      , .snaplen = len 
+      , .len     = len
+      , .snaplen = len
     };
 
     if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt))
@@ -377,7 +377,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
         slot->orig   = orig;
         slot->idx_fq = idx_fq;
         slot->packet = pkt;
-    
+
         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
         *pkthdr  = &slot->pkthdr;
@@ -393,7 +393,7 @@ int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len)
 {
     // return pcap_inject(s->p, packet, len);
-    return 0;
+    return -1;
 }
 
 
@@ -457,4 +457,3 @@ void
 nethuns_dump_rings_xdp(__maybe_unused struct nethuns_socket_xdp *s)
 {
 }
-
