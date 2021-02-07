@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pcap_reader.h"
+#include "pcap_file.h"
 
 #ifdef NETHUNS_USE_TPACKET_V3
 

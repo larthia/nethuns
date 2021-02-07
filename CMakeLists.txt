@@ -33,8 +33,8 @@ option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 set(NETHUNS_DEP)
 
 set(NETHUNS_SRC src/nethuns/nethuns.c 
-		src/nethuns/global.c
-                src/nethuns/sockets/pcap_reader.c)
+		        src/nethuns/global.c
+                src/nethuns/sockets/pcap_file.c)
 
 if (NETHUNS_BUILTIN_PCAP_READER)
     message("Nethuns: using built-in pcap file reader!")
