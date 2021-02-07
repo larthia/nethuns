@@ -90,3 +90,25 @@ struct nethuns_packet
 };
 
 
+struct nethuns_timeval
+{
+    uint32_t    tv_sec;
+    uint32_t    tv_usec;
+};
+
+
+struct nethuns_pcap_pkthdr
+{
+    struct nethuns_timeval ts;      /* time stamp */
+    uint32_t caplen;                /* length of portion present */
+    uint32_t len;                   /* length this packet (off wire) */
+};
+
+struct nethuns_pcap_patched_pkthdr {
+    struct nethuns_timeval ts;	    /* time stamp */
+    uint32_t caplen;		        /* length of portion present */
+    uint32_t len;		            /* length of this packet (off wire) */
+    int		index;
+    unsigned short protocol;
+    unsigned char pkt_type;
+};

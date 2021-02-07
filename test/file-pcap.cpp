@@ -135,7 +135,7 @@ try
             if ((pkt_id = nethuns_recv(in, &pkthdr, &frame)))
             {
                 dump_packet(pkthdr, frame);
-                nethuns_pcap_write(out, pkthdr, frame, nethuns_len(pkthdr));
+                nethuns_pcap_store(out, pkthdr, frame, nethuns_len(pkthdr));
 
                 nethuns_release(in, pkt_id);
                 i++;

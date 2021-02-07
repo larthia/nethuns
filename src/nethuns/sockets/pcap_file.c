@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <time.h>
 #include <string.h>
 
 #include "../util/compiler.h"
@@ -36,7 +37,7 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 
     if (opt->dir != nethuns_in_out)
     {
-        nethuns_perror(errbuf, "unsupported catpure direction (%d)", (int)opt->dir);
+        nethuns_perror(errbuf, "pcap_open: unsupported catpure direction (%d)", (int)opt->dir);
         return NULL;
     }
 
@@ -304,8 +305,21 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 
 #endif
 
+
 int
-nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
+nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
+{
+    fwrite(header, sizeof(struct nethuns_pcap_pkthdr), 1, s->w);
+    if (fwrite(packet, 1, len, s->w) != len) {
+        return -1;
+    }
+    fflush(s->w);
+    return len;
+}
+
+
+int
+nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
 {
     struct nethuns_pcap_pkthdr header;
     int has_vlan_offload = nethuns_offvlan_tpid(pkthdr) ? 1 : 0;
@@ -318,20 +332,25 @@ nethuns_pcap_write(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t co
 
     fwrite(&header, sizeof(header), 1, s->w);
 
+    uint32_t clen = header.caplen;
+
     if (has_vlan_offload)
     {
         uint16_t h8021q[2] = { htons(nethuns_offvlan_tpid(pkthdr)), htons(nethuns_offvlan_tci(pkthdr)) };
         fwrite(packet,    1, 12, s->w);
         fwrite(h8021q,    1, 4,  s->w);
-        fwrite(packet+12, 1, header.caplen-16, s->w);
+        clen = header.caplen-16;
+        if (fwrite(packet+12, 1, clen, s->w) != clen) {
+            return -1;
+        }
     }
     else
     {
-        fwrite(packet, 1, header.caplen, s->w);
+        if (fwrite(packet, 1, header.caplen, s->w) != header.caplen) {
+            return -1;
+        }
     }
 
     fflush(s->w);
-    return 0;
+    return clen;
 }
-
-

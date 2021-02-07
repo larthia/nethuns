@@ -24,30 +24,6 @@ struct nethuns_pcap_file_header
     uint32_t        linktype;       /* data link type (LINKTYPE_*) */
 };
 
-
-struct nethuns_timeval
-{
-    uint32_t    tv_sec;
-    uint32_t    tv_usec;
-};
-
-
-struct nethuns_pcap_pkthdr
-{
-    struct nethuns_timeval ts;      /* time stamp */
-    uint32_t caplen;                /* length of portion present */
-    uint32_t len;                   /* length this packet (off wire) */
-};
-
-struct nethuns_pcap_patched_pkthdr {
-    struct nethuns_timeval ts;	    /* time stamp */
-    uint32_t caplen;		        /* length of portion present */
-    uint32_t len;		            /* length of this packet (off wire) */
-    int		index;
-    unsigned short protocol;
-    unsigned char pkt_type;
-};
-
 typedef struct nethuns_pcap_socket nethuns_pcap_t;
 
 struct nethuns_pcap_socket
@@ -60,6 +36,5 @@ struct nethuns_pcap_socket
 #endif
     FILE *              w;
     uint32_t            snaplen;
-    uint32_t            magic; 
+    uint32_t            magic;
 };
-
