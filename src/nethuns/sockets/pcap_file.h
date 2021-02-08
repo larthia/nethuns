@@ -34,7 +34,6 @@ struct nethuns_pcap_socket
 #else
     pcap_t *            r;
 #endif
-    FILE *              w;
     uint32_t            snaplen;
     uint32_t            magic;
 };
@@ -43,16 +42,28 @@ struct nethuns_pcap_socket
 extern "C" {
 #endif
 
+#ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 static inline
 int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
 {
-    fwrite(header, sizeof(struct nethuns_pcap_pkthdr), 1, s->w);
-    if (fwrite(packet, 1, len, s->w) != len) {
+    fwrite(header, sizeof(struct nethuns_pcap_pkthdr), 1, s->r);
+    if (fwrite(packet, 1, len, s->r) != len) {
         return -1;
     }
-    fflush(s->w);
+    fflush(s->r);
     return len;
 }
+#else
+static inline
+int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
+{
+    (void)s;
+    (void)header;
+    (void)packet;
+    (void)len;
+    return -1;
+}
+#endif
 
 #ifdef __cplusplus
 }

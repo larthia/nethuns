@@ -31,8 +31,6 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     pcap_t * pr = NULL;
 #endif
 
-    FILE *pw = NULL;
-
     size_t snaplen;
 
     if (opt->dir != nethuns_in_out)
@@ -105,8 +103,9 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
     }
     else {
 
-        pw = fopen(filename, "w");
-        if (!pw) {
+#ifdef NETHUNS_USE_BUILTIN_PCAP_READER
+        pr = fopen(filename, "w");
+        if (!pr) {
             nethuns_perror(errbuf, "pcap_open: could not open '%s' file for writing", filename);
             free(pcap->base.ring.ring);
             free(pcap);
@@ -126,21 +125,26 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
         ,   .linktype      = 1 // DLT_EN10MB
         };
 
-        if (fwrite (&header, sizeof(header), 1, pw) != 1)
+        if (fwrite (&header, sizeof(header), 1, pr) != 1)
         {
             nethuns_perror(errbuf, "pcap_open: could not write to pcap file!");
-            fclose(pw);
+            fclose(pr);
             free(pcap->base.ring.ring);
             free(pcap);
             return NULL;
         }
 
-        fflush(pw);
+        fflush(pr);
+#else
+        nethuns_perror(errbuf, "pcap_open: could not open pcap file for writing (use built-in pcap option)");
+        free(pcap->base.ring.ring);
+        free(pcap);
+        return NULL;
+#endif
     }
 
     pcap->base.opt  = *opt;
     pcap->r         = pr;
-    pcap->w         = pw;
     pcap->snaplen   = snaplen;
     return pcap;
 }
@@ -155,10 +159,6 @@ nethuns_pcap_close(nethuns_pcap_t *p)
 #else
         pcap_close(p->r);
 #endif
-    }
-
-    if (p->w) {
-        fclose(p->w);
     }
 
     free(p->base.ring.ring);
@@ -308,6 +308,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 // static inline
 // int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
 
+#ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 int
 nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
 {
@@ -320,27 +321,48 @@ nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t co
     header.caplen     = (uint32_t) MIN(len, (nethuns_snaplen(pkthdr) + 4 * has_vlan_offload));
     header.len        = (uint32_t) (nethuns_len(pkthdr) + 4 * has_vlan_offload);
 
-    fwrite(&header, sizeof(header), 1, s->w);
+    fwrite(&header, sizeof(header), 1, s->r);
 
     uint32_t clen = header.caplen;
 
     if (has_vlan_offload)
     {
         uint16_t h8021q[2] = { htons(nethuns_offvlan_tpid(pkthdr)), htons(nethuns_offvlan_tci(pkthdr)) };
-        fwrite(packet,    1, 12, s->w);
-        fwrite(h8021q,    1, 4,  s->w);
+        fwrite(packet,    1, 12, s->r);
+        fwrite(h8021q,    1, 4,  s->r);
         clen = header.caplen-16;
-        if (fwrite(packet+12, 1, clen, s->w) != clen) {
+        if (fwrite(packet+12, 1, clen, s->r) != clen) {
             return -1;
         }
     }
     else
     {
-        if (fwrite(packet, 1, header.caplen, s->w) != header.caplen) {
+        if (fwrite(packet, 1, header.caplen, s->r) != header.caplen) {
             return -1;
         }
     }
 
-    fflush(s->w);
+    fflush(s->r);
     return clen;
 }
+
+int nethuns_pcap_rewind(nethuns_pcap_t *s)
+{
+    return fseek(s->r, sizeof(struct nethuns_pcap_file_header), SEEK_SET);
+}
+#else
+int nethuns_pcap_rewind(nethuns_pcap_t *s)
+{
+    (void)s;
+    return -1;
+}
+int
+nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
+{
+    (void)s;
+    (void)pkthdr;
+    (void)packet;
+    (void)len;
+    return -1;
+}
+#endif
