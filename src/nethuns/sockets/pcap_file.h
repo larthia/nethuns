@@ -39,6 +39,9 @@ struct nethuns_pcap_socket
     uint32_t            magic;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static inline
 int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
@@ -50,3 +53,7 @@ int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *head
     fflush(s->w);
     return len;
 }
+
+#ifdef __cplusplus
+}
+#endif
