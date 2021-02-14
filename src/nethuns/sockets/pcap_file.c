@@ -174,7 +174,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     unsigned int caplen = p->base.opt.packetsize;
     unsigned int bytes;
 
-    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&p->base.ring, p->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.ring, p->base.ring.head);
 
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -235,7 +235,7 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
     unsigned int bytes;
     size_t n;
 
-    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&p->base.ring, p->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.ring, p->base.ring.head);
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {

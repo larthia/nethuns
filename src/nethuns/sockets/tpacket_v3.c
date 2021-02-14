@@ -297,7 +297,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             {
                 s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-                slot = nethuns_ring_next(&s->base.ring);
+                slot = nethuns_ring_next_slot(&s->base.ring);
                 slot->id = s->rx_block_idx;
                 __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 

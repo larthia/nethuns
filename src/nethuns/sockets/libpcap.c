@@ -156,7 +156,7 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 
     struct pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
 
 #if 1
     if (s->p == NULL || __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -251,6 +251,3 @@ void
 nethuns_dump_rings_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 {
 }
-
-
-

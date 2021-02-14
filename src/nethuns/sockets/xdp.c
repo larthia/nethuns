@@ -318,7 +318,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
     nethuns_ring_free_slots(&s->base.ring, __nethuns_xdp_free_slots, s);
 
-    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;

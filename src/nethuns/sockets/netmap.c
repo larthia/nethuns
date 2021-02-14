@@ -99,7 +99,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     const uint8_t *pkt;
     struct nm_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
