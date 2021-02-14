@@ -276,15 +276,18 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 
     s->xsk = xsk_configure_socket(s, nethuns_socket(s)->opt.numpackets, nethuns_socket(s)->opt.packetsize, s->rx, s->tx);
     if (!s->xsk) {
+        nethuns_perror(s->base.errbuf, "bind: configure socket (%s)", nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
     if (nethuns_socket(s)->opt.xdp_prog) {
         if (load_xdp_program(s, dev) < 0) {
+            nethuns_perror(s->base.errbuf, "bind: could not load xdp program %s (%s)", nethuns_socket(s)->opt.xdp_prog, ethuns_dev_queue_name(dev, queue));
     	    return -1;
         }
 
         if (xsk_enter_into_map(s) < 0) {
+            nethuns_perror(s->base.errbuf, "bind: could not enter into map (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
         }
     }
@@ -292,6 +295,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     if (nethuns_socket(s)->opt.promisc)
     {
         if (__nethuns_set_if_promisc(s, dev) < 0)
+            nethuns_perror(s->base.errbuf, "bind: could not set promisc (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
     }
 
@@ -393,6 +397,7 @@ int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len)
 {
     // return pcap_inject(s->p, packet, len);
+    nethuns_perror(s->base.errbuf, "send: not implemented yet (%s)", nethuns_device_name(s));
     return -1;
 }
 
@@ -449,6 +454,7 @@ int nethuns_fd_xdp(__maybe_unused struct nethuns_socket_xdp *s)
 int
 nethuns_fanout_xdp(__maybe_unused struct nethuns_socket_xdp *s, __maybe_unused int group, __maybe_unused const char *fanout)
 {
+    nethuns_perror(s->base.errbuf, "fanout: not supported (%s)", nethuns_device_name(s));
     return -1;
 }
 
