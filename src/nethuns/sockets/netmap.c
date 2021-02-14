@@ -78,6 +78,8 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         return -1;
     }
 
+    nethuns_socket(s)->queue   = queue;
+    nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
     nethuns_socket(s)->devname = strdup(dev);
 
     if (nethuns_socket(s)->opt.promisc)

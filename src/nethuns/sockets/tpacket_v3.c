@@ -220,6 +220,8 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
 
     /* save device name.. */
 
+    nethuns_socket(s)->queue   = queue;
+    nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
     nethuns_socket(s)->devname = strdup(dev);
 
     /* set promisc interface */

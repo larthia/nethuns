@@ -7,6 +7,7 @@
 
 #include <pcap/pcap.h>
 #include <sys/ioctl.h>
+#include <net/if.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -142,6 +143,10 @@ int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int 
             }
         }
     }
+
+    nethuns_socket(s)->queue   = queue;
+    nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
+    nethuns_socket(s)->devname = strdup(dev);
 
     return 0;
 }
