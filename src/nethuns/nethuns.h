@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 #include <net/ethernet.h>
+#include <net/if.h>
 
 #include "util/compiler.h"
 #include "sockets/stub.h"
@@ -99,6 +100,27 @@ extern "C" {
 
     void nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx);
     void nethuns_clear_filter(nethuns_socket_t * s);
+
+    static inline char *
+    nethuns_dev_queue_name(const char *dev, int queue)
+    {
+        static __thread char name[IFNAMSIZ+4];
+        if (dev == NULL) {
+            sprintf(name, "unspec");
+        } else if (queue == NETHUNS_ANY_QUEUE) {
+            sprintf(name, "%s", dev);
+        } else {
+            sprintf(name, "%s:%d", dev, queue);
+        }
+        return name;
+    }
+
+    static inline char *
+    nethuns_device_name(nethuns_socket_t *s)
+    {
+        return nethuns_dev_queue_name(nethuns_socket(s)->devname, nethuns_socket(s)->queue);
+    }
+
 
 #define nethuns_release(_sock, _pktid) do \
 { \
