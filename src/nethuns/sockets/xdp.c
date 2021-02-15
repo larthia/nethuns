@@ -127,7 +127,7 @@ struct nethuns_socket_xdp *
 nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_xdp *s;
-    int n;
+    unsigned int n;
 
     s = calloc(1, sizeof(struct nethuns_socket_xdp));
     if (!s)
@@ -281,6 +281,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 
     if (nethuns_socket(s)->opt.xdp_prog) {
         if (load_xdp_program(s, dev) < 0) {
+            nethuns_perror(s->base.errbuf, "bind: could not load xdp program %s (%s)", nethuns_socket(s)->opt.xdp_prog, nethuns_dev_queue_name(dev, queue));
     	    return -1;
         }
 
@@ -291,8 +292,10 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 
     if (nethuns_socket(s)->opt.promisc)
     {
-        if (__nethuns_set_if_promisc(s, dev) < 0)
+        if (__nethuns_set_if_promisc(s, dev) < 0) {
+            nethuns_perror(s->base.errbuf, "bind: could not set promisc (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
+	}
     }
 
     return 0;
@@ -304,6 +307,7 @@ __nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t
 {
     struct nethuns_socket_xdp *s = (struct nethuns_socket_xdp *)user;
     xsk_ring_cons__release(&s->xsk->rx, 1);
+    (void)slot;
     return 0;
 }
 
@@ -311,7 +315,7 @@ __nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t
 uint64_t
 nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
-    unsigned int caplen = nethuns_socket(s)->opt.packetsize;
+    // unsigned int caplen = nethuns_socket(s)->opt.packetsize;
     uint32_t idx_rx = 0, idx_fq = 0;
     int rcvd, ret;
     unsigned int i, stock_frames;
@@ -393,7 +397,8 @@ int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len)
 {
     // return pcap_inject(s->p, packet, len);
-    return 0;
+    nethuns_perror(s->base.errbuf, "send: not implemented yet (%s): packet@%p size:%u", nethuns_device_name(s), packet, len);
+    return -1;
 }
 
 

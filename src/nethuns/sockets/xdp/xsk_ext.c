@@ -80,7 +80,9 @@ xsk_configure_socket(
 {
 	struct xsk_socket_config cfg;
 	struct xsk_socket_info *xsk;
-	int i, ret, idx;
+	int ret;
+    unsigned int i;
+    	unsigned int idx;
 
 	xsk = calloc(1, sizeof(*xsk) + num_frames * frame_size);
 	if (!xsk)
@@ -109,8 +111,9 @@ xsk_configure_socket(
 
 	/* Initialize umem frame allocation */
 
-	for (i = 0; i < num_frames; i++)
+	for (i = 0; i < num_frames; i++) {
 		xsk->umem_frame_addr[i] = i * frame_size;
+	}
 
 	xsk->umem_frame_free = num_frames;
 
@@ -121,7 +124,7 @@ xsk_configure_socket(
 				     &idx);
 
 	if (ret != XSK_RING_CONS__DEFAULT_NUM_DESCS) {
-		printf("num_frame: %d frame_size:%d ret:%d\n", num_frames, frame_size, ret);
+		printf("num_frame:%lu frame_size:%lu ret:%d\n", num_frames, frame_size, ret);
         nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_config: could not reserve slots in fill ring");
 		goto err;
 	}
