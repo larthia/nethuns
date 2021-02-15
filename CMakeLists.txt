@@ -18,6 +18,11 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_definitions(-D_GNU_SOURCE)
+
+find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
+find_library(LIBPCAP_LIBRARY pcap)
+include_directories(${LIBPCAP_INCLUDE_DIR})
+
 include_directories(/usr/local/include/ src) 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
@@ -33,15 +38,14 @@ option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
 set(NETHUNS_DEP)
 
 set(NETHUNS_SRC src/nethuns/nethuns.c 
-		        src/nethuns/global.c
+		src/nethuns/global.c
                 src/nethuns/sockets/pcap_file.c)
 
 if (NETHUNS_BUILTIN_PCAP_READER)
     message("Nethuns: using built-in pcap file reader!")
 else()
-    list(APPEND NETHUNS_DEP -lpcap)
-
-    list(APPEND OTHER_LIB -lpcap)
+    list(APPEND NETHUNS_DEP ${LIBPCAP_LIBRARY})
+    list(APPEND OTHER_LIB ${LIBPCAP_LIBRARY})
     message("Nethuns: using libpcap to read files!")
 endif()
 
@@ -84,8 +88,8 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
-    list(APPEND NETHUNS_DEP -lpcap)
-    list(APPEND OTHER_LIB -lpcap)
+    list(APPEND NETHUNS_DEP ${LIBPCAP_LIBRARY})
+    list(APPEND OTHER_LIB ${LIBPCAP_LIBRARY})
 
 endif()
 
@@ -129,10 +133,10 @@ if (NETHUNS_BUILD_TESTS)
     target_link_libraries(nethuns-meter-mt   ${OTHER_LIB} nethuns)
     target_link_libraries(nethuns-filter     ${OTHER_LIB} nethuns)
 
-    target_link_libraries(pure-pcap-forward      -lpcap  -pthread)
-    target_link_libraries(pure-pcap-forward-mt   -lpcap  -pthread)
-    target_link_libraries(pure-pcap-meter        -lpcap  -pthread)
-    target_link_libraries(pure-pcap-meter-mt     -lpcap  -pthread)
+    target_link_libraries(pure-pcap-forward      -pthread ${LIBPCAP_LIBRARY})
+    target_link_libraries(pure-pcap-forward-mt   -pthread ${LIBPCAP_LIBRARY})
+    target_link_libraries(pure-pcap-meter        -pthread ${LIBPCAP_LIBRARY})
+    target_link_libraries(pure-pcap-meter-mt     -pthread ${LIBPCAP_LIBRARY})
 
 endif()
 
