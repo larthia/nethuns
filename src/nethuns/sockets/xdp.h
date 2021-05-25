@@ -29,6 +29,9 @@ struct nethuns_socket_xdp
 
     bool rx;
     bool tx;
+
+    unsigned int rcvd;
+    uint32_t idx_rx;
 };
 
 

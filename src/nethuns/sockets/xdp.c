@@ -314,6 +314,7 @@ static int
 __nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t id, void *user)
 {
     struct nethuns_socket_xdp *s = (struct nethuns_socket_xdp *)user;
+    xsk_free_umem_frame(s->xsk, slot->addr);
     xsk_ring_cons__release(&s->xsk->rx, 1);
     (void)slot;
     return 0;
@@ -324,8 +325,8 @@ uint64_t
 nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     // unsigned int caplen = nethuns_socket(s)->opt.packetsize;
-    uint32_t idx_rx = 0, idx_fq = 0;
-    int rcvd, ret;
+    uint32_t idx_fq = 0;
+    int ret;
     unsigned int i, stock_frames;
 
     nethuns_ring_free_slots(&s->base.ring, __nethuns_xdp_free_slots, s);
@@ -339,31 +340,35 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     // retrieve the pointer to the packet
     //
 
-    rcvd = xsk_ring_cons__peek(&s->xsk->rx, 1, &idx_rx);
-    if (rcvd == 0)  {
-        return 0;
-    }
+    if (s->rcvd == 0) {
+	    s->rcvd = xsk_ring_cons__peek(&s->xsk->rx, 1, &s->idx_rx);
+	    if (s->rcvd == 0)  {
+		return 0;
+	    }
 
-    stock_frames = xsk_prod_nb_free(&s->xsk->umem->fq, xsk_umem_free_frames(s->xsk));
-    if (stock_frames > 0) {
+            stock_frames = xsk_prod_nb_free(&s->xsk->umem->fq, xsk_umem_free_frames(s->xsk));
+            if (stock_frames > 0) {
 
-        ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, stock_frames, &idx_fq);
+                ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, stock_frames, &idx_fq);
 
-        while (ret != rcvd)
-			ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, rcvd, &idx_fq);
+                 while (ret != stock_frames)
+                		ret = xsk_ring_prod__reserve(&s->xsk->umem->fq, s->rcvd, &idx_fq);
 
-        for (i = 0; i < stock_frames; i++)
-			*xsk_ring_prod__fill_addr(&s->xsk->umem->fq, idx_fq++) =
-				xsk_alloc_umem_frame(s->xsk);
+                for (i = 0; i < stock_frames; i++)
+                		*xsk_ring_prod__fill_addr(&s->xsk->umem->fq, idx_fq++) =
+                			xsk_alloc_umem_frame(s->xsk);
 
-		xsk_ring_prod__submit(&s->xsk->umem->fq, stock_frames);
+                	xsk_ring_prod__submit(&s->xsk->umem->fq, stock_frames);
+            }
     }
 
     /* process the packet */
 
-	uint64_t addr = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->addr;
-	uint32_t len  = xsk_ring_cons__rx_desc(&s->xsk->rx, idx_rx)->len;
+        uint64_t addr;
+	slot->addr = addr = xsk_ring_cons__rx_desc(&s->xsk->rx, s->idx_rx)->addr;
+	uint32_t len  = xsk_ring_cons__rx_desc(&s->xsk->rx, s->idx_rx++)->len;
 	uint64_t orig = xsk_umem__extract_addr(addr);
+	s->rcvd--;
 
 	addr = xsk_umem__add_offset_to_addr(addr);
 	unsigned char *pkt = xsk_umem__get_data(s->xsk->umem->buffer, addr);
