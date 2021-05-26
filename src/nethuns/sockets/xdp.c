@@ -46,6 +46,11 @@ load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
             .file           = nethuns_socket(s)->opt.xdp_prog,
         };
 
+	if (prog_load_attr.file == NULL) {
+	    nethuns_fprintf(stderr, "bpf_prog_load: using default program\n");
+	    goto out;
+	}
+
         int prog_fd;
 
         nethuns_fprintf(stderr, "bpf_prog_load: loading %s program...\n", nethuns_socket(s)->opt.xdp_prog);
@@ -76,7 +81,7 @@ load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
 
         nethuns_fprintf(stderr, "bpf_prog_load: done\n");
     }
-
+out:
     nethuns_unlock_global();
     return 0;
 err:
@@ -96,14 +101,14 @@ unload_xdp_program(struct nethuns_socket_xdp *s)
     if (info != NULL) {
         if (--info->xdp_prog_refcnt == 0)
         {
-            nethuns_fprintf(stderr, "bpf_prog_load: unloading %s program...\n", nethuns_socket(s)->opt.xdp_prog);
+            nethuns_fprintf(stderr, "bpf_prog_load: unloading %s program...\n", nethuns_socket(s)->opt.xdp_prog ? nethuns_socket(s)->opt.xdp_prog : "default");
 
             if (bpf_get_link_xdp_id(nethuns_socket(s)->ifindex, &curr_prog_id, s->xdp_flags)) {
                 nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link: could get xdp id");
                 goto err;
             }
 
-            if (info->xdp_prog_id == curr_prog_id) {
+            if (info->xdp_prog_id == 0 || info->xdp_prog_id == curr_prog_id) {
 	            bpf_set_link_xdp_fd(nethuns_socket(s)->ifindex, -1, s->xdp_flags);
 
             } else if (!curr_prog_id) {
@@ -250,9 +255,7 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
         munmap(s->bufs, s->total_mem);
 
 
-        if (nethuns_socket(s)->opt.xdp_prog) {
-            unload_xdp_program(s);
-        }
+        unload_xdp_program(s);
 
         if (nethuns_socket(s)->opt.promisc)
         {
@@ -286,12 +289,12 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
         return -1;
     }
 
-    if (nethuns_socket(s)->opt.xdp_prog) {
-        if (load_xdp_program(s, dev) < 0) {
-            nethuns_perror(s->base.errbuf, "bind: could not load xdp program %s (%s)", nethuns_socket(s)->opt.xdp_prog, nethuns_dev_queue_name(dev, queue));
-    	    return -1;
-        }
+    if (load_xdp_program(s, dev) < 0) {
+        nethuns_perror(s->base.errbuf, "bind: could not load xdp program %s (%s)", nethuns_socket(s)->opt.xdp_prog, nethuns_dev_queue_name(dev, queue));
+        return -1;
+    }
 
+    if (nethuns_socket(s)->opt.xdp_prog) {
         if (xsk_enter_into_map(s) < 0) {
             nethuns_perror(s->base.errbuf, "bind: could not enter into map (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
@@ -305,6 +308,22 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
             return -1;
 	}
     }
+
+    nethuns_lock_global();
+
+    struct nethuns_netinfo *info = nethuns_lookup_netinfo(dev);
+
+    if (info->xdp_prog_id == 0) {
+	// the library has loaded the default program, retrieve its id
+        if (bpf_get_link_xdp_id(nethuns_socket(s)->ifindex, &info->xdp_prog_id, s->xdp_flags))
+        {
+            nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link_id: get link xpd failed");
+            nethuns_unlock_global();
+	    return -1;
+        }
+    }
+
+    nethuns_unlock_global();
 
     return 0;
 }
