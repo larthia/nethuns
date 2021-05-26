@@ -345,7 +345,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 {
     // unsigned int caplen = nethuns_socket(s)->opt.packetsize;
     uint32_t idx_fq = 0;
-    int ret;
+    unsigned int ret;
     unsigned int i, stock_frames;
 
     nethuns_ring_free_slots(&s->base.ring, __nethuns_xdp_free_slots, s);
