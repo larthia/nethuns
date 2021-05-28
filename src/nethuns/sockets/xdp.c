@@ -201,7 +201,8 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
         goto err0;
     }
 
-    s->total_mem = opt->numblocks * opt->numpackets * opt->packetsize;
+    // what is the purpose of numblock?
+    s->total_mem = (XSK_RING_PROD__DEFAULT_NUM_DESCS + opt->numblocks * opt->numpackets) * opt->packetsize;
 
     s->bufs = mmap(NULL, s->total_mem,
                                  PROT_READ | PROT_WRITE,
@@ -424,19 +425,64 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     return 0;
 }
 
+static void kick_tx(struct xsk_socket_info *xsk)
+{
+	int ret;
+
+	ret = sendto(xsk_socket__fd(xsk->xsk), NULL, 0, MSG_DONTWAIT, NULL, 0);
+	if (ret >= 0 || errno == ENOBUFS || errno == EAGAIN || errno == EBUSY)
+		return;
+}
+
+
+static void xdp_complete_tx(struct nethuns_socket_xdp *s)
+{
+	if (s->xsk->outstanding_tx > 0) {
+	      uint32_t dummy;
+	      if (xsk_ring_prod__needs_wakeup(&s->xsk->tx))
+		    kick_tx(s->xsk);
+
+	    int rcvd = xsk_ring_cons__peek(&s->xsk->umem->cq, XSK_RING_PROD__DEFAULT_NUM_DESCS, &dummy);
+	    if (rcvd > 0) {
+	    	xsk_ring_cons__release(&s->xsk->umem->cq, rcvd);
+	    	s->xsk->outstanding_tx -= rcvd;
+	    }
+	}
+}
 
 int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len)
 {
     // return pcap_inject(s->p, packet, len);
-    nethuns_perror(s->base.errbuf, "send: not implemented yet (%s): packet@%p size:%u", nethuns_device_name(s), packet, len);
-    return -1;
+    //nethuns_perror(s->base.errbuf, "send: not implemented yet (%s): packet@%p size:%u", nethuns_device_name(s), packet, len);
+	struct nethuns_socket_options *opt = &nethuns_socket(s)->opt;
+	uint32_t idx;
+	int retry = 1;
+	while (retry > 0) {
+	    if (xsk_ring_prod__reserve(&s->xsk->tx, 1, &idx) == 1) {
+         	uint64_t addr = opt->numpackets + (idx % XSK_RING_PROD__DEFAULT_NUM_DESCS) * opt->packetsize;
+	        memcpy(xsk_umem__get_data(s->bufs, addr), packet, len);
+	    	xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->addr	= addr;
+	    	xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->len = len;
+	    	s->xsk->outstanding_tx++;
+	    	s->toflush++;
+	    	return 0;
+	    }
+		xdp_complete_tx(s);
+	    retry--;
+    }
+	return -1;
 }
 
-
 int
-nethuns_flush_xdp(__maybe_unused struct nethuns_socket_xdp *s)
+nethuns_flush_xdp(struct nethuns_socket_xdp *s)
 {
+	if (s->toflush > 0) {
+		xsk_ring_prod__submit(&s->xsk->tx, s->toflush);
+		s->xsk->outstanding_tx += s->toflush;
+		s->toflush = 0;
+	}
+	xdp_complete_tx(s);
     return 0;
 }
 

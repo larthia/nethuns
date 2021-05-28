@@ -31,6 +31,7 @@ struct nethuns_socket_xdp
     bool tx;
 
     unsigned int rcvd;
+    unsigned int toflush;
     uint32_t idx_rx;
 };
 
