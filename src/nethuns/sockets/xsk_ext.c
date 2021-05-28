@@ -87,7 +87,7 @@ xsk_configure_socket(
     unsigned int i;
     	unsigned int idx;
 
-	xsk = calloc(1, sizeof(*xsk) + num_frames * frame_size);
+	xsk = calloc(1, sizeof(*xsk) + num_frames * sizeof(uint64_t));
 	if (!xsk)
 		return NULL;
 
