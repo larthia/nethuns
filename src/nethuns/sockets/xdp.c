@@ -466,7 +466,7 @@ nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned i
 	    	xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->len = len;
 	    	s->xsk->outstanding_tx++;
 	    	s->toflush++;
-	    	return 0;
+	    	return 1;
 	    }
 		xdp_complete_tx(s);
 	    retry--;
