@@ -147,13 +147,6 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.rx_ring) < 0)
-    {
-        nethuns_perror(errbuf, "open: failed to allocate ring");
-        free(s);
-        return NULL;
-    }
-
     /* set defualt xdp_flags */
 
     s->xdp_flags = 0; // or safer XDP_FLAGS_UPDATE_IF_NOEXIST;
@@ -224,11 +217,22 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 
     if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_rx_only) {
         s->rx = true;
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0 /* opt->packetsize */, &s->base.rx_ring) < 0)
+        {
+            nethuns_perror(errbuf, "open: failed to allocate ring");
+            goto err1;
+        }
     }
 
     if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_tx_only) {
         s->tx = true;
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0 /* opt->packetsize */, &s->base.tx_ring) < 0)
+        {
+            nethuns_perror(errbuf, "open: failed to allocate ring");
+            goto err2;
+        }
     }
+
 
     // postpone the creation of the socket to bind stage...
 
@@ -237,6 +241,10 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     nethuns_socket(s)->opt = *opt;
     return s;
 
+    err2:
+	if (s->rx) {
+	    nethuns_delete_ring(&s->base.rx_ring);
+	}
     err1:
         munmap(s->bufs, s->total_mem);
     err0:

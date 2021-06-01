@@ -125,6 +125,11 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         nethuns_perror(errbuf, "ring: could not allocate ring");
 	goto err_free_tx;
     }
+
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.tx_ring) < 0)
+    {
+        nethuns_perror(errbuf, "ring: could not allocate ring");
+	goto err_free_nring;
     }
 
     sock->base.opt          = *opt;
@@ -151,6 +156,8 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     return sock;
 
+    err_free_nring:
+	nethuns_delete_ring(&sock->base.rx_ring);
     err_free_tx:
         free(sock->tx_ring.rd);
     err_free_rx:

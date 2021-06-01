@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <limits.h>
 
 #include "../misc/macro.h"
@@ -84,6 +85,14 @@ nethuns_make_ring(size_t nslots, size_t pktsize, struct nethuns_ring *r)
     r->shift   = __builtin_ctzl(ss);
 
     return r->ring ? 0 : -1;
+}
+
+static inline
+void
+nethuns_delete_ring(struct nethuns_ring *r)
+{
+    free(r->ring);
+    memset(r, 0, sizeof(*r));
 }
 
 

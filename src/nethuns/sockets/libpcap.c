@@ -33,8 +33,13 @@ nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
     if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "open: failed to allocate ring");
-        free(sock);
-        return NULL;
+        goto err_free;
+    }
+
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.tx_ring) < 0)
+    {
+        nethuns_perror(errbuf, "open: failed to allocate ring");
+	goto err_del_ring;
     }
 
     /* set a single consumer by default */
@@ -42,6 +47,12 @@ nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
     sock->base.opt = *opt;
 
     return sock;
+
+    err_del_ring:
+    	nethuns_delete_ring(&sock->base.rx_ring);
+    err_free:
+        free(sock);
+	return NULL;
 }
 
 
