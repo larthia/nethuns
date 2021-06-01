@@ -39,12 +39,7 @@ int
 xsk_populate_fill_ring(struct nethuns_socket_xdp *sock, size_t frame_size);
 
 struct xsk_socket_info *
-	xsk_configure_socket(
-		struct nethuns_socket_xdp *sock
-		, size_t num_frames
-		, size_t frame_size
-		, bool rx
-		, bool tx);
+xsk_configure_socket(struct nethuns_socket_xdp *sock);
 
 int 
 xsk_enter_into_map(struct nethuns_socket_xdp *sock);

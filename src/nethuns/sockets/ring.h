@@ -44,8 +44,6 @@ struct nethuns_ring_slot
     struct pcap_pkthdr      pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     struct xdp_pkthdr       pkthdr;
-    uint64_t                orig;
-    int32_t                 idx_fq;
 #endif
     uint64_t                id;
     int                     inuse;
@@ -102,6 +100,13 @@ nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
 {
     return (struct nethuns_ring_slot *)
             ((char *)ring->ring + ((n & ring->mask) << ring->shift));
+}
+
+static inline
+uint64_t
+nethuns_slot_get_idx(struct nethuns_ring *ring, struct nethuns_ring_slot *s)
+{
+	return (uint64_t)((char *)ring->ring - (char *)s) >> ring->shift;
 }
 
 
