@@ -137,7 +137,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "ring: could not allocate ring");
         free(sock->rx_ring.rd);
@@ -275,10 +275,10 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
     pb = __nethuns_block_tpacket_v3(&s->rx_ring, s->rx_block_mod);
 
     if (unlikely(  (pb->hdr.block_status & TP_STATUS_USER) == 0                      /* real ring is full or.. */
-                || (s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)  /* virtual ring is full   */
+                || (s->base.rx_ring.head - s->base.rx_ring.tail) == (s->base.rx_ring.size-1)  /* virtual ring is full   */
                 ))
     {
-        nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
+        nethuns_ring_free_slots(&s->base.rx_ring, __nethuns_blocks_free, s);
         // poll(&s->rx_pfd, 1, -1);
         return 0;
     }
@@ -306,11 +306,11 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             {
                 s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-                slot = nethuns_ring_next_slot(&s->base.ring);
+                slot = nethuns_ring_next_slot(&s->base.rx_ring);
                 slot->id = s->rx_block_idx;
                 __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
-                return s->base.ring.head;
+                return s->base.rx_ring.head;
             }
         }
 
@@ -319,7 +319,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         return 0;
     }
 
-    nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
+    nethuns_ring_free_slots(&s->base.rx_ring, __nethuns_blocks_free, s);
 
     s->rx_block_idx++;
     s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;

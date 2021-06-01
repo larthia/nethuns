@@ -86,7 +86,7 @@ try
     }
     while (!nethuns_pkt_is_err(pkt_id));
 
-    std::cerr << "head: " << p->base.ring.head << std::endl;
+    std::cerr << "head: " << p->base.rx_ring.head << std::endl;
 
     stop.store(true, std::memory_order_relaxed);
 

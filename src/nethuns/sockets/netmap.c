@@ -29,7 +29,7 @@ nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "open: failed to allocate ring");
         free(sock);
@@ -100,7 +100,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     nethuns_socket(s)->queue   = queue;
     nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
 
-    s->p->reg.nr_extra_bufs = s->base.ring.size;
+    s->p->reg.nr_extra_bufs = s->base.rx_ring.size;
 
     if (nmport_open_desc(s->p) < 0) {
         nethuns_perror(s->base.errbuf, "open: could open dev %s (%s)", nethuns_dev_queue_name(dev, queue),
@@ -108,10 +108,10 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         return -1;
     }
 
-    if (s->p->reg.nr_extra_bufs != s->base.ring.size) {
+    if (s->p->reg.nr_extra_bufs != s->base.rx_ring.size) {
         nethuns_perror(s->base.errbuf, "dev %s: cannot obtain %u extra bufs (got %u)",
 			nethuns_dev_queue_name(dev, queue),
-                	s->base.ring.size, s->p->reg.nr_extra_bufs);
+                	s->base.rx_ring.size, s->p->reg.nr_extra_bufs);
         return -1;
     }
 
@@ -187,7 +187,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     struct netmap_ring *ring;
     u_int i, idx;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.rx_ring, s->base.rx_ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
@@ -195,7 +195,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 
     if (unlikely(s->free_head == s->free_tail))
     {
-        nethuns_ring_free_slots(&s->base.ring, nethuns_blocks_free, s);
+        nethuns_ring_free_slots(&s->base.rx_ring, nethuns_blocks_free, s);
         if (unlikely(s->free_head == s->free_tail))
         {
             return 0;
@@ -244,10 +244,10 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
         *pkthdr  = &slot->pkthdr;
         *payload =  pkt;
 
-        return ++s->base.ring.head;
+        return ++s->base.rx_ring.head;
     }
 
-    nethuns_ring_free_slots(&s->base.ring, nethuns_blocks_free, s);
+    nethuns_ring_free_slots(&s->base.rx_ring, nethuns_blocks_free, s);
 
     return 0;
 }

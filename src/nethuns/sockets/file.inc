@@ -52,7 +52,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         return NULL;
     }
 
-    if(nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &pcap->base.ring) < 0)
+    if(nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &pcap->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "pcap_open: could not allocate ring");
         free(pcap);
@@ -66,7 +66,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         pr = pcap_open_offline(filename, perr);
         if (!pr) {
             nethuns_perror(errbuf, "pcap_open: could not open '%s' file", filename);
-            free(pcap->base.ring.ring);
+            free(pcap->base.rx_ring.ring);
             free(pcap);
             return NULL;
         }
@@ -76,7 +76,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         pr = fopen(filename, "r");
         if (!pr) {
             nethuns_perror(errbuf, "pcap_open: could not open '%s' file", filename);
-            free(pcap->base.ring.ring);
+            free(pcap->base.rx_ring.ring);
             free(pcap);
             return NULL;
         }
@@ -86,7 +86,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         {
             nethuns_perror(errbuf, "pcap_open: could not read pcap_file_header");
             fclose(pr);
-            free(pcap->base.ring.ring);
+            free(pcap->base.rx_ring.ring);
             free(pcap);
             return NULL;
         }
@@ -99,7 +99,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         {
             nethuns_perror(errbuf, "pcap_open: magic pcap_file_header not supported (%x)", fh.magic);
             fclose(pr);
-            free(pcap->base.ring.ring);
+            free(pcap->base.rx_ring.ring);
             free(pcap);
             return NULL;
         }
@@ -113,7 +113,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         pr = fopen(filename, "w");
         if (!pr) {
             nethuns_perror(errbuf, "pcap_open: could not open '%s' file for writing", filename);
-            free(pcap->base.ring.ring);
+            free(pcap->base.rx_ring.ring);
             free(pcap);
             return NULL;
         }
@@ -135,7 +135,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         {
             nethuns_perror(errbuf, "pcap_open: could not write to pcap file!");
             fclose(pr);
-            free(pcap->base.ring.ring);
+            free(pcap->base.rx_ring.ring);
             free(pcap);
             return NULL;
         }
@@ -143,7 +143,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
         fflush(pr);
 #else
         nethuns_perror(errbuf, "pcap_open: could not open pcap file for writing (use built-in pcap option)");
-        free(pcap->base.ring.ring);
+        free(pcap->base.rx_ring.ring);
         free(pcap);
         return NULL;
 #endif
@@ -167,7 +167,7 @@ TEMPLATE(nethuns_pcap_close_,SOCKET_TYPE) (nethuns_pcap_t *p)
 #endif
     }
 
-    free(p->base.ring.ring);
+    free(p->base.rx_ring.ring);
     free(p);
     return 0;
 }
@@ -180,7 +180,7 @@ TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t co
     unsigned int caplen = p->base.opt.packetsize;
     unsigned int bytes;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.ring, p->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.rx_ring, p->base.rx_ring.head);
 
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -231,7 +231,7 @@ TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t co
     *pkthdr   = &slot->pkthdr;
     *payload  =  slot->packet;
 
-    return ++p->base.ring.head;
+    return ++p->base.rx_ring.head;
 }
 #else
 {
@@ -239,7 +239,7 @@ TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t co
     unsigned int bytes;
     size_t n;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.ring, p->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&p->base.rx_ring, p->base.rx_ring.head);
 #if 1
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
@@ -304,7 +304,7 @@ TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t co
     *pkthdr   = &slot->pkthdr;
     *payload  =  slot->packet;
 
-    return ++p->base.ring.head;
+    return ++p->base.rx_ring.head;
 }
 #endif
 

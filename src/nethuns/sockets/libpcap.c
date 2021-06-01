@@ -30,7 +30,7 @@ nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "open: failed to allocate ring");
         free(sock);
@@ -166,7 +166,7 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 
     struct pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.rx_ring, s->base.rx_ring.head);
 
 #if 1
     if (s->p == NULL || __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
@@ -199,7 +199,7 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
             *pkthdr  = &slot->pkthdr;
             *payload =  slot->packet;
 
-            return ++s->base.ring.head;
+            return ++s->base.rx_ring.head;
         }
     }
 

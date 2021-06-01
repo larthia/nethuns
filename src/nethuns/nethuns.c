@@ -90,7 +90,7 @@ void
 __nethuns_free_base(nethuns_socket_t *s)
 {
     free(nethuns_socket(s)->devname);
-    free(nethuns_socket(s)->ring.ring);
+    free(nethuns_socket(s)->rx_ring.ring);
 }
 
 

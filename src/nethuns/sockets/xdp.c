@@ -147,7 +147,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "open: failed to allocate ring");
         free(s);
@@ -349,9 +349,9 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     unsigned int ret;
     unsigned int i, stock_frames;
 
-    nethuns_ring_free_slots(&s->base.ring, __nethuns_xdp_free_slots, s);
+    nethuns_ring_free_slots(&s->base.rx_ring, __nethuns_xdp_free_slots, s);
 
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.rx_ring, s->base.rx_ring.head);
     if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
@@ -419,7 +419,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
         *pkthdr  = &slot->pkthdr;
         *payload =  slot->packet;
-        return ++s->base.ring.head;
+        return ++s->base.rx_ring.head;
     }
 
     return 0;

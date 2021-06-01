@@ -48,7 +48,6 @@ struct nethuns_socket_options
     const char                  *xdp_prog;
 };
 
-
 struct nethuns_stat
 {
     uint64_t     rx_packets;

@@ -31,7 +31,7 @@ struct nethuns_socket_base
     char   errbuf[NETHUNS_ERRBUF_SIZE];
 
     struct nethuns_socket_options opt;
-    struct nethuns_ring           ring;
+    struct nethuns_ring           rx_ring;
     char                         *devname;
     int                           queue;
     int 		                  ifindex;
