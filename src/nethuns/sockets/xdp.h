@@ -30,6 +30,8 @@ struct nethuns_socket_xdp
     uint64_t num_tx_frames;
     uint64_t first_rx_frame;
     uint64_t num_rx_frames;
+    size_t framesz; /* real size of each frame (power of 2) */
+    size_t fshift; /* log_2 of the frame size */
 
     bool rx;
     bool tx;
@@ -158,13 +160,19 @@ nethuns_offvlan_tci_xdp(__maybe_unused struct xdp_pkthdr const *hdr) {
 static inline uint64_t
 tx_frame(struct nethuns_socket_xdp *s, uint64_t idx)
 {
-		return (s->first_tx_frame + (idx & s->base.tx_ring.mask)) * s->base.opt.packetsize;
+		return (s->first_tx_frame + (idx & s->base.tx_ring.mask)) << s->fshift;
+}
+
+static inline uint64_t
+tx_slot(struct nethuns_socket_xdp *s, uint64_t frame)
+{
+		return ((frame >> s->fshift) - s->first_tx_frame) & s->base.tx_ring.mask;
 }
 
 static inline uint64_t
 rx_frame(struct nethuns_socket_xdp *s, uint64_t idx)
 {
-		return (s->first_rx_frame + (idx & s->base.rx_ring.mask)) * s->base.opt.packetsize;
+		return (s->first_rx_frame + (idx & s->base.rx_ring.mask)) << s->fshift;
 }
 
 #ifdef __cplusplus

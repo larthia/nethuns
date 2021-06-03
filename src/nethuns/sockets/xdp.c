@@ -229,9 +229,11 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
             goto err1;
         }
     }
+    s->framesz = nethuns_lpow2(opt->packetsize);
+    s->fshift = __builtin_ctzl(s->framesz);
 
-    s->total_mem = !!s->tx * (s->base.tx_ring.mask + 1) * opt->packetsize +
-                   !!s->rx * (s->base.rx_ring.mask + 1) * opt->packetsize;
+    s->total_mem = !!s->tx * (s->base.tx_ring.mask + 1) * s->framesz +
+                   !!s->rx * (s->base.rx_ring.mask + 1) * s->framesz;
 
     s->bufs = mmap(NULL, s->total_mem,
                                  PROT_READ | PROT_WRITE,
@@ -242,7 +244,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
         goto err1;
     }
 
-	s->umem = xsk_configure_umem(s, s->bufs, s->total_mem, opt->packetsize);
+	s->umem = xsk_configure_umem(s, s->bufs, s->total_mem, s->framesz);
     if (!s->umem) {
         nethuns_perror(errbuf, "open: XDP configure umem failed!");
         goto err2;
