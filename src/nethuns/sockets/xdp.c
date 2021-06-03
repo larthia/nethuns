@@ -214,7 +214,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 	s->first_rx_frame = 0;
 	s->first_tx_frame = 0;
     if (s->rx) {
-        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0 /* opt->packetsize */, &s->base.rx_ring) < 0)
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.rx_ring) < 0)
         {
             nethuns_perror(errbuf, "open: failed to allocate ring");
             goto err0;
@@ -223,7 +223,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     }
 
     if (s->tx) {
-        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0 /* opt->packetsize */, &s->base.tx_ring) < 0)
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.tx_ring) < 0)
         {
             nethuns_perror(errbuf, "open: failed to allocate ring");
             goto err1;
@@ -364,30 +364,12 @@ __nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t
     return 0;
 }
 
-uint64_t
-nethuns_reserve_slot_xdp(struct nethuns_socket_xdp *s, unsigned char **packet)
-{
-    struct nethuns_ring_slot * slot;
-
-	// TODO is tx true?
-   
-    slot = nethuns_ring_get_slot(&s->base.tx_ring, s->base.tx_ring.head);
-    if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
-    {
-        return 0;
-    }
-    *packet = slot->packet = xsk_umem__get_data(s->xsk->umem->buffer,
-					tx_frame(s, nethuns_slot_get_idx(&s->base.tx_ring, slot)));
-	return ++s->base.rx_ring.head;
-}
-
 int
 nethuns_send_slot_xdp(struct nethuns_socket_xdp *s, uint64_t idx, unsigned int len)
 {
-	xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->addr = tx_frame(s, idx);
-	xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->len = len;
-	s->xsk->outstanding_tx++;
-	s->toflush++;
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.tx_ring, idx);
+    slot->len = len;
+    __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 	return 1;
 }
 
@@ -470,6 +452,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
         *pkthdr  = &slot->pkthdr;
         *payload =  slot->packet;
+        // TODO: this will give 0 when head wraps around
         return ++s->base.rx_ring.head;
     }
 
@@ -489,46 +472,77 @@ static void kick_tx(struct xsk_socket_info *xsk)
 static void xdp_complete_tx(struct nethuns_socket_xdp *s)
 {
 	if (s->xsk->outstanding_tx > 0) {
-		uint32_t dummy;
 		if (xsk_ring_prod__needs_wakeup(&s->xsk->tx))
 			kick_tx(s->xsk);
 
-		int rcvd = xsk_ring_cons__peek(&s->xsk->umem->cq, XSK_RING_PROD__DEFAULT_NUM_DESCS, &dummy);
-		if (rcvd > 0) {
-			xsk_ring_cons__release(&s->xsk->umem->cq, rcvd);
-			s->xsk->outstanding_tx -= rcvd;
-		}
+//		int rcvd = xsk_ring_cons__peek(&s->xsk->umem->cq, XSK_RING_PROD__DEFAULT_NUM_DESCS, &dummy);
+//		if (rcvd > 0) {
+//			xsk_ring_cons__release(&s->xsk->umem->cq, rcvd);
+//			s->xsk->outstanding_tx -= rcvd;
+//		}
 	}
 }
 
 int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len)
 {
-    // return pcap_inject(s->p, packet, len);
-    //nethuns_perror(s->base.errbuf, "send: not implemented yet (%s): packet@%p size:%u", nethuns_device_name(s), packet, len);
-	uint32_t idx;
-	unsigned char *frame;
-	int retry = 1;
-	while (retry > 0) {
-	    if ( (idx = nethuns_reserve_slot_xdp(s, &frame)) ) {
-	        memcpy(frame, packet, len);
-			return nethuns_send_slot_xdp(s, idx, len);
-	    }
-		xdp_complete_tx(s);
-	    retry--;
+    uint64_t tail = s->base.tx_ring.tail;
+    struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&s->base.tx_ring, tail);
+	uint8_t *frame = xsk_umem__get_data(s->xsk->umem->buffer, tx_frame(s, tail));
+  
+    if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED)) {
+        return 0;
     }
-	return -1;
+
+    memcpy(frame, packet, len);
+    s->base.tx_ring.tail++;
+    nethuns_send_slot_xdp(s, tail, len);
+    //printf("marking slot %d\n", tail);
+	return 1;
 }
 
 int
 nethuns_flush_xdp(struct nethuns_socket_xdp *s)
 {
-	if (s->toflush > 0) {
-		xsk_ring_prod__submit(&s->xsk->tx, s->toflush);
-		s->xsk->outstanding_tx += s->toflush;
-		s->toflush = 0;
-	}
-	xdp_complete_tx(s);
+    uint32_t idx = 0;
+    unsigned int cmpl, i, toflush;
+
+    // mark completed transmissions
+    cmpl = xsk_ring_cons__peek(&s->xsk->umem->cq, s->base.tx_ring.size, &idx);
+    for (i = 0; i < cmpl; i++) {
+        uint64_t addr = *xsk_ring_cons__comp_addr(&s->xsk->umem->cq, idx);
+        uint64_t slotnr = tx_slot(s, addr);
+        struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&s->base.tx_ring, slotnr);
+        //printf("release slot %lu addr %lx\n", slotnr, addr);
+        __atomic_store_n(&slot->inuse, 0, __ATOMIC_RELEASE);
+        idx++;
+    }
+	xsk_ring_cons__release(&s->xsk->umem->cq, cmpl);
+	s->xsk->outstanding_tx -= cmpl;
+    //printf("cmpl %d outstanding %d\n", cmpl, s->xsk->outstanding_tx);
+    __atomic_add_fetch(&s->xsk->tx_npkts, cmpl, __ATOMIC_RELAXED);
+
+    toflush = 0;
+    for (i = 0; i < s->base.tx_ring.size; i++) {
+        uint64_t head = s->base.tx_ring.head;
+        struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&s->base.tx_ring, head);
+        if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE) != 1)
+            break;
+
+        __atomic_store_n(&slot->inuse, 2, __ATOMIC_RELAXED);
+        xsk_ring_prod__reserve(&s->xsk->tx, 1, &idx);
+        xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->addr = tx_frame(s, head);
+        //printf("slot %d sending %lx\n", head, tx_frame(s, head));
+        xsk_ring_prod__tx_desc(&s->xsk->tx, idx)->len = slot->len;
+        toflush++;
+        s->base.tx_ring.head++;
+    }
+	if (toflush) {
+	    xsk_ring_prod__submit(&s->xsk->tx, toflush);
+	    s->xsk->outstanding_tx += toflush;
+        //printf("toflush %d outstanding %d\n", cmpl, s->xsk->outstanding_tx);
+	    xdp_complete_tx(s);
+    }
     return 0;
 }
 

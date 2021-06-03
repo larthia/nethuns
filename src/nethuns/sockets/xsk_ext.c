@@ -32,8 +32,8 @@ xsk_configure_umem(
 
 	int ret;
 
-	printf("buffer %p size %ld (%lx) frame_size %ld (%lx)\n",
-			buffer, size, size, frame_size, frame_size);
+	//printf("buffer %p size %ld (%lx) frame_size %ld (%lx)\n",
+	//		buffer, size, size, frame_size, frame_size);
 
 	umem = calloc(1, sizeof(*umem));
 	if (!umem) {
@@ -83,7 +83,7 @@ xsk_configure_socket(struct nethuns_socket_xdp *sock)
 	struct xsk_socket_info *xsk;
 	int ret;
     unsigned int i;
-    	unsigned int idx;
+    unsigned int idx;
 
 	xsk = calloc(1, sizeof(*xsk));
 	if (!xsk)
