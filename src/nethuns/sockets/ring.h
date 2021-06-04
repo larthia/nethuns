@@ -173,3 +173,17 @@ nethuns_send_slot(nethuns_socket_t *sock, uint64_t pktid, size_t len)
     return 1;
 }
 
+static inline
+size_t
+nethuns_rxring_get_size(nethuns_socket_t *s)
+{
+    return nethuns_socket(s)->rx_ring.mask + 1;
+}
+
+static inline
+size_t
+nethuns_txring_get_size(nethuns_socket_t *s)
+{
+    return nethuns_socket(s)->tx_ring.mask + 1;
+}
+

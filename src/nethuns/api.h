@@ -106,7 +106,6 @@ extern "C" {
     }
 
 
-
 #ifdef __cplusplus
 }
 
