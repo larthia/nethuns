@@ -476,8 +476,8 @@ static void xdp_complete_tx(struct nethuns_socket_xdp *s)
 uint8_t *
 nethuns_get_buf_addr_xdp(struct nethuns_socket_xdp *s, uint64_t pktid)
 {
-    // XXX check pktid
-    return xsk_umem__get_data(s->xsk->umem->buffer, tx_frame(s, pktid));
+    return xsk_umem__get_data(s->xsk->umem->buffer,
+        tx_frame(s, (pktid & s->base.tx_ring.mask)));
 }
 
 int
