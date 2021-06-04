@@ -83,7 +83,7 @@ xsk_configure_socket(struct nethuns_socket_xdp *sock)
 {
 	struct xsk_socket_config cfg;
 	struct xsk_socket_info *xsk;
-	int ret;
+	unsigned int ret;
     unsigned int i;
     unsigned int idx;
 
