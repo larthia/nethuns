@@ -5,6 +5,8 @@
 #include <stdlib.h>
 
 #include "nethuns/sockets/xdp.h"
+#include <src/bpf.h>
+#include <src/libbpf.h>
 
 #include "xdp/xsk.h"
 #include "xdp/bpf.h"
