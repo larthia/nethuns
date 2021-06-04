@@ -143,6 +143,7 @@
 #define nethuns_recv(...)           nethuns_recv_xdp(__VA_ARGS__)
 #define nethuns_flush(...)          nethuns_flush_xdp(__VA_ARGS__)
 #define nethuns_send(...)           nethuns_send_xdp(__VA_ARGS__)
+#define nethuns_get_buf_addr(...)   nethuns_get_buf_addr_xdp(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_xdp(__VA_ARGS__)
 
 #define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_xdp(__VA_ARGS__)

@@ -39,6 +39,8 @@ extern "C" {
 
     int nethuns_send(nethuns_socket_t * s, const uint8_t *packet, unsigned int len);
 
+    uint8_t * nethuns_get_buf_addr(nethuns_socket_t * s, uint64_t pktid);
+
     int nethuns_flush(nethuns_socket_t * s);
 
     int nethuns_close(nethuns_socket_t * s);

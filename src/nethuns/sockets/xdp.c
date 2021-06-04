@@ -364,16 +364,6 @@ __nethuns_xdp_free_slots(struct nethuns_ring_slot *slot, __maybe_unused uint64_t
     return 0;
 }
 
-int
-nethuns_send_slot_xdp(struct nethuns_socket_xdp *s, uint64_t idx, unsigned int len)
-{
-    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.tx_ring, idx);
-    slot->len = len;
-    __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
-	return 1;
-}
-
-
 uint64_t
 nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
@@ -483,6 +473,13 @@ static void xdp_complete_tx(struct nethuns_socket_xdp *s)
 	}
 }
 
+uint8_t *
+nethuns_get_buf_addr_xdp(struct nethuns_socket_xdp *s, uint64_t pktid)
+{
+    // XXX check pktid
+    return xsk_umem__get_data(s->xsk->umem->buffer, tx_frame(s, pktid));
+}
+
 int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len)
 {
@@ -496,7 +493,7 @@ nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned i
 
     memcpy(frame, packet, len);
     s->base.tx_ring.tail++;
-    nethuns_send_slot_xdp(s, tail, len);
+    nethuns_send_slot(s, tail, len);
     //printf("marking slot %d\n", tail);
 	return 1;
 }
