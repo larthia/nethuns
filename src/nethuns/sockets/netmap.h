@@ -16,6 +16,8 @@ struct nethuns_socket_netmap
     uint64_t free_mask;
     uint64_t free_head;
     uint64_t free_tail;
+    bool tx;
+    bool rx;
 };
 
 #ifdef __cplusplus

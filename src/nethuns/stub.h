@@ -64,6 +64,7 @@
 #define nethuns_recv(...)           nethuns_recv_netmap(__VA_ARGS__)
 #define nethuns_flush(...)          nethuns_flush_netmap(__VA_ARGS__)
 #define nethuns_send(...)           nethuns_send_netmap(__VA_ARGS__)
+#define nethuns_get_buf_addr(...)   nethuns_get_buf_addr_netmap(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_netmap(__VA_ARGS__)
 
 #define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_netmap(__VA_ARGS__)

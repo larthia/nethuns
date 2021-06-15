@@ -20,37 +20,67 @@
 struct nethuns_socket_netmap *
 nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
 {
-    struct nethuns_socket_netmap *sock;
+    struct nethuns_socket_netmap *s;
 
-    sock = calloc(1, sizeof(struct nethuns_socket_netmap));
-    if (!sock)
+    s = calloc(1, sizeof(struct nethuns_socket_netmap));
+    if (!s)
     {
         nethuns_perror(errbuf, "open: could not allocate socket");
-        return NULL;
+        goto err_out;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.rx_ring) < 0)
+    s->rx = false;
+    s->tx = false;
+
+    if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_rx_only)
     {
-        nethuns_perror(errbuf, "open: failed to allocate ring");
-	goto err_free;
+        s->rx = true;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.tx_ring) < 0)
+    if (opt->mode == nethuns_socket_rx_tx || opt->mode == nethuns_socket_tx_only)
     {
-        nethuns_perror(errbuf, "open: failed to allocate ring");
-	goto err_del_ring;
+        s->tx = true;
+    }
+
+	if (!s->rx && !s->tx)
+    {
+		nethuns_perror(errbuf, "open: please select at least one between rx and tx");
+		goto err_free;
+	}
+
+
+    if (s->rx)
+    {
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.rx_ring) < 0)
+        {
+            nethuns_perror(errbuf, "open: failed to allocate ring");
+            goto err_free;
+        }
+    }
+
+    if (s->tx)
+    {
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.tx_ring) < 0)
+        {
+            nethuns_perror(errbuf, "open: failed to allocate ring");
+            goto err_del_ring;
+        }
     }
 
     /* set a single consumer by default */
 
-    sock->base.opt = *opt;
-    return sock;
+    s->base.opt = *opt;
+    return s;
 
     err_del_ring:
-	nethuns_delete_ring(&sock->base.rx_ring);
+    if (s->rx)
+    {
+	    nethuns_delete_ring(&s->base.rx_ring);
+    }
     err_free:
-        free(sock);
-        return NULL;
+    free(s);
+    err_out:
+    return NULL;
 }
 
 
@@ -58,15 +88,31 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 {
     struct netmap_if *nifp;
     uint32_t idx, *next;
+    struct nethuns_socket_base *b = nethuns_socket(s);
 
     if (s)
     {
-        if (nethuns_socket(s)->opt.promisc)
+        if (b->opt.promisc)
         {
-            __nethuns_clear_if_promisc(s, nethuns_socket(s)->devname);
+            __nethuns_clear_if_promisc(s, b->devname);
+        }
+        nifp = s->p->nifp;
+        if (s->tx)
+        {
+            size_t i;
+            for (i = 0; i < b->tx_ring.size; i++)
+            {
+                struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&b->tx_ring, i);
+                {
+                    idx = slot->pkthdr.buf_idx;
+                    next = (uint32_t *)NETMAP_BUF(s->some_ring, idx);
+
+                    *next = nifp->ni_bufs_head;
+                    nifp->ni_bufs_head = idx;
+                }
+            }
         }
 
-        nifp = s->p->nifp;
         for ( ; s->free_head != s->free_tail; s->free_head++)
         {
             idx = s->free_ring[s->free_head & s->free_mask];
@@ -89,16 +135,27 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
 {
     static const int NMDEVSZ = 128;
     char nm_dev[NMDEVSZ];
+    const char *flags = "";
+    struct nethuns_socket_base *b = nethuns_socket(s);
     uint32_t extra_bufs;
     uint32_t scan;
 
+    if (!s->tx)
+    {
+        flags = "/R";
+    }
+    else if (!s->rx)
+    {
+        flags = "/T";
+    }
+
     if (queue == NETHUNS_ANY_QUEUE)
     {
-        snprintf(nm_dev, NMDEVSZ, "netmap:%s", dev);
+        snprintf(nm_dev, NMDEVSZ, "netmap:%s%s", dev, flags);
     }
     else
     {
-        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d", dev, nethuns_socket(s)->queue);
+        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d%s", dev, nethuns_socket(s)->queue, flags);
     }
 
     s->p = nmport_prepare(nm_dev);
@@ -108,11 +165,11 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         return -1;
     }
 
-
     nethuns_socket(s)->queue   = queue;
     nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
 
-    s->p->reg.nr_extra_bufs = s->base.rx_ring.size;
+    extra_bufs = !!s->tx * s->base.rx_ring.size + !!s->rx * s->base.tx_ring.size;
+    s->p->reg.nr_extra_bufs = extra_bufs;
 
     if (nmport_open_desc(s->p) < 0) {
         nethuns_perror(s->base.errbuf, "open: could open dev %s (%s)", nethuns_dev_queue_name(dev, queue),
@@ -120,14 +177,14 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         return -1;
     }
 
-    if (s->p->reg.nr_extra_bufs != s->base.rx_ring.size) {
+    if (s->p->reg.nr_extra_bufs != extra_bufs) {
         nethuns_perror(s->base.errbuf, "dev %s: cannot obtain %u extra bufs (got %u)",
 			nethuns_dev_queue_name(dev, queue),
-                	s->base.rx_ring.size, s->p->reg.nr_extra_bufs);
+                extra_bufs, s->p->reg.nr_extra_bufs);
         return -1;
     }
 
-    s->some_ring = NETMAP_RXRING(s->p->nifp, s->p->first_rx_ring);
+    s->some_ring = NETMAP_RXRING(s->p->nifp, s->rx ? s->p->first_rx_ring : s->p->first_tx_ring);
 
     extra_bufs = nethuns_lpow2(s->p->reg.nr_extra_bufs);
     s->free_ring = calloc(1, sizeof(uint32_t) * extra_bufs);
@@ -139,22 +196,34 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     }
     s->free_mask = extra_bufs - 1;
 
-    for (scan = s->p->nifp->ni_bufs_head; scan; scan = *(uint32_t *)NETMAP_BUF(s->some_ring, scan))
-    {
-        s->free_ring[s->free_tail & s->free_mask] = scan;
-        s->free_tail++;
+    scan = s->p->nifp->ni_bufs_head;
+    if (s->tx) {
+        size_t i;
+
+        for (i = 0; i < b->tx_ring.size; i++, scan = *(uint32_t *)NETMAP_BUF(s->some_ring, scan))
+        {
+            struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&b->tx_ring, i);
+            slot->pkthdr.buf_idx = scan;
+        }
+    }
+
+    if (s->rx) {
+        for ( ; scan; scan = *(uint32_t *)NETMAP_BUF(s->some_ring, scan))
+        {
+            s->free_ring[s->free_tail & s->free_mask] = scan;
+            s->free_tail++;
+        }
     }
     s->p->nifp->ni_bufs_head = 0;
 
-
     nethuns_socket(s)->devname = strdup(dev);
 
-    if (nethuns_socket(s)->opt.promisc)
+    if (b->opt.promisc)
     {
         if (__nethuns_set_if_promisc(s, nethuns_socket(s)->devname) < 0) {
             nethuns_perror(s->base.errbuf, "bind: could set promisc: %s", nethuns_dev_queue_name(dev, queue));
             return -1;
-	}
+	    }
     }
 
     sleep(2);
@@ -162,7 +231,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
 }
 
 static struct netmap_ring *
-non_empty_ring(struct nmport_d *d)
+non_empty_rxring(struct nmport_d *d)
 {
     int ri = d->cur_rx_ring;
 
@@ -214,11 +283,11 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
         }
     }
 
-    ring = non_empty_ring(s->p);
+    ring = non_empty_rxring(s->p);
     if (unlikely(!ring))
     {
         ioctl(s->p->fd, NIOCRXSYNC);
-        ring = non_empty_ring(s->p);
+        ring = non_empty_rxring(s->p);
         if (unlikely(!ring))
             return 0;
 
@@ -264,6 +333,13 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     return 0;
 }
 
+uint8_t *
+nethuns_get_buf_addr_netmap(struct nethuns_socket_netmap *s, uint64_t pktid)
+{
+    return (uint8_t*)NETMAP_BUF(s->some_ring,
+            nethuns_ring_get_slot(&nethuns_socket(s)->tx_ring, pktid)->pkthdr.buf_idx);
+}
+
 
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len)
@@ -275,7 +351,65 @@ nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsi
 int
 nethuns_flush_netmap(struct nethuns_socket_netmap *s)
 {
-    return ioctl(s->p->fd, NIOCTXSYNC);
+    unsigned int i;
+    uint32_t *prev_tails;
+    struct nethuns_socket_base *b = nethuns_socket(s);
+    uint64_t head = b->tx_ring.head;
+    struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&b->tx_ring, head);
+    struct netmap_ring *ring;
+    struct netmap_slot *nslot;
+    uint32_t buf_idx;
+
+    prev_tails = alloca((s->p->last_tx_ring - s->p->first_tx_ring + 1) * sizeof(*prev_tails)); 
+
+    // try to push packets marked for transmission
+    for (i = s->p->first_tx_ring; i <= s->p->last_tx_ring; i++)
+    {
+        ring = NETMAP_TXRING(s->p->nifp, i);
+        prev_tails[i] = ring->tail;
+
+        while (!nm_ring_empty(ring) && __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE) == 1)
+        {
+            // swap buf indexes between the nethuns and netmap slots, mark
+            // the nethuns slot as in-flight (inuse <- 2)
+            __atomic_store_n(&slot->inuse, 2, __ATOMIC_RELAXED);
+            nslot = &ring->slot[ring->head];
+            buf_idx = nslot->buf_idx;
+            nslot->buf_idx = slot->pkthdr.buf_idx;
+            slot->pkthdr.buf_idx = buf_idx;
+            nslot->len = slot->len;
+            nslot->flags = NS_BUF_CHANGED;
+            // remember the nethuns slot in the netmap slot ptr field
+            nslot->ptr = (uint64_t)slot;
+
+            ring->head = ring->cur = nm_ring_next(ring, ring->head);
+            b->tx_ring.head = ++head;
+            slot = nethuns_ring_get_slot(&b->tx_ring, head);
+       }
+    }
+    if (ioctl(s->p->fd, NIOCTXSYNC) < 0)
+        return -1;
+    // cleanup completed transmissions: for each completed
+    // netmap slot, mark the corresponding nethuns slot as
+    // available (inuse <- 0)
+    for (i = s->p->first_tx_ring; i <= s->p->last_tx_ring; i++)
+    {
+        uint32_t scan, stop;
+        ring = NETMAP_TXRING(s->p->nifp, i);
+
+        stop = nm_ring_next(ring, ring->tail);
+        for (scan = nm_ring_next(ring, prev_tails[i]); scan != stop;
+                scan = nm_ring_next(ring, scan))
+        {
+            nslot = &ring->slot[scan];
+            slot = (struct nethuns_ring_slot *)nslot->ptr;
+            buf_idx = nslot->buf_idx;
+            nslot->buf_idx = slot->pkthdr.buf_idx;
+            slot->pkthdr.buf_idx = buf_idx;
+            __atomic_store_n(&slot->inuse, 0, __ATOMIC_RELEASE);
+        }
+    }
+    return 0;
 }
 
 
