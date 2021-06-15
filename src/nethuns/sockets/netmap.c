@@ -87,17 +87,18 @@ int nethuns_close_netmap(struct nethuns_socket_netmap *s)
 
 int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int queue)
 {
-    char nm_dev[128];
+    static const int NMDEVSZ = 128;
+    char nm_dev[NMDEVSZ];
     uint32_t extra_bufs;
     uint32_t scan;
 
     if (queue == NETHUNS_ANY_QUEUE)
     {
-        snprintf(nm_dev, 128, "netmap:%s", dev);
+        snprintf(nm_dev, NMDEVSZ, "netmap:%s", dev);
     }
     else
     {
-        snprintf(nm_dev, 128, "netmap:%s-%d", dev, nethuns_socket(s)->queue);
+        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d", dev, nethuns_socket(s)->queue);
     }
 
     s->p = nmport_prepare(nm_dev);
