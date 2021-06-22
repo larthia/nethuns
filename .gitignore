@@ -1,4 +1,9 @@
+.vscode
+BUILD/
 build/
 build-clang/
 .DS_Store
 hdr/version.hpp
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
