@@ -328,16 +328,14 @@ main(int argc, char *argv[])
     else
         std::thread(sock_meter, sock_idx).detach();
 
+    // setup sockets and rings
     for (i = 0; i < nsock; i++) {
         setup_rx_ring(i);
     }
+
     // case single thread (main) with generic number of sockets
     if (!mthreading) {
         try {
-            //for (i = 0; i < nsock; i++) {
-            //    setup_rx_ring(i);
-            //}
-
             uint64_t count_to_dump = 0;
             while (!term) {
                 for (i = 0; i < nsock; i++) {
