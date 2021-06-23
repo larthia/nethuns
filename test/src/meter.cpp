@@ -313,6 +313,7 @@ main(int argc, char *argv[])
     //,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
     //,   .xdp_prog        = "/home/devel/xdp-tutorial/advanced03-AF_XDP/af_xdp_kern.o"
     ,   .xdp_prog        = nullptr
+    ,   .xdp_prog_sec    = nullptr
     };
 
     out = new nethuns_socket_t*[nsock]();

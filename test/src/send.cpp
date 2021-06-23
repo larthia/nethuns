@@ -206,6 +206,7 @@ main(int argc, char *argv[])
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
     ,   .xdp_prog        = nullptr
+    ,   .xdp_prog_sec    = nullptr
     };
 
     out = new nethuns_socket_t*[nsock]();
