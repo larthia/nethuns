@@ -126,7 +126,7 @@ void transmit_c(int th_idx, const unsigned char *payload, int pkt_size)
 {
     // prepare batch
     for (int n = 0; n < batch_size; n++) {
-        if (nethuns_send_xdp(out[th_idx], payload, pkt_size) <= 0)
+        if (nethuns_send(out[th_idx], payload, pkt_size) <= 0)
             break;
         totals.at(th_idx)++;
     }
