@@ -312,6 +312,7 @@ main(int argc, char *argv[])
     ,   .tx_qdisc_bypass = true
     //,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
     //,   .xdp_prog        = "/home/devel/xdp-tutorial/advanced03-AF_XDP/af_xdp_kern.o"
+    //,   .xdp_prog_sec    = "xdp_sock1"
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
     };
