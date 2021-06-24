@@ -26,6 +26,167 @@
 #include <linux/if_xdp.h>
 
 
+struct bpf_object*
+load_bpf_object_file(const char *filename, int ifindex)
+{
+	int first_prog_fd = -1;
+	struct bpf_object *obj;
+	int err;
+
+	// Struct used to set ifindex for hardware offloading XDP programs.
+    // This sets libbpf bpf_program->prog_ifindex, and foreach bpf_map->map_ifindex.
+	struct bpf_prog_load_attr prog_load_attr = {
+		.prog_type = BPF_PROG_TYPE_XDP,
+		.ifindex   = ifindex,
+	};
+	prog_load_attr.file = filename;
+
+	// Use libbpf for extracting BPF byte-code from BPF-ELF object, and
+	// loading this into the kernel via bpf-syscall
+	err = bpf_prog_load_xattr(&prog_load_attr, &obj, &first_prog_fd);
+	if (err) {
+		nethuns_fprintf(stderr, "load_bpf_object_file: loading BPF-OBJ file(%s) (%d): %s\n", filename, err, strerror(-err));
+		return NULL;
+	}
+
+	// Return pointer to a libbpf bpf_object
+	return obj;
+}
+
+int
+xdp_link_attach(int ifindex, __u32 xdp_flags, int prog_fd)
+{
+	int err;
+
+	// libbpf provides the XDP net_device link-level hook attach helper
+	err = bpf_set_link_xdp_fd(ifindex, prog_fd, xdp_flags);
+	if (err == -EEXIST && !(xdp_flags & XDP_FLAGS_UPDATE_IF_NOEXIST)) {
+		// Force mode didn't work, probably because a program of the opposite type is loaded.
+        // Let's unload that and try loading again.
+
+		__u32 old_flags = xdp_flags;
+
+		xdp_flags &= ~XDP_FLAGS_MODES;
+		xdp_flags |= (old_flags & XDP_FLAGS_SKB_MODE) ? XDP_FLAGS_DRV_MODE : XDP_FLAGS_SKB_MODE;
+		err = bpf_set_link_xdp_fd(ifindex, -1, xdp_flags);
+		if (!err)
+			err = bpf_set_link_xdp_fd(ifindex, prog_fd, old_flags);
+	}
+
+	if (err < 0) {
+		nethuns_fprintf(stderr, "xdp_link_attach: ifindex(%d) link set xdp fd failed (%d): %s\n",
+			ifindex, -err, strerror(-err));
+
+		switch (-err) {
+		case EBUSY:
+		case EEXIST:
+			nethuns_fprintf(stderr, "xdp_link_attach: XDP already loaded on device, use --force to swap/replace\n");
+			break;
+		case EOPNOTSUPP:
+			nethuns_fprintf(stderr, "xdp_link_attach:: native-XDP not supported, use --skb-mode or --auto-mode\n");
+			break;
+		default:
+			break;
+		}
+		return -1;
+	}
+
+	return 0;
+}
+
+static struct bpf_object*
+load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
+{
+    struct bpf_program *bpf_prog;
+	struct bpf_object *bpf_obj;
+	int offload_ifindex = 0;
+	int prog_fd = -1;
+	int err;
+
+	// If flags indicate hardware offload, supply ifindex.
+	if (s->xdp_flags & XDP_FLAGS_HW_MODE)
+		offload_ifindex = nethuns_socket(s)->ifindex;
+
+    // Load the BPF-ELF object file and get back libbpf bpf_object.
+    bpf_obj = load_bpf_object_file(nethuns_socket(s)->opt.xdp_prog, offload_ifindex);  // TODO controlla riuso mappe prima di fare questo...
+	if (!bpf_obj) {
+		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: loading BPF object file %s...\n", nethuns_socket(s)->opt.xdp_prog);
+        return NULL;
+	}
+
+    // All XDP/BPF programs from xdp_prog have been loaded into the kernel, and evaluated by the verifier.
+    // Only one of these gets attached to XDP hook, the others will get freed once this process exit.
+
+    if (nethuns_socket(s)->opt.xdp_prog_sec) {
+        // Find a matching BPF prog section name.
+		bpf_prog = bpf_object__find_program_by_title(bpf_obj, nethuns_socket(s)->opt.xdp_prog_sec);
+    } else {
+		// Find the first program.
+		bpf_prog = bpf_program__next(NULL, bpf_obj);
+    }
+
+	if (!bpf_prog) {
+		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: couldn't find a program in ELF section '%s'\n", nethuns_socket(s)->opt.xdp_prog_sec);
+		return NULL;
+	}
+
+    //strncpy(nethuns_socket(s)->opt.xdp_prog_sec, bpf_program__title(bpf_prog, false), strlen(nethuns_socket(s)->opt.xdp_prog_sec));
+
+	prog_fd = bpf_program__fd(bpf_prog);
+	if (prog_fd <= 0) {
+		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: bpf_program__fd failed\n");
+		return NULL;
+	}
+
+	// BPF-progs are (only) loaded by the kernel, and prog_fd is the selected file-descriptor handle.
+    // This FD is now attached to a kernel hook point (the XDP net_device link-level hook).
+	err = xdp_link_attach(nethuns_socket(s)->ifindex, s->xdp_flags, prog_fd);
+	if (err == -1) {
+		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: xdp_link_attach failed\n");
+		return NULL;
+	}
+
+	return bpf_obj;
+}
+
+
+
+static int
+load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
+{
+    nethuns_lock_global();
+
+    struct nethuns_netinfo *info = nethuns_lookup_netinfo(dev);
+    if (info == NULL) {
+        info = nethuns_create_netinfo(dev);
+        if (info == NULL) {
+            goto err;
+        }
+    }
+    if (info->xdp_prog_refcnt++ == 0) {
+
+        // Load custom program if configured.
+        if (nethuns_socket(s)->opt.xdp_prog) {
+
+            s->obj = load_bpf_and_xdp_attach(s);
+            if (!s->obj) {
+                // Error handling done in load_bpf_and_xdp_attach()
+                goto err;
+            }
+        } else {
+            nethuns_fprintf(stderr, "bpf_prog_load: using default program\n");
+            goto out;
+        }
+	}
+out:
+    nethuns_unlock_global();
+    return 0;
+err:
+    nethuns_unlock_global();
+    return -1;
+}
+
+/*
 static int
 load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
 {
@@ -88,7 +249,7 @@ err:
     nethuns_unlock_global();
     return -1;
 }
-
+*/
 
 static int
 unload_xdp_program(struct nethuns_socket_xdp *s)
