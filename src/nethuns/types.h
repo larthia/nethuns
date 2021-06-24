@@ -47,6 +47,8 @@ struct nethuns_socket_options
     bool                        tx_qdisc_bypass;
     const char                  *xdp_prog;            // xdp only
     const char                  *xdp_prog_sec;        // xdp only
+    bool                        reuse_maps;           // xdp only
+    const char                  *pin_dir;             // xdp only
 };
 
 struct nethuns_stat
