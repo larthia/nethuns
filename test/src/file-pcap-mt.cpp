@@ -58,6 +58,7 @@ try
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
         ,   .xdp_prog        = nullptr
+        ,   .xdp_prog_sec    = nullptr
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

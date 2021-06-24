@@ -51,6 +51,7 @@ main(int argc, char *argv[])
     ,   .tx_qdisc_bypass = false
     ,   .xdp_prog        = NULL
    // ,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
+    ,   .xdp_prog_sec    = NULL
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
