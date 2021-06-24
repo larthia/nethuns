@@ -17,6 +17,7 @@ const struct option long_opts[] = {
         {"batch_size", required_argument, 0, 'b'},
         {"sockets", required_argument, 0, 'n'},
         {"multithreading", no_argument, 0, 'm'},
+        {"zerocopy", no_argument, 0, 'z'},
         {0, 0, 0, 0}
 };
 
@@ -27,7 +28,8 @@ const std::string help_brief = "Usage:  nethuns-send [ options ]\n" \
                                 "Other options: \n" \
                                 "\t\t\t[ -b <batch_sz> ] \t set batch size \n" \
                                 "\t\t\t[ -n <nsock> ] \t\t set number of sockets \n" \
-                                "\t\t\t[ -m ] \t\t\t enable multithreading \n";
+                                "\t\t\t[ -m ] \t\t\t enable multithreading \n" \
+                                "\t\t\t[ -z ] \t\t\t enable send zero-copy \n";
 
 const std::string help_long = "Usage:  nethuns-send [ options ] \n\n" \
                                 "-h, --help \t\t\t\t Show program usage and exit.\n\n" \
@@ -38,7 +40,8 @@ const std::string help_long = "Usage:  nethuns-send [ options ] \n\n" \
                                 "-n, --sockets \t\t<nsock> \t Number of sockets to use. By default, only one socket is used.\n\n" \
                                 "-m, --multithreading \t\t\t Enable multithreading. By default, only one thread is used. " \
                                 "\n\t\t\t\t\t If multithreading is enabled, and there is more than one socket in use, " \
-                                "\n\t\t\t\t\t each socket is handled by a separated thread.\n";
+                                "\n\t\t\t\t\t each socket is handled by a separated thread.\n\n" \
+                                "-z, --zerocopy \t\t\t\t Enable send zero-copy. By default, classic send that requires a copy is used.\n";
 
 
 nethuns_socket_t **out;
@@ -51,6 +54,7 @@ int batch_size = 1;
 int nsock = 1;
 bool mthreading = false;
 std::vector<std::thread> threads;
+bool zerocopy = false;
 
 // terminate application
 volatile bool term = false;
@@ -94,22 +98,36 @@ void fill_tx_ring(int th_idx, const unsigned char *payload, int pkt_size)
         throw nethuns_exception(out[th_idx]);
     }
 
-    // fill the slots in the tx ring
-    for (j = 0; j < nethuns_txring_get_size(out[th_idx]); j++) {
-        uint8_t *pkt = nethuns_get_buf_addr(out[th_idx], j);    // tell me where to copy the j-th packet to be transmitted
-        memcpy(pkt, payload, pkt_size);                         // copy the packet
+    // fill the slots in the tx ring (optimized send only)
+    if (zerocopy) {
+        for (j = 0; j < nethuns_txring_get_size(out[th_idx]); j++) {
+            uint8_t *pkt = nethuns_get_buf_addr(out[th_idx], j);    // tell me where to copy the j-th packet to be transmitted
+            memcpy(pkt, payload, pkt_size);                         // copy the packet
+        }
+        pktid[th_idx] = 0;                                          // first position (slot) in tx ring to be transmitted
     }
-    pktid[th_idx] = 0;                                          // first position (slot) in tx ring to be transmitted
 }
 
-// transmit packets in the tx ring
-void transmit(int th_idx, int pkt_size)
+// transmit packets in the tx ring (use optimized send, zero copy)
+void transmit_zc(int th_idx, int pkt_size)
 {
     // prepare batch
     for (int n = 0; n < batch_size; n++) {
         if (nethuns_send_slot(out[th_idx], pktid[th_idx], pkt_size) <= 0)
             break;
         pktid[th_idx]++;
+        totals.at(th_idx)++;
+    }
+    nethuns_flush(out[th_idx]);             // send batch
+}
+
+// transmit packets in the tx ring (use classic send, copy)
+void transmit_c(int th_idx, const unsigned char *payload, int pkt_size)
+{
+    // prepare batch
+    for (int n = 0; n < batch_size; n++) {
+        if (nethuns_send_xdp(out[th_idx], payload, pkt_size) <= 0)
+            break;
         totals.at(th_idx)++;
     }
     nethuns_flush(out[th_idx]);             // send batch
@@ -122,7 +140,10 @@ void st_send(int th_idx, const unsigned char *payload, int pkt_size)
         fill_tx_ring(th_idx, payload, pkt_size);
 
         while (!term) {
-            transmit(th_idx, pkt_size);
+            if (zerocopy)
+                transmit_zc(th_idx, pkt_size);
+            else
+                transmit_c(th_idx, payload, pkt_size);
         }
     } catch(nethuns_exception &e) {
         if (e.sock) {
@@ -153,8 +174,8 @@ main(int argc, char *argv[])
     int opt = 0;
     int optidx = 0;
     opterr = 1;     // turn on/off getopt error messages
-    if (argc > 1 && argc < 9) {
-        while ((opt = getopt_long(argc, argv, "hi:b:n:m", long_opts, &optidx)) != -1) {
+    if (argc > 1 && argc < 10) {
+        while ((opt = getopt_long(argc, argv, "hi:b:n:mz", long_opts, &optidx)) != -1) {
             switch (opt) {
             case 'h':
                 std::cout << help_long << std::endl;
@@ -174,6 +195,9 @@ main(int argc, char *argv[])
             case 'm':
                 mthreading = true;
                 break;
+            case 'z':
+                zerocopy = true;
+                break;
             default:
                 std::cerr << "Error in parsing command line options.\n" << help_brief << std::endl;
                 return 1;
@@ -189,6 +213,7 @@ main(int argc, char *argv[])
                             << "* batch_size: " << batch_size << " \n"
                             << "* sockets: " << nsock << " \n"
                             << "* multithreading: " << ((mthreading) ? " ON \n" : " OFF \n")
+                            << "* zero-copy: " << ((zerocopy) ? " ON \n" : " OFF \n")
                             << std::endl;
 
     signal(SIGINT, terminate);  // register termination signal
@@ -229,7 +254,10 @@ main(int argc, char *argv[])
 
             while (!term) {
                 for (i = 0; i < nsock; i++) {
-                    transmit(i, 34);
+                    if (zerocopy)
+                        transmit_zc(i, 34);
+                    else
+                        transmit_c(i, payload, 34);
                 }
             }
         } catch(nethuns_exception &e) {
