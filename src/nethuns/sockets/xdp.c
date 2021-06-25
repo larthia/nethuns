@@ -53,6 +53,108 @@ load_bpf_object_file(const char *filename, int ifindex)
 	return obj;
 }
 
+static struct bpf_object*
+open_bpf_object(const char *file, int ifindex)
+{
+	int err;
+	struct bpf_object *obj;
+	struct bpf_map *map;
+	struct bpf_program *prog, *first_prog = NULL;
+
+	struct bpf_object_open_attr open_attr = {
+		.file = file,
+		.prog_type = BPF_PROG_TYPE_XDP,
+	};
+
+	obj = bpf_object__open_xattr(&open_attr);
+	if (IS_ERR_OR_NULL(obj)) {
+		err = -PTR_ERR(obj);
+		nethuns_fprintf(stderr, "open_bpf_object: error opening BPF-OBJ file(%s) (%d): %s\n",	file, err, strerror(-err));
+		return NULL;
+	}
+
+	bpf_object__for_each_program(prog, obj) {
+		bpf_program__set_type(prog, BPF_PROG_TYPE_XDP);
+		bpf_program__set_ifindex(prog, ifindex);
+		if (!first_prog)
+			first_prog = prog;
+	}
+
+	bpf_object__for_each_map(map, obj) {
+		if (!bpf_map__is_offload_neutral(map))
+			bpf_map__set_ifindex(map, ifindex);
+	}
+
+	if (!first_prog) {
+		nethuns_fprintf(stderr, "open_bpf_object: file %s contains no programs\n", file);
+		return NULL;
+	}
+
+	return obj;
+}
+
+static int
+reuse_maps(struct bpf_object *obj, const char *path)
+{
+	struct bpf_map *map;
+
+	if (!obj)
+		return -ENOENT;
+
+	if (!path)
+		return -EINVAL;
+
+	bpf_object__for_each_map(map, obj) {
+		int len, err;
+		int pinned_map_fd;
+		char buf[PATH_MAX];
+
+		len = snprintf(buf, PATH_MAX, "%s/%s", path, bpf_map__name(map));
+		if (len < 0) {
+			return -EINVAL;
+		} else if (len >= PATH_MAX) {
+			return -ENAMETOOLONG;
+		}
+
+		pinned_map_fd = bpf_obj_get(buf);
+		if (pinned_map_fd < 0)
+			return pinned_map_fd;
+
+		err = bpf_map__reuse_fd(map, pinned_map_fd);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
+struct bpf_object*
+load_bpf_object_file_reuse_maps(const char *file, int ifindex, const char *pin_dir)
+{
+	int err;
+	struct bpf_object *obj;
+
+	obj = open_bpf_object(file, ifindex);
+	if (!obj) {
+		nethuns_fprintf(stderr, "load_bpf_object_file_reuse_maps: failed to open object %s\n", file);
+		return NULL;
+	}
+
+	err = reuse_maps(obj, pin_dir);
+	if (err) {
+		nethuns_fprintf(stderr, "load_bpf_object_file_reuse_maps: failed to reuse maps for object %s, pin_dir=%s\n", file, pin_dir);
+		return NULL;
+	}
+
+	err = bpf_object__load(obj);
+	if (err) {
+		nethuns_fprintf(stderr, "load_bpf_object_file_reuse_maps: error loading BPF-OBJ file(%s) (%d): %s\n", file, err, strerror(-err));
+		return NULL;
+	}
+
+	return obj;
+}
+
 int
 xdp_link_attach(int ifindex, __u32 xdp_flags, int prog_fd)
 {
@@ -107,9 +209,16 @@ load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
 		offload_ifindex = nethuns_socket(s)->ifindex;
 
     // Load the BPF-ELF object file and get back libbpf bpf_object.
-    bpf_obj = load_bpf_object_file(nethuns_socket(s)->opt.xdp_prog, offload_ifindex);  // TODO controlla riuso mappe prima di fare questo...
-	if (!bpf_obj) {
-		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: loading BPF object file %s...\n", nethuns_socket(s)->opt.xdp_prog);
+    if (nethuns_socket(s)->opt.reuse_maps) {
+        // Find pinned maps to reuse.
+        bpf_obj = load_bpf_object_file_reuse_maps(nethuns_socket(s)->opt.xdp_prog, offload_ifindex, nethuns_socket(s)->opt.pin_dir);
+    } else {
+        // No pinned maps to reuse.
+        bpf_obj = load_bpf_object_file(nethuns_socket(s)->opt.xdp_prog, offload_ifindex);
+    }
+
+    if (!bpf_obj) {
+		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: error loading BPF object file %s...\n", nethuns_socket(s)->opt.xdp_prog);
         return NULL;
 	}
 
