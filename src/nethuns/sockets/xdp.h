@@ -12,6 +12,10 @@
 
 #include "base.h"
 
+#ifndef PATH_MAX
+#define PATH_MAX	4096    /* maximum path length for bpf pinned maps */
+#endif
+
 struct nethuns_socket_xdp
 {
     struct nethuns_socket_base base;
