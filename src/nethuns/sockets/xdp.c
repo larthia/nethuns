@@ -149,7 +149,6 @@ load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
 }
 
 
-
 static int
 load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
 {
