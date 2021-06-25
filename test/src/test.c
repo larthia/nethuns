@@ -52,6 +52,8 @@ main(int argc, char *argv[])
     ,   .xdp_prog        = NULL
    // ,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
     ,   .xdp_prog_sec    = NULL
+    ,   .reuse_maps      = false
+    ,   .pin_dir         = NULL
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

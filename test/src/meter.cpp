@@ -315,6 +315,8 @@ main(int argc, char *argv[])
     //,   .xdp_prog_sec    = "xdp_sock1"
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
+    ,   .reuse_maps      = false
+    ,   .pin_dir         = nullptr
     };
 
     out = new nethuns_socket_t*[nsock]();

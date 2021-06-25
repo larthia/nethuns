@@ -78,6 +78,8 @@ try
     ,   .tx_qdisc_bypass = true
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
+    ,   .reuse_maps      = false
+    ,   .pin_dir         = nullptr
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

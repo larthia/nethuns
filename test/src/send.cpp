@@ -232,6 +232,8 @@ main(int argc, char *argv[])
     ,   .tx_qdisc_bypass = true
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
+    ,   .reuse_maps      = false
+    ,   .pin_dir         = nullptr
     };
 
     out = new nethuns_socket_t*[nsock]();
