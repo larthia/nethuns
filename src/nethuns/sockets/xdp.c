@@ -19,7 +19,7 @@
 #include <string.h>
 #include <time.h>
 
-#include <linux/bpf.h>
+#include <src/bpf.h>
 #include <src/libbpf.h>
 
 #include <linux/if_link.h>
