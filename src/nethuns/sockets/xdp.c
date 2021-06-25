@@ -24,6 +24,7 @@
 
 #include <linux/if_link.h>
 #include <linux/if_xdp.h>
+#include <linux/err.h>
 
 
 struct bpf_object*
