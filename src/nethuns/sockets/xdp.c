@@ -74,8 +74,7 @@ xdp_link_attach(int ifindex, __u32 xdp_flags, int prog_fd)
 	}
 
 	if (err < 0) {
-		nethuns_fprintf(stderr, "xdp_link_attach: ifindex(%d) link set xdp fd failed (%d): %s\n",
-			ifindex, -err, strerror(-err));
+		nethuns_fprintf(stderr, "xdp_link_attach: ifindex(%d) link set xdp fd failed (%d): %s\n", ifindex, -err, strerror(-err));
 
 		switch (-err) {
 		case EBUSY:
