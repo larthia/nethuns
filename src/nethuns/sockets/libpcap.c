@@ -3,7 +3,6 @@
 
 #include "../api.h"
 
-#include "../misc/macro.h"
 #include "../misc/compiler.h"
 
 

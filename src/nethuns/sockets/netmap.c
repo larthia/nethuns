@@ -1,9 +1,11 @@
-#include "../util/compiler.h"
-#include "../util/macro.h"
+#include "../define.h"
+
+#define NETHUNS_SOCKET NETHUNS_SOCKET_NETMAP
+#include "ring.h"
 #include "netmap.h"
 
+#include "../misc/compiler.h"
 #include "../api.h"
-#include "../ring.h"
 
 #include <sys/ioctl.h>
 #include <sys/poll.h>

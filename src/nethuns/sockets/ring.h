@@ -12,19 +12,16 @@
 #endif
 
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
-#pragma message "The value of NETHUNS_SOCKET: " XSTR(NETHUNS_SOCKET)
 #include <linux/if_packet.h>
 #endif
 
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
-#pragma message "The value of NETHUNS_SOCKET: " XSTR(NETHUNS_SOCKET)
 #define NETMAP_WITH_LIBS
 #include <net/netmap_user.h>
 #endif
 
 
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
-#pragma message "The value of NETHUNS_SOCKET: " XSTR(NETHUNS_SOCKET)
 #include "xdp_pkthdr.h"
 #endif
 

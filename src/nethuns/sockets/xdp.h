@@ -3,7 +3,8 @@
 #include <stdio.h>
 
 #include "../types.h"
-#include "../util/compiler.h"
+#include "../misc/compiler.h"
+
 #include "xdp_pkthdr.h"
 #include "xdp/xsk_ext.h"
 

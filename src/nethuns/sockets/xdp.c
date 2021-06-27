@@ -1,6 +1,9 @@
+#define NETHUNS_SOCKET NETHUNS_SOCKET_XDP
+#include "ring.h"
+
+#include "../misc/compiler.h"
+
 #include "../api.h"
-#include "../ring.h"
-#include "../impl/compiler.h"
 #include "xdp.h"
 
 #include <sys/ioctl.h>

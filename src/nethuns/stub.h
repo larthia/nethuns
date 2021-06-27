@@ -1,7 +1,7 @@
 #pragma once
 
 #include "define.h"
-#include "packet/vlan.h"
+#include "vlan.h"
 
 #if !defined NETHUNS_SOCKET
 #error NETHUNS_SOCKET is not defined.

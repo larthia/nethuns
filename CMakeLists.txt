@@ -23,7 +23,7 @@ option(NETHUNS_OPT_NETMAP               "Enable Netmap support" OFF)
 add_definitions(-D_GNU_SOURCE)
 
 find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
-find_library(LIBPCAP_LIBRARY pcap)
+find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
 
 include_directories(${LIBPCAP_INCLUDE_DIR})
 include_directories(/usr/local/include/ src)
@@ -94,14 +94,9 @@ if (NETHUNS_OPT_LIBPCAP)
     list(APPEND NETHUNS_LIB ${LIBPCAP_LIBRARY})
 endif()
 
-
 add_library(nethuns STATIC ${NETHUNS_SRC})
 
-message("-> " ${NETHUNS_LIB})
-
-target_link_libraries(nethuns PUBLIC ${NETHUNS_LIB})
-
-link_directories(${nethuns_BINARY_DIR})
+target_link_libraries(nethuns PRIVATE ${NETHUS_LIB})
 
 install_targets(/lib nethuns)
 

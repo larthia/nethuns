@@ -1,11 +1,14 @@
-#include "../util/compiler.h"
-#include "../util/macro.h"
+#define NETHUNS_SOCKET NETHUNS_SOCKET_TPACKET3
+#include "ring.h"
+
+#include "../api.h"
+#include "../misc/compiler.h"
 
 #include "tpacket_v3.h"
-#include "../api.h"
-#include "../ring.h"
+
 
 #include <linux/version.h>
+#include <linux/types.h>
 
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -13,6 +16,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <string.h>
+
 
 struct nethuns_socket_tpacket_v3 *
 nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
