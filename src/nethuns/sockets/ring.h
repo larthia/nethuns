@@ -1,36 +1,50 @@
 #pragma once
 
-#ifdef NETHUNS_USE_TPACKET_V3
-#include <linux/if_packet.h>
+#include "base.h"
+#include "../define.h"
+
+#if !defined NETHUNS_SOCKET
+#error NETHUNS_SOCKET is not defined.
 #endif
 
-#ifdef NETHUNS_USE_NETMAP
-#define NETMAP_WITH_LIBS
-#include <net/netmap_user.h>
-#endif
-#ifdef NETHUNS_USE_DEVPCAP
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
 #include <pcap/pcap.h>
 #endif
 
-#ifdef NETHUNS_USE_XDP
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
+#pragma message "The value of NETHUNS_SOCKET: " XSTR(NETHUNS_SOCKET)
+#include <linux/if_packet.h>
+#endif
+
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
+#pragma message "The value of NETHUNS_SOCKET: " XSTR(NETHUNS_SOCKET)
+#define NETMAP_WITH_LIBS
+#include <net/netmap_user.h>
+#endif
+
+
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
+#pragma message "The value of NETHUNS_SOCKET: " XSTR(NETHUNS_SOCKET)
 #include "xdp_pkthdr.h"
 #endif
 
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "../util/macro.h"
-#include "../util/compiler.h"
+#include "../misc/macro.h"
+#include "../misc/compiler.h"
+#include "../types.h"
+#include "../filter.h"
 
 struct nethuns_ring_slot
 {
-#if defined (NETHUNS_USE_TPACKET_V3)
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
     struct tpacket3_hdr     pkthdr;
-#elif defined (NETHUNS_USE_NETMAP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
     struct nm_pkthdr        pkthdr;
-#elif defined (NETHUNS_USE_DEVPCAP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
     struct pcap_pkthdr      pkthdr;
-#elif defined (NETHUNS_USE_XDP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     struct xdp_pkthdr       pkthdr;
     uint64_t                orig;
     int32_t                 idx_fq;
@@ -39,23 +53,11 @@ struct nethuns_ring_slot
     int                     inuse;
     unsigned char           pad[2];
 
-#if defined (NETHUNS_USE_XDP)
+#if defined NETHUNS_SOCKET && NETHUNS_SOCKET == xdp
     unsigned char           *packet;
 #else
     unsigned char           packet[];
 #endif
-};
-
-
-struct nethuns_ring
-{
-    size_t size;
-    size_t pktsize;
-
-    uint64_t head;
-    uint64_t tail;
-
-    struct nethuns_ring_slot *ring;
 };
 
 

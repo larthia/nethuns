@@ -1,10 +1,15 @@
 #pragma once
 
-#include "pcap_file.h"
+#include "define.h"
+#include "packet/vlan.h"
 
-#ifdef NETHUNS_USE_TPACKET_V3
+#if !defined NETHUNS_SOCKET
+#error NETHUNS_SOCKET is not defined.
+#endif
 
-#include "tpacket_v3.h"
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
+
+#include "sockets/tpacket_v3.h"
 
 #define nethuns_open(...)           nethuns_open_tpacket_v3(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_tpacket_v3(__VA_ARGS__)
@@ -34,9 +39,9 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_tpacket_v3(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_tpacket_v3(__VA_ARGS__)
 
-#elif defined(NETHUNS_USE_NETMAP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
 
-#include "netmap.h"
+#include "sockets/netmap.h"
 
 #define nethuns_open(...)           nethuns_open_netmap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_netmap(__VA_ARGS__)
@@ -66,9 +71,9 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_netmap(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_netmap(__VA_ARGS__)
 
-#elif defined (NETHUNS_USE_DEVPCAP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
 
-#include "libpcap.h"
+#include "sockets/libpcap.h"
 
 #define nethuns_open(...)           nethuns_open_libpcap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_libpcap(__VA_ARGS__)
@@ -99,9 +104,9 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_libpcap(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_libpcap(__VA_ARGS__)
 
-#elif defined (NETHUNS_USE_XDP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
 
-#include "xdp.h"
+#include "sockets/xdp.h"
 
 #define nethuns_open(...)           nethuns_open_xdp(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_xdp(__VA_ARGS__)
@@ -132,8 +137,16 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_xdp(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_xdp(__VA_ARGS__)
 
-#else
-
-#error "Nethuns: socket type not specified!"
-
 #endif
+
+static inline uint16_t
+nethuns_vlan_tpid_(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
+{
+    return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tpid(hdr) : nethuns_vlan_tpid(payload);
+}
+
+static inline uint16_t
+nethuns_vlan_tci_(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
+{
+    return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tci(hdr) : nethuns_vlan_tci(payload);
+}

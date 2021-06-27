@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <pcap/pcap.h>
 
+#include "../misc/compiler.h"
+#include "../misc/macro.h"
+#include "../vlan.h"
 #include "../types.h"
-#include "../util/compiler.h"
-#include "../util/macro.h"
 
 struct nethuns_socket_libpcap
 {
@@ -17,10 +18,42 @@ struct nethuns_socket_libpcap
 extern "C" {
 #endif
 
+struct nethuns_socket_libpcap *
+nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf);
+
+int
+nethuns_close_libpcap(struct nethuns_socket_libpcap *s);
+
+int
+nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int queue);
+
+uint64_t
+nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
+
+int
+nethuns_send_libpcap(struct nethuns_socket_libpcap *s, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_flush_libpcap(__maybe_unused struct nethuns_socket_libpcap *s);
+
+int
+nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stat *stats);
+
+int
+nethuns_fanout_libpcap(__maybe_unused struct nethuns_socket_libpcap *s, __maybe_unused int group, __maybe_unused const char *fanout);
+
+int
+nethuns_fd_libpcap(__maybe_unused struct nethuns_socket_libpcap *s);
+
+void
+nethuns_dump_rings_libpcap(__maybe_unused struct nethuns_socket_libpcap *s);
+
+
 static inline uint32_t
 nethuns_tstamp_sec_libpcap(struct pcap_pkthdr const *hdr) {
     return (uint32_t)hdr->ts.tv_sec;
 }
+
 static inline uint32_t
 nethuns_tstamp_usec_libpcap(struct pcap_pkthdr const *hdr) {
     return (uint32_t)hdr->ts.tv_usec;
@@ -85,4 +118,3 @@ nethuns_offvlan_tci_libpcap(__maybe_unused struct pcap_pkthdr const *hdr) {
 #ifdef __cplusplus
 }
 #endif
-

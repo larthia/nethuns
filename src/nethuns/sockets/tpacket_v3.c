@@ -1,9 +1,9 @@
-#include "../nethuns.h"
 #include "../util/compiler.h"
 #include "../util/macro.h"
 
 #include "tpacket_v3.h"
-#include "ring.h"
+#include "../api.h"
+#include "../ring.h"
 
 #include <linux/version.h>
 

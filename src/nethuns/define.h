@@ -1,0 +1,9 @@
+#pragma once
+
+#define NETHUNS_ERRBUF_SIZE     512
+#define NETHUNS_ANY_QUEUE       (-1)
+
+#define NETHUNS_SOCKET_LIBPCAP   0
+#define NETHUNS_SOCKET_NETMAP    1
+#define NETHUNS_SOCKET_XDP       2
+#define NETHUNS_SOCKET_TPACKET3  3

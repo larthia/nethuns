@@ -6,9 +6,8 @@
 #include <linux/bpf.h>
 #include <src/libbpf.h>
 
-#include <nethuns/sockets/xdp.h>
-#include <nethuns/nethuns.h>
-
+#include "../../api.h"
+#include "nethuns/sockets/xdp.h"
 #include "xsk_ext.h"
 
 struct xsk_umem_info *
@@ -46,7 +45,7 @@ xsk_configure_umem(
 }
 
 
-int 
+int
 xsk_populate_fill_ring(
 	  struct nethuns_socket_xdp *sock
 	, size_t frame_size)
@@ -92,14 +91,14 @@ xsk_configure_socket(
 	cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
 	cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
 
-	cfg.libbpf_flags = nethuns_socket(sock)->opt.xdp_prog != NULL 
-						? XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD 
+	cfg.libbpf_flags = nethuns_socket(sock)->opt.xdp_prog != NULL
+						? XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD
 						: 0;
 
 	cfg.xdp_flags = sock->xdp_flags;
 	cfg.bind_flags = sock->xdp_bind_flags;
 
-	ret = xsk_socket__create(&xsk->xsk, nethuns_socket(sock)->devname, nethuns_socket(sock)->queue, sock->umem->umem, 
+	ret = xsk_socket__create(&xsk->xsk, nethuns_socket(sock)->devname, nethuns_socket(sock)->queue, sock->umem->umem,
 			rx ? &xsk->rx : NULL,
 			tx ? &xsk->tx : NULL,
 			&cfg);
@@ -142,7 +141,7 @@ err:
 	return NULL;
 }
 
-int 
+int
 xsk_enter_into_map(struct nethuns_socket_xdp *sock)
 {
 	struct bpf_map *map;

@@ -1,7 +1,7 @@
-#include "../nethuns.h"
-#include "../util/compiler.h"
+#include "../api.h"
+#include "../ring.h"
+#include "../impl/compiler.h"
 #include "xdp.h"
-#include "ring.h"
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>

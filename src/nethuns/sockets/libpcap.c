@@ -1,9 +1,13 @@
-#include "../nethuns.h"
-#include "../util/macro.h"
-#include "../util/compiler.h"
+#define NETHUNS_SOCKET NETHUNS_SOCKET_LIBPCAP
+#include "ring.h"
+
+#include "../api.h"
+
+#include "../misc/macro.h"
+#include "../misc/compiler.h"
+
 
 #include "libpcap.h"
-#include "ring.h"
 
 #include <pcap/pcap.h>
 #include <sys/ioctl.h>
@@ -55,7 +59,8 @@ int nethuns_close_libpcap(struct nethuns_socket_libpcap *s)
 }
 
 
-int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int queue)
+int
+nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int queue)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
 

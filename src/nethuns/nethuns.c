@@ -7,12 +7,15 @@
 #include <net/if.h>
 #include <unistd.h>
 
-#include "nethuns.h"
+#include "sockets/base.h"
 #include "global.h"
-
+#include "define.h"
+#include "types.h"
+#include "filter.h"
+#include "api.h"
 
 void
-nethuns_fprintf(FILE *out, char *msg, ...)
+nethuns_fprintf(FILE *out, const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
@@ -23,7 +26,7 @@ nethuns_fprintf(FILE *out, char *msg, ...)
 
 
 void
-nethuns_perror(char *buf, char *msg, ...)
+nethuns_perror(char *buf, const char *msg, ...)
 {
     int n;
 
@@ -85,22 +88,6 @@ nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, u
 
 
 void
-nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx)
-{
-    nethuns_socket(s)->filter = filter;
-    nethuns_socket(s)->filter_ctx = ctx;
-}
-
-
-void
-nethuns_clear_filter(nethuns_socket_t * s)
-{
-    nethuns_socket(s)->filter = NULL;
-    nethuns_socket(s)->filter_ctx = NULL;
-}
-
-
-void
 __nethuns_free_base(nethuns_socket_t *s)
 {
     free(nethuns_socket(s)->devname);
@@ -117,7 +104,7 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
-    
+
     nethuns_lock_global();
 
     info = nethuns_lookup_netinfo(devname);
@@ -148,7 +135,7 @@ __nethuns_set_if_promisc(nethuns_socket_t *s, char const *devname)
 
     if (do_promisc)
         nethuns_fprintf(stderr, "device %s promisc mode set\n", devname);
-    else 
+    else
         nethuns_fprintf(stderr, "device %s (already) promisc mode set\n", devname);
 
     nethuns_unlock_global();
@@ -165,9 +152,9 @@ __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
 
     if (nethuns_ioctl_if(s, devname, SIOCGIFFLAGS, &flags) < 0)
         return -1;
-    
+
     nethuns_lock_global();
-    
+
     info = nethuns_lookup_netinfo(devname);
     if (info != NULL) {
         if(--info->promisc_refcnt <= 0) {
@@ -187,4 +174,3 @@ __nethuns_clear_if_promisc(nethuns_socket_t *s, char const *devname)
     nethuns_unlock_global();
     return 0;
 }
-

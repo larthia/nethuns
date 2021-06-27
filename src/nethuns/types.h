@@ -1,16 +1,25 @@
 #pragma once
 
-#include "sockets/ring.h"
-#include "sockets/types.h"
+#include <sys/time.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+
+#include "sockets/types.h"
+
+#ifndef NETHUNS_USE_BUILTIN_PCAP_READER
+#include <pcap/pcap.h>
+#endif
 
 
-#define NETHUNS_ERRBUF_SIZE     512
-#define NETHUNS_ANY_QUEUE       (-1)
+#ifdef __cplusplus
+#define nethuns_socket(_sock)       (reinterpret_cast<struct nethuns_socket_base *>(_sock))
+#define nethuns_const_socket(_sock) (reinterpret_cast<struct nethuns_socket_base const *>(_sock))
+#else
+#define nethuns_socket(_sock)       ((struct nethuns_socket_base *)(_sock))
+#define nethuns_const_socket(_sock) ((struct nethuns_socket_base const *)(_sock))
+#endif
 
-
-typedef int (*nethuns_filter_t)(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt);
 
 enum nethuns_capture_dir
 {
@@ -36,6 +45,7 @@ enum nethuns_socket_mode
  ,  nethuns_socket_tx_only
 };
 
+
 struct nethuns_socket_options
 {
     unsigned int                numblocks;
@@ -51,23 +61,6 @@ struct nethuns_socket_options
     const char                  *xdp_prog;
 };
 
-struct nethuns_socket_base
-{
-    char   errbuf[NETHUNS_ERRBUF_SIZE];
-
-    struct nethuns_socket_options opt;
-    struct nethuns_ring           ring;
-    char                         *devname;
-    int                           queue;
-    int 		                  ifindex;
-
-    nethuns_filter_t              filter;
-    void *                        filter_ctx;
-};
-
-
-typedef struct nethuns_socket_base  nethuns_socket_base_t;
-
 
 struct nethuns_stat
 {
@@ -81,11 +74,12 @@ struct nethuns_stat
 };
 
 
+struct nethuns_socket_base;
 struct nethuns_packet
 {
     uint8_t const                 *payload;
     const nethuns_pkthdr_t        *pkthdr;
-    nethuns_socket_base_t         *sock;
+    struct nethuns_socket_base    *sock;
     uint64_t                       id;
 };
 
@@ -94,22 +88,4 @@ struct nethuns_timeval
 {
     uint32_t    tv_sec;
     uint32_t    tv_usec;
-};
-
-
-struct nethuns_pcap_pkthdr
-{
-    struct nethuns_timeval ts;      /* time stamp */
-    uint32_t caplen;                /* length of portion present */
-    uint32_t len;                   /* length this packet (off wire) */
-};
-
-
-struct nethuns_pcap_patched_pkthdr {
-    struct nethuns_timeval ts;	    /* time stamp */
-    uint32_t caplen;		        /* length of portion present */
-    uint32_t len;		            /* length of this packet (off wire) */
-    int		 index;
-    unsigned short protocol;
-    unsigned char pkt_type;
 };

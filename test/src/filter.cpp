@@ -1,7 +1,10 @@
 #include <nethuns/nethuns.h>
 #include <stdio.h>
-#include <unistd.h>
 
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include <iostream>
 
 void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 {
@@ -13,13 +16,13 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
                                                                                      , nethuns_len(hdr)
                                                                                      , nethuns_offvlan_tci(hdr)
                                                                                      , nethuns_offvlan_tpid(hdr)
-                                                                                     , nethuns_pktvlan_tci(frame)
-                                                                                     , nethuns_pktvlan_tpid(frame)
+                                                                                     , nethuns_vlan_tci(frame)
+                                                                                     , nethuns_vlan_tpid(frame)
                                                                                      , nethuns_vlan_tci(hdr, frame)
                                                                                      , nethuns_vlan_tpid(hdr, frame)
                                                                                      , nethuns_vlan_vid(nethuns_vlan_tci(hdr, frame))
                                                                                      , nethuns_rxhash(hdr));
-    for(; i < 14; i++)
+    for(; i < 34; i++)
     {
         printf("%02x ", frame[i]);
     }
@@ -27,65 +30,111 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 }
 
 
+int simple_filter(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt)
+{
+    auto header = (std::string *)ctx;
+    printf("filter context %s:\n", header->c_str());
+    dump_packet(pkthdr, pkt);
+    return 1;
+}
+
+
+std::atomic_long total;
+
+void meter()
+{
+    auto now = std::chrono::system_clock::now();
+    for(;;)
+    {
+        now += std::chrono::seconds(1);
+        std::this_thread::sleep_until(now);
+        auto x = total.exchange(0);
+        std::cout << "pkt/sec: " << x << std::endl;
+    }
+}
+
+
 int
 main(int argc, char *argv[])
+try
 {
-    nethuns_socket_t *s;
-
     if (argc < 2)
     {
-        fprintf(stderr,"usage: %s dev\n", argv[0]);
+        std::cerr << "usage: " << argv[0] << " dev" << std::endl;
         return 0;
     }
 
     struct nethuns_socket_options opt =
     {
-        .numblocks       = 4
-    ,   .numpackets      = 4096
+        .numblocks       = 1
+    ,   .numpackets      = 65536
     ,   .packetsize      = 2048
+    ,   .timeout_ms      = 0
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
     ,   .mode            = nethuns_socket_rx_tx
     ,   .promisc         = true
-    ,   .rxhash          = true
-    ,   .tx_qdisc_bypass = false
-    ,   .xdp_prog        = NULL
-   // ,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
+    ,   .rxhash          = false
+    ,   .tx_qdisc_bypass = true
+    ,   .xdp_prog        = nullptr
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
-
-    s = nethuns_open(&opt, errbuf);
-    if (!s)
+    nethuns_socket_t *s = nethuns_open(&opt, errbuf);
+    if (s == nullptr)
     {
-        fprintf(stderr, "%s\n", errbuf);
-        return -1;
+        throw std::runtime_error(errbuf);
     }
 
     if (nethuns_bind(s, argv[1], NETHUNS_ANY_QUEUE) < 0)
     {
-        fprintf(stderr, "%s\n", nethuns_error(s));
-        return -1;
+        throw nethuns_exception(s);
     }
+
+    std::thread(meter).detach();
 
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    for(int i =0; i < 50000; i++)
+    // set filter...
+
+    std::string ctx = "packet (C++)";
+    nethuns_set_filter(s, &simple_filter, &ctx);
+
+
+    uint64_t total2 = 0;
+    for(;;)
     {
         uint64_t pkt_id;
 
         if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
-            dump_packet(pkthdr, frame);
+            total++;
+            total2++;
+
+            if (total2 == 10000000)
+            {
+                total2 = 0;
+                nethuns_dump_rings(s);
+            }
+
             nethuns_release(s, pkt_id);
         }
-
-        usleep(1);
     }
 
-    printf("done.\n");
     nethuns_close(s);
     return 0;
 }
-
+catch(nethuns_exception &e)
+{
+    if (e.sock) {
+        nethuns_close(e.sock);
+    }
+    std::cerr << e.what() << std::endl;
+    return 1;
+}
+catch(std::exception &e)
+{
+    std::cerr << e.what() << std::endl;
+    return 1;
+}

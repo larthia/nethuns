@@ -1,8 +1,9 @@
-#include "../nethuns.h"
 #include "../util/compiler.h"
 #include "../util/macro.h"
 #include "netmap.h"
-#include "ring.h"
+
+#include "../api.h"
+#include "../ring.h"
 
 #include <sys/ioctl.h>
 #include <sys/poll.h>
