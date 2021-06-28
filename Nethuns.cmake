@@ -7,6 +7,10 @@ cmake_minimum_required(VERSION 3.0)
 set(NETHUNS_CAPTURE_SOCKET "libpcap" CACHE STRING "Nethuns underlying capture engine")
 set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS libpcap tpacket3 xdp netmap)
 
+set(NETHUNS_LIBS)
+
+list(APPEND NETHUNS_LIBS nethuns)
+
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
     message ("Nethuns: TPACKET_v3 enabled!")
     add_definitions(-DNETHUNS_SOCKET=3)
@@ -23,4 +27,6 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
     message ("Nethuns: basic libpcap enabled!")
     add_definitions(-DNETHUNS_SOCKET=0)
 
+    find_library(LIBPCAP_LIBRARY pcap)
+    list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()

@@ -12,15 +12,6 @@
 #endif
 
 
-#ifdef __cplusplus
-#define nethuns_socket(_sock)       (reinterpret_cast<struct nethuns_socket_base *>(_sock))
-#define nethuns_const_socket(_sock) (reinterpret_cast<struct nethuns_socket_base const *>(_sock))
-#else
-#define nethuns_socket(_sock)       ((struct nethuns_socket_base *)(_sock))
-#define nethuns_const_socket(_sock) ((struct nethuns_socket_base const *)(_sock))
-#endif
-
-
 enum nethuns_capture_dir
 {
     nethuns_in

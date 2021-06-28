@@ -1,10 +1,12 @@
 #pragma once
 
 #include "../define.h"
-#include "../filter.h"
 #include "../types.h"
 
 struct nethuns_ring_slot;
+
+typedef int (*nethuns_filter_t)(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt);
+
 
 struct nethuns_ring
 {
@@ -31,8 +33,11 @@ struct nethuns_socket_base
     void *                        filter_ctx;
 };
 
-
 typedef struct nethuns_socket_base  nethuns_socket_base_t;
+
+#define nethuns_socket(_sock)       ((struct nethuns_socket_base *)(_sock))
+#define nethuns_const_socket(_sock) ((struct nethuns_socket_base const *)(_sock))
+
 
 struct nethuns_pcap_pkthdr
 {
@@ -77,3 +82,17 @@ struct nethuns_socket_pcapfile
 };
 
 typedef struct nethuns_socket_pcapfile nethuns_pcap_t;
+
+static inline void
+nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx)
+{
+    nethuns_socket(s)->filter = filter;
+    nethuns_socket(s)->filter_ctx = ctx;
+}
+
+static inline void
+nethuns_clear_filter(nethuns_socket_t * s)
+{
+    nethuns_socket(s)->filter = NULL;
+    nethuns_socket(s)->filter_ctx = NULL;
+}

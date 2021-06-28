@@ -11,7 +11,6 @@
 #include "global.h"
 #include "define.h"
 #include "types.h"
-#include "filter.h"
 #include "api.h"
 
 void

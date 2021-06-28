@@ -1,10 +1,8 @@
 #define NETHUNS_SOCKET NETHUNS_SOCKET_LIBPCAP
 #include "ring.h"
 
-#include "../api.h"
-
 #include "../misc/compiler.h"
-
+#include "../api.h"
 
 #include "libpcap.h"
 

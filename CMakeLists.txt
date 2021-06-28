@@ -38,10 +38,9 @@ endif()
 # define the list of library to link...
 #
 
-set(NETHUNS_LIB)
+set(NETHUNS_LIBS)
 
 set(NETHUNS_SRC src/nethuns/nethuns.c
-                src/nethuns/filter.c
                 src/nethuns/global.c)
 
 if (NETHUNS_OPT_BUILTIN_PCAP_READER OR NETHUNS_OPT_XDP)
@@ -49,7 +48,7 @@ if (NETHUNS_OPT_BUILTIN_PCAP_READER OR NETHUNS_OPT_XDP)
     message("Nethuns: using built-in pcap file reader!")
 	add_definitions(-DNETHUNS_USE_BUILTIN_PCAP_READER)
 else()
-    list(APPEND NETHUNS_LIB ${LIBPCAP_LIBRARY})
+    list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
     message("Nethuns: using libpcap to read files!")
 endif()
 
@@ -83,20 +82,20 @@ if (NETHUNS_OPT_XDP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp.c)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp/xsk_ext.c)
 
-    list(APPEND NETHUNS_LIB libbpf)
-    list(APPEND NETHUNS_LIB -lelf)
-    list(APPEND NETHUNS_LIB ZLIB::ZLIB)
+    list(APPEND NETHUNS_LIBS libbpf)
+    list(APPEND NETHUNS_LIBS -lelf)
+    list(APPEND NETHUNS_LIBS ZLIB::ZLIB)
 
 endif()
 
 if (NETHUNS_OPT_LIBPCAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
-    list(APPEND NETHUNS_LIB ${LIBPCAP_LIBRARY})
+    list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()
 
 add_library(nethuns STATIC ${NETHUNS_SRC})
 
-target_link_libraries(nethuns PRIVATE ${NETHUS_LIB})
+target_link_libraries(nethuns PRIVATE ${NETHUS_LIBS})
 
 install_targets(/lib nethuns)
 

@@ -18,9 +18,9 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
                                                                                      , nethuns_offvlan_tpid(hdr)
                                                                                      , nethuns_vlan_tci(frame)
                                                                                      , nethuns_vlan_tpid(frame)
-                                                                                     , nethuns_vlan_tci(hdr, frame)
-                                                                                     , nethuns_vlan_tpid(hdr, frame)
-                                                                                     , nethuns_vlan_vid(nethuns_vlan_tci(hdr, frame))
+                                                                                     , nethuns_vlan_tci_(hdr, frame)
+                                                                                     , nethuns_vlan_tpid_(hdr, frame)
+                                                                                     , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
                                                                                      , nethuns_rxhash(hdr));
     for(; i < 34; i++)
     {

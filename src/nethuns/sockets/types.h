@@ -1,4 +1,5 @@
 #pragma once
+#include "../define.h"
 
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
 

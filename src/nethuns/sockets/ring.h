@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.h"
+
 #include "../define.h"
 
 #if !defined NETHUNS_SOCKET
@@ -31,7 +32,6 @@
 #include "../misc/macro.h"
 #include "../misc/compiler.h"
 #include "../types.h"
-#include "../filter.h"
 
 struct nethuns_ring_slot
 {
