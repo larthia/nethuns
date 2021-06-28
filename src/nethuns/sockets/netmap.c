@@ -77,7 +77,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     s->p = nm_open(nm_dev, NULL, 0, NULL);
     if (!s->p)
     {
-        nethuns_perror(s->base.errbuf, "bind: could not open dev: %s (%s)", errbuf, nethuns_dev_queue_name(dev, queue));
+        nethuns_perror(s->base.errbuf, "bind: could not open dev: %s", nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
@@ -88,7 +88,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     if (nethuns_socket(s)->opt.promisc)
     {
         if (__nethuns_set_if_promisc(s, nethuns_socket(s)->devname) < 0) {
-            nethuns_perror(s->base.errbuf, "bind: could set promisc: %s (%s)", errbuf, nethuns_dev_queue_name(dev, queue));
+            nethuns_perror(s->base.errbuf, "bind: could set promisc: %s", nethuns_dev_queue_name(dev, queue));
             return -1;
         }
     }
