@@ -18,6 +18,33 @@ struct nethuns_socket_netmap
 extern "C" {
 #endif
 
+struct nethuns_socket_netmap * 
+nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf);
+
+int nethuns_close_netmap(struct nethuns_socket_netmap *s);
+
+int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int queue);
+
+uint64_t
+nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
+
+int
+nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_flush_netmap(struct nethuns_socket_netmap *s);
+
+int
+nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stat *stats);
+
+int
+nethuns_fanout_netmap(__maybe_unused struct nethuns_socket_netmap *s, __maybe_unused int group, __maybe_unused const char *fanout);
+
+
+int nethuns_fd_netmap(__maybe_unused struct nethuns_socket_netmap *s);
+
+void
+nethuns_dump_rings_netmap(__maybe_unused struct nethuns_socket_netmap *s);
 
 static inline uint32_t
 nethuns_tstamp_sec_netmap(struct nm_pkthdr const *hdr) {
