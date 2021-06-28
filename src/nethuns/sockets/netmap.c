@@ -1,5 +1,3 @@
-#include "../define.h"
-
 #define NETHUNS_SOCKET NETHUNS_SOCKET_NETMAP
 #include "ring.h"
 #include "netmap.h"
