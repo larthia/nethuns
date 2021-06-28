@@ -50,7 +50,7 @@ struct nethuns_ring_slot
     int                     inuse;
     unsigned char           pad[2];
 
-#if defined NETHUNS_SOCKET && NETHUNS_SOCKET == xdp
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     unsigned char           *packet;
 #else
     unsigned char           packet[];
