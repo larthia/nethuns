@@ -2,11 +2,15 @@
 
 #include <stdio.h>
 
-#include "../types.h"
 #include "../misc/compiler.h"
+#include "../misc/macro.h"
+#include "../vlan.h"
+#include "../types.h"
 
 #include "xdp_pkthdr.h"
-#include "xdp/xsk_ext.h"
+#include "xsk_ext.h"
+
+#include "base.h"
 
 struct nethuns_socket_xdp
 {
@@ -50,6 +54,34 @@ nethuns_pcap_store_xdp(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_
 int 
 nethuns_pcap_rewind_xdp(nethuns_pcap_t *s);
 
+struct nethuns_socket_xdp *
+nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf);
+
+int 
+nethuns_close_xdp(struct nethuns_socket_xdp *s);
+
+int 
+nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue);
+
+uint64_t
+nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
+
+int
+nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_flush_xdp(__maybe_unused struct nethuns_socket_xdp *s);
+
+int
+nethuns_stats_xdp(struct nethuns_socket_xdp *s, struct nethuns_stat *stats);
+
+int nethuns_fd_xdp(__maybe_unused struct nethuns_socket_xdp *s);
+
+int
+nethuns_fanout_xdp(__maybe_unused struct nethuns_socket_xdp *s, __maybe_unused int group, __maybe_unused const char *fanout);
+
+void
+nethuns_dump_rings_xdp(__maybe_unused struct nethuns_socket_xdp *s);
 
 static inline uint32_t
 nethuns_tstamp_sec_xdp(struct xdp_pkthdr const *hdr) {

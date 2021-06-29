@@ -8,6 +8,7 @@
 
 #include "../api.h"
 #include "xdp.h"
+#include "xsk_ext.h"
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -24,7 +25,6 @@
 #include <linux/if_link.h>
 #include <linux/if_xdp.h>
 
-#include "xdp/xsk_ext.h"
 
 static int
 load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)

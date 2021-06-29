@@ -21,6 +21,7 @@ if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
     message ("Nethuns: AF_XDP enabled!")
     add_definitions(-DNETHUNS_SOCKET=2)
+    include_directories(BEFORE /usr/local/include/nethuns/sockets/xdp/)
 
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
     message ("Nethuns: netmap socket enabled!")

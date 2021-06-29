@@ -30,7 +30,6 @@ include_directories(/usr/local/include/ src)
 
 if (NETHUNS_OPT_XDP)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
-	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/uapi)
 endif()
 
@@ -80,11 +79,13 @@ if (NETHUNS_OPT_XDP)
     add_dependencies(libbpf build_libbpf)
 
     list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp.c)
-    list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp/xsk_ext.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/xsk_ext.c)
 
     list(APPEND NETHUNS_LIBS libbpf)
     list(APPEND NETHUNS_LIBS -lelf)
     list(APPEND NETHUNS_LIBS ZLIB::ZLIB)
+
+    # install(TARGETS libbpf DESTINATION /usr/local/lib)
 
 endif()
 
@@ -97,6 +98,8 @@ add_library(nethuns STATIC ${NETHUNS_SRC})
 
 target_link_libraries(nethuns PRIVATE ${NETHUS_LIBS})
 
-install_targets(/lib nethuns)
+install(TARGETS nethuns DESTINATION /usr/local/lib)
 
-install(DIRECTORY src/nethuns/ DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY src/nethuns/ 	   	DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
+install(DIRECTORY libbpf/src/      	DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )

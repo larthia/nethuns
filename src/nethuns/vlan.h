@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <net/ethernet.h>
+#include "define.h"
 
 static inline uint16_t
 nethuns_vlan_vid(uint16_t tci)
@@ -15,7 +16,7 @@ nethuns_vlan_pcp(uint16_t tci)
     return (tci >> 13) & 7;
 }
 
-static inline bool
+static inline int 
 nethuns_vlan_dei(uint16_t tci)
 {
     return (tci >> 12) & 1;

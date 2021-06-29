@@ -15,13 +15,6 @@
     void (*__nethuns_fini)() = nethuns_global_fini;
 
 
-#define NETHUNS_ERROR               ((uint64_t)-1)
-#define NETHUNS_EOF                 ((uint64_t)-2)
-#define NETHUNS_ETH_P_8021Q         0x8100
-#define NETHUNS_ETH_P_8021AD        0x88A8
-
-
-
 #define nethuns_error(_sock)        ({nethuns_const_socket(_sock)->errbuf;})
 
 #define nethuns_pkt_is_valid(_n)    ((_n + 2) > 2)

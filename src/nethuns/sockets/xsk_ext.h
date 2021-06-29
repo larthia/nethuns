@@ -1,8 +1,9 @@
 #pragma once
 
-#include <src/libbpf.h>
-#include <src/xsk.h>
-#include <linux/bpf.h>
+#include "xdp/libbpf.h"
+#include "xdp/bpf.h"
+#include "xdp/xsk.h"
+
 #include <stdint.h>
 
 #define XSK_INVALID_UMEM_FRAME UINT64_MAX

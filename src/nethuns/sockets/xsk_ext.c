@@ -1,14 +1,18 @@
+#define NETHUNS_SOCKET NETHUNS_SOCKET_XDP
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <src/xsk.h>
 
-#include <linux/bpf.h>
-#include <src/libbpf.h>
-
-#include "../../api.h"
 #include "nethuns/sockets/xdp.h"
+
+#include "xdp/xsk.h"
+#include "xdp/bpf.h"
+#include "xdp/libbpf.h"
+
 #include "xsk_ext.h"
+
+#include "../api.h"
 
 struct xsk_umem_info *
 xsk_configure_umem(
