@@ -8,6 +8,7 @@
 #include <string.h>
 
 #ifndef NETHUNS_USE_BUILTIN_PCAP_READER
+#define PCAP_DONT_INCLUDE_PCAP_BPF_H
 #include <pcap/pcap.h>
 #endif
 
@@ -17,11 +18,13 @@
 #include "../api.h"
 #include "../stub.h"
 
+
 #define TCPDUMP_MAGIC           0xa1b2c3d4
 #define KUZNETZOV_TCPDUMP_MAGIC 0xa1b2cd34
 #define FMESQUITA_TCPDUMP_MAGIC 0xa1b234cd
 #define NAVTEL_TCPDUMP_MAGIC    0xa12b3c4d
 #define NSEC_TCPDUMP_MAGIC      0xa1b23c4d
+
 
 nethuns_pcap_t *
 TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf)
