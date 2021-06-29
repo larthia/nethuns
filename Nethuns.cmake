@@ -10,6 +10,9 @@ set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS libpcap tpacket3 xdp 
 set(NETHUNS_LIBS)
     
 find_library(LIBPCAP_LIBRARY pcap)
+find_library(LIBBPF_LIBRARY bpf)
+find_library(LIBELF_LIBRARY elf)
+find_package(ZLIB)
 
 list(APPEND NETHUNS_LIBS nethuns)
 list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
@@ -22,7 +25,10 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
     message ("Nethuns: AF_XDP enabled!")
     add_definitions(-DNETHUNS_SOCKET=2)
     include_directories(BEFORE /usr/local/include/nethuns/sockets/xdp/)
-
+    list(APPEND NETHUNS_LIBS ${LIBBPF_LIBRARY})
+    list(APPEND NETHUNS_LIBS ${LIBELF_LIBRARY})
+    list(APPEND NETHUNS_LIBS ZLIB::ZLIB)
+    	
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
     message ("Nethuns: netmap socket enabled!")
     add_definitions(-DNETHUNS_SOCKET=1)

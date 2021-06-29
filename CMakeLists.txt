@@ -85,8 +85,6 @@ if (NETHUNS_OPT_XDP)
     list(APPEND NETHUNS_LIBS -lelf)
     list(APPEND NETHUNS_LIBS ZLIB::ZLIB)
 
-    # install(TARGETS libbpf DESTINATION /usr/local/lib)
-
 endif()
 
 if (NETHUNS_OPT_LIBPCAP)
@@ -103,3 +101,4 @@ install(TARGETS nethuns DESTINATION /usr/local/lib)
 install(DIRECTORY src/nethuns/ 	   	DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
 install(DIRECTORY libbpf/src/      	DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
 install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+install(FILES     libbpf/src/libbpf.a   DESTINATION /usr/local/lib/)
