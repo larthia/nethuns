@@ -44,7 +44,7 @@ set(NETHUNS_SRC src/nethuns/nethuns.c
 
 if (NETHUNS_OPT_BUILTIN_PCAP_READER OR NETHUNS_OPT_XDP)
 	set(NETHUNS_OPT_BUILTIN_PCAP_READER ON CACHE BOOL ON FORCE)
-    message("Nethuns: using built-in pcap file reader!")
+    	message("Nethuns: using built-in pcap file reader!")
 	add_definitions(-DNETHUNS_USE_BUILTIN_PCAP_READER)
 else()
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
