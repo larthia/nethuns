@@ -127,3 +127,9 @@ nethuns_ring_free_slots(struct nethuns_ring *ring, nethuns_free_slot_t cb, void 
 
     return n;
 }
+
+#define nethuns_release(_sock, _pktid) do \
+{ \
+    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_socket(_sock)->ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+} while (0)
+

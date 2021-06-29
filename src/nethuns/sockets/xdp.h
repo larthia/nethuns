@@ -8,10 +8,6 @@
 #include "xdp_pkthdr.h"
 #include "xdp/xsk_ext.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct nethuns_socket_xdp
 {
     struct nethuns_socket_base base;
@@ -30,6 +26,30 @@ struct nethuns_socket_xdp
     bool rx;
     bool tx;
 };
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+nethuns_pcap_t *
+nethuns_pcap_open_xdp(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
+
+int 
+nethuns_pcap_close_xdp(nethuns_pcap_t *p);
+
+uint64_t
+nethuns_pcap_read_xdp(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+
+int
+nethuns_pcap_write_xdp(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_pcap_store_xdp(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
+
+int 
+nethuns_pcap_rewind_xdp(nethuns_pcap_t *s);
+
 
 static inline uint32_t
 nethuns_tstamp_sec_xdp(struct xdp_pkthdr const *hdr) {

@@ -18,6 +18,27 @@ struct nethuns_socket_netmap
 extern "C" {
 #endif
 
+
+nethuns_pcap_t *
+nethuns_pcap_open_netmap(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
+
+int 
+nethuns_pcap_close_netmap(nethuns_pcap_t *p);
+
+uint64_t
+nethuns_pcap_read_netmap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+
+int
+nethuns_pcap_write_netmap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_pcap_store_netmap(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
+
+int 
+nethuns_pcap_rewind_netmap(nethuns_pcap_t *s);
+
+
+
 struct nethuns_socket_netmap * 
 nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf);
 

@@ -7,6 +7,10 @@ struct nethuns_ring_slot;
 
 typedef int (*nethuns_filter_t)(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt);
 
+#ifndef TEMPLATE_
+#define TEMPLATE_(x,y) x ## y
+#define TEMPLATE(x,y) TEMPLATE_(x,y) 
+#endif
 
 struct nethuns_ring
 {
@@ -72,11 +76,7 @@ struct nethuns_pcap_file_header
 struct nethuns_socket_pcapfile
 {
     struct nethuns_socket_base  base;
-#ifdef NETHUNS_USE_BUILTIN_PCAP_READER
-    FILE *              r;
-#else
-    pcap_t *            r;
-#endif
+    void *              r;              // either FILE * or pcap_t *, depending on the value of NETHUNS_USE_BULTIN_PCAP_READER
     uint32_t            snaplen;
     uint32_t            magic;
 };

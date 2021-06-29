@@ -8,8 +8,11 @@ set(NETHUNS_CAPTURE_SOCKET "libpcap" CACHE STRING "Nethuns underlying capture en
 set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS libpcap tpacket3 xdp netmap)
 
 set(NETHUNS_LIBS)
+    
+find_library(LIBPCAP_LIBRARY pcap)
 
 list(APPEND NETHUNS_LIBS nethuns)
+list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 
 if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
     message ("Nethuns: TPACKET_v3 enabled!")
@@ -26,7 +29,4 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
 elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
     message ("Nethuns: basic libpcap enabled!")
     add_definitions(-DNETHUNS_SOCKET=0)
-
-    find_library(LIBPCAP_LIBRARY pcap)
-    list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()

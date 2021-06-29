@@ -7,10 +7,6 @@
 
 #include "sockets/types.h"
 
-#ifndef NETHUNS_USE_BUILTIN_PCAP_READER
-#include <pcap/pcap.h>
-#endif
-
 
 enum nethuns_capture_dir
 {

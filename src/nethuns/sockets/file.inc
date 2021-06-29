@@ -1,4 +1,3 @@
-#pragma once
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -8,10 +7,15 @@
 #include <time.h>
 #include <string.h>
 
+#ifndef NETHUNS_USE_BUILTIN_PCAP_READER
+#include <pcap/pcap.h>
+#endif
+
 #include "../misc/compiler.h"
 #include "../misc/macro.h"
 #include "../sockets/ring.h"
 #include "../api.h"
+#include "../stub.h"
 
 #define TCPDUMP_MAGIC           0xa1b2c3d4
 #define KUZNETZOV_TCPDUMP_MAGIC 0xa1b2cd34
@@ -19,14 +23,12 @@
 #define NAVTEL_TCPDUMP_MAGIC    0xa12b3c4d
 #define NSEC_TCPDUMP_MAGIC      0xa1b23c4d
 
-
-static inline
 nethuns_pcap_t *
-nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf)
+TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf)
 {
     struct nethuns_socket_pcapfile *pcap;
 
-#ifdef ETHUNS_USE_BUILTIN_PCAP_READER
+#ifdef NETHUNS_USE_BUILTIN_PCAP_READER
     FILE * pr = NULL;
 #else
     pcap_t * pr = NULL;
@@ -151,8 +153,8 @@ nethuns_pcap_open(struct nethuns_socket_options *opt, const char *filename, int 
 }
 
 
-static inline
-int nethuns_pcap_close(nethuns_pcap_t *p)
+int 
+TEMPLATE(nethuns_pcap_close_,SOCKET_TYPE) (nethuns_pcap_t *p)
 {
     if (p->r) {
 #ifdef NETHUNS_USE_BUILTIN_PCAP_READER
@@ -168,9 +170,8 @@ int nethuns_pcap_close(nethuns_pcap_t *p)
 }
 
 
-static inline
 uint64_t
-nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
+TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 #ifndef NETHUNS_USE_BUILTIN_PCAP_READER
 {
     unsigned int caplen = p->base.opt.packetsize;
@@ -304,8 +305,8 @@ nethuns_pcap_read(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t co
 }
 #endif
 
-static inline int
-nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
+int
+TEMPLATE(nethuns_pcap_write_,SOCKET_TYPE) (nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len)
 #ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 {
     fwrite(header, sizeof(struct nethuns_pcap_pkthdr), 1, s->r);
@@ -326,8 +327,8 @@ nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, 
 #endif
 
 
-static inline int
-nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
+int
+TEMPLATE(nethuns_pcap_store_,SOCKET_TYPE) (nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len)
 #ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 {
     struct nethuns_pcap_pkthdr header;
@@ -374,7 +375,8 @@ nethuns_pcap_store(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t co
 #endif
 
 
-static inline int nethuns_pcap_rewind(nethuns_pcap_t *s)
+int 
+TEMPLATE(nethuns_pcap_rewind_,SOCKET_TYPE) (nethuns_pcap_t *s)
 #ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 {
     return fseek(s->r, sizeof(struct nethuns_pcap_file_header), SEEK_SET);

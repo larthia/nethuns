@@ -2,6 +2,9 @@
 #include "ring.h"
 #include "netmap.h"
 
+#define SOCKET_TYPE netmap 
+#include "file.inc"
+
 #include "../misc/compiler.h"
 #include "../api.h"
 
