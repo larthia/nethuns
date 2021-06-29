@@ -43,24 +43,30 @@ set(NETHUNS_SRC src/nethuns/nethuns.c
                 src/nethuns/global.c)
 
 if (NETHUNS_OPT_BUILTIN_PCAP_READER OR NETHUNS_OPT_XDP)
-	set(NETHUNS_OPT_BUILTIN_PCAP_READER ON CACHE BOOL ON FORCE)
-    	message("Nethuns: using built-in pcap file reader!")
+    	message("Nethuns: using built-in pcap reader")
 	add_definitions(-DNETHUNS_USE_BUILTIN_PCAP_READER)
+	if (NETHUNS_OPT_XDP AND NOT NETHUNS_OPT_BUILTIN_PCAP_READER)
+		message("Nethuns: XDP requires built-in pcap reader enabled (forced enabling)!")
+	endif()
+	set(NETHUNS_OPT_BUILTIN_PCAP_READER ON CACHE BOOL ON FORCE)
 else()
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
-    message("Nethuns: using libpcap to read files!")
+    message("Nethuns: using libpcap to read files")
 endif()
 
 if (NETHUNS_OPT_TPACKET_V3)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/tpacket_v3.c)
+    message("Nethuns: tpcaket v3 ENABLED")
 endif()
 
 if (NETHUNS_OPT_NETMAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/netmap.c)
+    message("Nethuns: netmap ENABLED")	
 endif()
 
 if (NETHUNS_OPT_XDP)
 
+    message("Nethuns: xdp ENABLED")
     find_package(ZLIB)
 
     set(LIBBPF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src/libbpf.a)
@@ -88,6 +94,7 @@ if (NETHUNS_OPT_XDP)
 endif()
 
 if (NETHUNS_OPT_LIBPCAP)
+    message("Nethuns: libpcap ENABLEd")
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()
