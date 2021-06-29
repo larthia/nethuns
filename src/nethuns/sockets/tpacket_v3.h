@@ -91,6 +91,36 @@ int
 nethuns_pcap_rewind_tpacket_v3(nethuns_pcap_t *s);
 
 
+struct nethuns_socket_tpacket_v3 *
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf);
+
+int
+nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s);
+
+int
+nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev, int queue);
+
+uint64_t
+nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
+
+int
+nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_flush_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
+
+int
+nethuns_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_stat *stats);
+
+int
+nethuns_fanout_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s, __maybe_unused int group, __maybe_unused const char *fanout);
+
+int
+nethuns_fd_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
+
+void
+nethuns_dump_rings_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
+
 static inline
 struct block_descr_v3 *
 __nethuns_block_mod_tpacket_v3(struct ring_v3 *ring, uint64_t id)
