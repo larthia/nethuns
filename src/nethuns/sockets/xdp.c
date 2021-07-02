@@ -281,6 +281,7 @@ load_xdp_program(struct nethuns_socket_xdp *s, const char *dev)
                 // Error handling done in load_bpf_and_xdp_attach()
                 goto err;
             }
+            nethuns_fprintf(stderr, "bpf_prog_load: done\n");
         } else {
             nethuns_fprintf(stderr, "bpf_prog_load: using default program\n");
             goto out;
