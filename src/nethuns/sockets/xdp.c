@@ -219,7 +219,7 @@ load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
     }
 
     if (!bpf_obj) {
-		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: error loading BPF object file %s...\n", nethuns_socket(s)->opt.xdp_prog);
+		nethuns_perror(nethuns_socket(s)->errbuf,  "load_bpf_and_xdp_attach: error loading BPF object file %s...\n", nethuns_socket(s)->opt.xdp_prog);
         return NULL;
 	}
 
@@ -235,7 +235,7 @@ load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
     }
 
 	if (!bpf_prog) {
-		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: couldn't find a program in ELF section '%s'\n", nethuns_socket(s)->opt.xdp_prog_sec);
+		nethuns_perror(nethuns_socket(s)->errbuf, "load_bpf_and_xdp_attach: couldn't find a program in ELF section '%s'\n", nethuns_socket(s)->opt.xdp_prog_sec);
 		return NULL;
 	}
 
@@ -243,7 +243,7 @@ load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
 
 	prog_fd = bpf_program__fd(bpf_prog);
 	if (prog_fd <= 0) {
-		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: bpf_program__fd failed\n");
+		nethuns_perror(nethuns_socket(s)->errbuf, "load_bpf_and_xdp_attach: bpf_program__fd failed\n");
 		return NULL;
 	}
 
@@ -251,7 +251,7 @@ load_bpf_and_xdp_attach(struct nethuns_socket_xdp *s)
     // This FD is now attached to a kernel hook point (the XDP net_device link-level hook).
 	err = xdp_link_attach(nethuns_socket(s)->ifindex, s->xdp_flags, prog_fd);
 	if (err == -1) {
-		nethuns_fprintf(stderr, "load_bpf_and_xdp_attach: xdp_link_attach failed\n");
+		nethuns_perror(nethuns_socket(s)->errbuf, "load_bpf_and_xdp_attach: xdp_link_attach failed\n");
 		return NULL;
 	}
 
