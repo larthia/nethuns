@@ -145,7 +145,7 @@ xsk_enter_into_map(struct nethuns_socket_xdp *sock)
 	map = bpf_object__find_map_by_name(sock->obj, nethuns_socket(sock)->opt.xsk_map_name);
 	xdp_map = bpf_map__fd(map);
 	if (xdp_map < 0) {
-        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_enter_into_map: could find map: %s", strerror(xdp_map));
+        nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_enter_into_map: couldn't find xsk map: %s", strerror(xdp_map));
 		return -1;
 	}
 
