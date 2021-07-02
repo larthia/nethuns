@@ -138,7 +138,11 @@ xsk_enter_into_map(struct nethuns_socket_xdp *sock)
 	struct bpf_map *map;
 	int xdp_map;
 
-	map = bpf_object__find_map_by_name(sock->obj, "xsk_map");
+	// Load the xsks map. A set entry in this map means that an active AF_XDP socket is bound to the corresponding queue_id.
+	if (!nethuns_socket(sock)->opt.xsk_map_name)
+		nethuns_socket(sock)->opt.xsk_map_name = "xsk_map";
+	
+	map = bpf_object__find_map_by_name(sock->obj, nethuns_socket(sock)->opt.xsk_map_name);
 	xdp_map = bpf_map__fd(map);
 	if (xdp_map < 0) {
         nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_enter_into_map: could find map: %s", strerror(xdp_map));
