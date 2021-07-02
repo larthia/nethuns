@@ -68,6 +68,7 @@ try
     ,   .tx_qdisc_bypass = true
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
+    ,   .xsk_map_name    = nullptr
     ,   .reuse_maps      = false
     ,   .pin_dir         = nullptr
     };
@@ -86,6 +87,7 @@ try
     ,   .tx_qdisc_bypass = true
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
+    ,   .xsk_map_name    = nullptr
     ,   .reuse_maps      = false
     ,   .pin_dir         = nullptr
     };

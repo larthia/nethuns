@@ -315,6 +315,7 @@ main(int argc, char *argv[])
     //,   .xdp_prog_sec    = "xdp_sock1"
     ,   .xdp_prog        = nullptr
     ,   .xdp_prog_sec    = nullptr
+    ,   .xsk_map_name    = nullptr
     ,   .reuse_maps      = false
     ,   .pin_dir         = nullptr
     };

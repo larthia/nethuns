@@ -52,6 +52,7 @@ main(int argc, char *argv[])
     ,   .xdp_prog        = NULL
    // ,   .xdp_prog        = "/etc/nethuns/net_xdp.o"
     ,   .xdp_prog_sec    = NULL
+    ,   .xsk_map_name    = NULL
     ,   .reuse_maps      = false
     ,   .pin_dir         = NULL
     };
