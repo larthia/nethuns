@@ -591,7 +591,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     }
 
     if (nethuns_socket(s)->opt.xdp_prog) {
-        if (xsk_enter_into_map(s) < 0) {
+        if (xsk_enter_into_map(s, queue) < 0) {
             nethuns_perror(s->base.errbuf, "bind: could not enter into map (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
         }

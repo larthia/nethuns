@@ -42,7 +42,7 @@ struct xsk_socket_info *
 xsk_configure_socket(struct nethuns_socket_xdp *sock);
 
 int 
-xsk_enter_into_map(struct nethuns_socket_xdp *sock);
+xsk_enter_into_map(struct nethuns_socket_xdp *sock, int queue);
 
 static inline __u32 xsk_ring_prod__free(struct xsk_ring_prod *r)
 {

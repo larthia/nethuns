@@ -30,6 +30,7 @@ include_directories(/usr/local/include/ src)
 
 if (NETHUNS_OPT_XDP)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/uapi)
 endif()
 

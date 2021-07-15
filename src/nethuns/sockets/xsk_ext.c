@@ -132,13 +132,13 @@ err:
 	return NULL;
 }
 
-int
-xsk_enter_into_map(struct nethuns_socket_xdp *sock)
+int 
+xsk_enter_into_map(struct nethuns_socket_xdp *sock, int queue)
 {
 	struct bpf_map *map;
 	int xdp_map;
 
-	// Load the xsks map. A set entry in this map means that an active AF_XDP socket is bound to the corresponding queue_id.
+	// Load the xsk map. A set entry in this map means that an active AF_XDP socket is bound to the corresponding device and queue (see nethuns_bind_xdp).
 	if (!nethuns_socket(sock)->opt.xsk_map_name)
 		nethuns_socket(sock)->opt.xsk_map_name = "xsk_map";
 	
@@ -152,7 +152,7 @@ xsk_enter_into_map(struct nethuns_socket_xdp *sock)
 	int fd = xsk_socket__fd(sock->xsk->xsk);
 	int key, ret;
 
-	key = 0;
+	key = queue;
 	ret = bpf_map_update_elem(xdp_map, &key, &fd, 0);
 	if (ret) {
         nethuns_perror(nethuns_socket(sock)->errbuf, "xsk_enter_into_map: bfp_map_update_elem");
