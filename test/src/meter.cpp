@@ -211,7 +211,7 @@ void recv_pkt(int th_idx, uint64_t &count_to_dump)
             nethuns_dump_rings(out[th_idx]);
         }
 
-        nethuns_release(out[th_idx], pkt_id);
+        nethuns_rx_release(out[th_idx], pkt_id);
     }
 }
 

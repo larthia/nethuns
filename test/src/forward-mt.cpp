@@ -80,7 +80,7 @@ int consumer(std::string dev)
 
             total_fwd++;
 
-            nethuns_release(pkt->sock, pkt->id);
+            nethuns_rx_release(pkt->sock, pkt->id);
         }
     }
 
@@ -98,8 +98,8 @@ try
         return 0;
     }
 
-    queue = nethuns_spsc_init(65536, sizeof(nethuns_packet)); 
-    if (!queue) { 
+    queue = nethuns_spsc_init(65536, sizeof(nethuns_packet));
+    if (!queue) {
         throw std::runtime_error("nethuns_spsc: internal error");
     }
 

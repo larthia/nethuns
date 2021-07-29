@@ -122,7 +122,7 @@ try
                 nethuns_dump_rings(s);
             }
 
-            nethuns_release(s, pkt_id);
+            nethuns_rx_release(s, pkt_id);
         }
     }
 

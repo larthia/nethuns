@@ -82,7 +82,7 @@ main(int argc, char *argv[])
         if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
             dump_packet(pkthdr, frame);
-            nethuns_release(s, pkt_id);
+            nethuns_rx_release(s, pkt_id);
         }
 
         usleep(1);

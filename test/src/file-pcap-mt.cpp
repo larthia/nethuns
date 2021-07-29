@@ -17,7 +17,7 @@ int consumer()
         auto pkt = reinterpret_cast<nethuns_packet *>(nethuns_spsc_pop(queue));
         if (pkt)
         {
-            nethuns_release(pkt->sock, pkt->id);
+            nethuns_rx_release(pkt->sock, pkt->id);
         }
 
         if (nethuns_spsc_is_empty(queue) && stop.load(std::memory_order_relaxed))

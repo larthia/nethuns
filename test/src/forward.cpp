@@ -136,7 +136,7 @@ try
 
             total_fwd++;
 
-            nethuns_release(in, pkt_id);
+            nethuns_rx_release(in, pkt_id);
         }
     }
 

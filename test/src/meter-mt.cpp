@@ -33,7 +33,7 @@ int consumer()
         auto pkt = reinterpret_cast<struct nethuns_packet *>(nethuns_spsc_pop(queue));
         if (pkt) {
             total++;
-            nethuns_release(pkt->sock, pkt->id);
+            nethuns_rx_release(pkt->sock, pkt->id);
         }
     }
 }
@@ -50,7 +50,7 @@ try
     }
 
     queue = nethuns_spsc_init(65536, sizeof(nethuns_packet));
-    if (!queue) { 
+    if (!queue) {
         throw std::runtime_error("nethuns_spsc: internal error");
     }
 
