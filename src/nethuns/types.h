@@ -1,16 +1,12 @@
 #pragma once
 
-#include "sockets/ring.h"
-#include "sockets/types.h"
+#include <sys/time.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
+#include "sockets/types.h"
 
-#define NETHUNS_ERRBUF_SIZE     512
-#define NETHUNS_ANY_QUEUE       (-1)
-
-
-typedef int (*nethuns_filter_t)(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt);
 
 enum nethuns_capture_dir
 {
@@ -36,6 +32,7 @@ enum nethuns_socket_mode
  ,  nethuns_socket_tx_only
 };
 
+
 struct nethuns_socket_options
 {
     unsigned int                numblocks;
@@ -48,26 +45,12 @@ struct nethuns_socket_options
     bool                        promisc;
     bool                        rxhash;
     bool                        tx_qdisc_bypass;
-    const char                  *xdp_prog;
+    const char                  *xdp_prog;            // xdp only
+    const char                  *xdp_prog_sec;        // xdp only
+    const char                  *xsk_map_name;        // xdp only
+    bool                        reuse_maps;           // xdp only
+    const char                  *pin_dir;             // xdp only
 };
-
-struct nethuns_socket_base
-{
-    char   errbuf[NETHUNS_ERRBUF_SIZE];
-
-    struct nethuns_socket_options opt;
-    struct nethuns_ring           ring;
-    char                         *devname;
-    int                           queue;
-    int 		                  ifindex;
-
-    nethuns_filter_t              filter;
-    void *                        filter_ctx;
-};
-
-
-typedef struct nethuns_socket_base  nethuns_socket_base_t;
-
 
 struct nethuns_stat
 {
@@ -81,12 +64,18 @@ struct nethuns_stat
 };
 
 
+struct nethuns_socket_base;
 struct nethuns_packet
 {
     uint8_t const                 *payload;
     const nethuns_pkthdr_t        *pkthdr;
-    nethuns_socket_base_t         *sock;
+    struct nethuns_socket_base    *sock;
     uint64_t                       id;
 };
 
 
+struct nethuns_timeval
+{
+    uint32_t    tv_sec;
+    uint32_t    tv_usec;
+};

@@ -1,12 +1,17 @@
-#include "../nethuns.h"
-#include "../util/macro.h"
-#include "../util/compiler.h"
+#define NETHUNS_SOCKET NETHUNS_SOCKET_LIBPCAP
+#include "ring.h"
+
+#define SOCKET_TYPE libpcap 
+#include "file.inc"
+
+#include "../misc/compiler.h"
+#include "../api.h"
 
 #include "libpcap.h"
-#include "ring.h"
 
 #include <pcap/pcap.h>
 #include <sys/ioctl.h>
+#include <net/if.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -25,11 +30,16 @@ nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
         return NULL;
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "open: failed to allocate ring");
-        free(sock);
-        return NULL;
+        goto err_free;
+    }
+
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &sock->base.tx_ring) < 0)
+    {
+        nethuns_perror(errbuf, "open: failed to allocate ring");
+	goto err_del_ring;
     }
 
     /* set a single consumer by default */
@@ -37,12 +47,18 @@ nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
     sock->base.opt = *opt;
 
     return sock;
+
+    err_del_ring:
+    	nethuns_delete_ring(&sock->base.rx_ring);
+    err_free:
+        free(sock);
+	return NULL;
 }
 
 
 int nethuns_close_libpcap(struct nethuns_socket_libpcap *s)
 {
-    if (s)
+    if (s && s->p)
     {
         pcap_close(s->p);
 
@@ -54,13 +70,14 @@ int nethuns_close_libpcap(struct nethuns_socket_libpcap *s)
 }
 
 
-int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int queue)
+int
+nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int queue)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
 
     if (queue != NETHUNS_ANY_QUEUE)
     {
-        nethuns_perror(nethuns_socket(s)->errbuf, "open: only ANY_QUEUE is currently supported by this device");
+        nethuns_perror(nethuns_socket(s)->errbuf, "open: only ANY_QUEUE is supported by this driver (%s)", nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
@@ -68,19 +85,19 @@ int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int 
 
     s->p = pcap_create(dev, errbuf);
     if (!s->p) {
-        nethuns_perror(s->base.errbuf, "bind: %s", errbuf);
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", errbuf, nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
     if (pcap_set_immediate_mode(s->p, 1) != 0)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
     if (pcap_set_buffer_size(s->p, (int)(nethuns_socket(s)->opt.numblocks * nethuns_socket(s)->opt.numpackets * nethuns_socket(s)->opt.packetsize)) != 0)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
@@ -88,32 +105,32 @@ int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int 
     {
         if (pcap_set_promisc(s->p, 1) != 0)
         {
-            nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+            nethuns_perror(s->base.errbuf, "bind: %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
             return -1;
         }
     }
 
     if (pcap_set_snaplen(s->p, (int)nethuns_socket(s)->opt.packetsize) != 0)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
     if (pcap_set_timeout(s->p, (int)nethuns_socket(s)->opt.timeout_ms) != 0)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
     if (pcap_activate(s->p) != 0)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", pcap_geterr(s->p));
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
     if (pcap_setnonblock(s->p, 1, errbuf) < 0)
     {
-        nethuns_perror(s->base.errbuf, "bind: %s", errbuf);
+        nethuns_perror(s->base.errbuf, "bind: %s (%s)", errbuf, nethuns_dev_queue_name(dev, queue));
         return -1;
     }
 
@@ -122,14 +139,14 @@ int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int 
         case nethuns_in: {
             if (pcap_setdirection(s->p, PCAP_D_IN) < 0)
             {
-                nethuns_perror(s->base.errbuf, "bind: dir_in %s", pcap_geterr(s->p));
+                nethuns_perror(s->base.errbuf, "bind: dir_in %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
                 return -1;
             }
         } break;
         case nethuns_out: {
             if (pcap_setdirection(s->p, PCAP_D_OUT) < 0)
             {
-                nethuns_perror(s->base.errbuf, "bind: dir_out %s", pcap_geterr(s->p));
+                nethuns_perror(s->base.errbuf, "bind: dir_out %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
                 return -1;
             }
         } break;
@@ -137,11 +154,15 @@ int nethuns_bind_libpcap(struct nethuns_socket_libpcap *s, const char *dev, int 
         {
             if (pcap_setdirection(s->p, PCAP_D_INOUT) < 0)
             {
-                nethuns_perror(s->base.errbuf, "bind: dir_inout %s", pcap_geterr(s->p));
+                nethuns_perror(s->base.errbuf, "bind: dir_inout %s (%s)", pcap_geterr(s->p), nethuns_dev_queue_name(dev, queue));
                 return -1;
             }
         }
     }
+
+    nethuns_socket(s)->queue   = queue;
+    nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
+    nethuns_socket(s)->devname = strdup(dev);
 
     return 0;
 }
@@ -156,10 +177,10 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 
     struct pcap_pkthdr header;
 
-    struct nethuns_ring_slot * slot = nethuns_get_ring_slot(&s->base.ring, s->base.ring.head);
+    struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&s->base.rx_ring, s->base.rx_ring.head);
 
 #if 1
-    if (__atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
+    if (s->p == NULL || __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE))
     {
         return 0;
     }
@@ -189,7 +210,7 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
             *pkthdr  = &slot->pkthdr;
             *payload =  slot->packet;
 
-            return ++s->base.ring.head;
+            return ++s->base.rx_ring.head;
         }
     }
 
@@ -200,7 +221,11 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 int
 nethuns_send_libpcap(struct nethuns_socket_libpcap *s, uint8_t const *packet, unsigned int len)
 {
-    return pcap_inject(s->p, packet, len);
+    if (likely(s->p != NULL)) {
+    	return pcap_inject(s->p, packet, len);
+    }
+
+    return -1;
 }
 
 
@@ -215,7 +240,7 @@ int
 nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stat *stats)
 {
     struct pcap_stat ps;
-    if (pcap_stats(s->p, &ps) == -1)
+    if (s->p == NULL || pcap_stats(s->p, &ps) == -1)
     {
         return -1;
     }
@@ -234,12 +259,14 @@ nethuns_stats_libpcap(struct nethuns_socket_libpcap *s, struct nethuns_stat *sta
 int
 nethuns_fanout_libpcap(__maybe_unused struct nethuns_socket_libpcap *s, __maybe_unused int group, __maybe_unused const char *fanout)
 {
+    nethuns_perror(s->base.errbuf, "fanout: not supported (%s)", nethuns_device_name(s));
     return -1;
 }
 
 
 int nethuns_fd_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 {
+    nethuns_perror(s->base.errbuf, "fd: not supported (%s)", nethuns_device_name(s));
     return -1;
 }
 
@@ -248,6 +275,3 @@ void
 nethuns_dump_rings_libpcap(__maybe_unused struct nethuns_socket_libpcap *s)
 {
 }
-
-
-

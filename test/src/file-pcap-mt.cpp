@@ -58,6 +58,10 @@ try
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
         ,   .xdp_prog        = nullptr
+        ,   .xdp_prog_sec    = nullptr
+        ,   .xsk_map_name    = nullptr
+        ,   .reuse_maps      = false
+        ,   .pin_dir         = nullptr
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -86,7 +90,7 @@ try
     }
     while (!nethuns_pkt_is_err(pkt_id));
 
-    std::cerr << "head: " << p->base.ring.head << std::endl;
+    std::cerr << "head: " << p->base.rx_ring.head << std::endl;
 
     stop.store(true, std::memory_order_relaxed);
 

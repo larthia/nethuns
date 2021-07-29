@@ -67,6 +67,10 @@ try
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
     ,   .xdp_prog        = nullptr
+    ,   .xdp_prog_sec    = nullptr
+    ,   .xsk_map_name    = nullptr
+    ,   .reuse_maps      = false
+    ,   .pin_dir         = nullptr
     };
 
     struct nethuns_socket_options out_opt =
@@ -81,7 +85,11 @@ try
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
-    ,   .xdp_prog        = nullptr 
+    ,   .xdp_prog        = nullptr
+    ,   .xdp_prog_sec    = nullptr
+    ,   .xsk_map_name    = nullptr
+    ,   .reuse_maps      = false
+    ,   .pin_dir         = nullptr
     };
 
     char errbuf[NETHUNS_ERRBUF_SIZE];

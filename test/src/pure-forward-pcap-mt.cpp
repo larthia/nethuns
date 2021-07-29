@@ -1,5 +1,4 @@
 #include <nethuns/queue.h>
-#include <nethuns/types.h>
 #include <pcap/pcap.h>
 #include <stdio.h>
 

@@ -16,7 +16,20 @@
 #include <sys/socket.h>
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
+
+#include <linux/types.h>
+
+//
+// Workaround: if __LINUX_TYPES_H is defined, then we are compiling against the broken linux/types.h of libbpf.
+// To fix it, we need to add the following typedefs before including <linux/ip.h> 
+// https://patchwork.ozlabs.org/project/netdev/patch/20190518004639.20648-2-mcroce@redhat.com/
+
+#ifdef __LINUX_TYPES_H
+typedef __u16 __bitwise __sum16;
+typedef __u32 __bitwise __wsum;
+#endif
 #include <linux/ip.h>
+
 
 #include "../types.h"
 
@@ -69,6 +82,56 @@ struct block_descr_v3
 extern "C" {
 #endif
 
+
+
+nethuns_pcap_t *
+nethuns_pcap_open_tpacket_v3(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
+
+int 
+nethuns_pcap_close_tpacket_v3(nethuns_pcap_t *p);
+
+uint64_t
+nethuns_pcap_read_tpacket_v3(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+
+int
+nethuns_pcap_write_tpacket_v3(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_pcap_store_tpacket_v3(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
+
+int 
+nethuns_pcap_rewind_tpacket_v3(nethuns_pcap_t *s);
+
+
+struct nethuns_socket_tpacket_v3 *
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf);
+
+int
+nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s);
+
+int
+nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev, int queue);
+
+uint64_t
+nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
+
+int
+nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *packet, unsigned int len);
+
+int
+nethuns_flush_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
+
+int
+nethuns_stats_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, struct nethuns_stat *stats);
+
+int
+nethuns_fanout_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s, __maybe_unused int group, __maybe_unused const char *fanout);
+
+int
+nethuns_fd_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
+
+void
+nethuns_dump_rings_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
 
 static inline
 struct block_descr_v3 *

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <src/libbpf.h>
-#include <src/xsk.h>
-#include <linux/bpf.h>
+#include "xdp/libbpf.h"
+#include "xdp/bpf.h"
+#include "xdp/xsk.h"
+
 #include <stdint.h>
 
 #define XSK_INVALID_UMEM_FRAME UINT64_MAX
@@ -38,15 +39,10 @@ int
 xsk_populate_fill_ring(struct nethuns_socket_xdp *sock, size_t frame_size);
 
 struct xsk_socket_info *
-	xsk_configure_socket(
-		struct nethuns_socket_xdp *sock
-		, size_t num_frames
-		, size_t frame_size
-		, bool rx
-		, bool tx);
+xsk_configure_socket(struct nethuns_socket_xdp *sock);
 
 int 
-xsk_enter_into_map(struct nethuns_socket_xdp *sock);
+xsk_enter_into_map(struct nethuns_socket_xdp *sock, int queue);
 
 static inline __u32 xsk_ring_prod__free(struct xsk_ring_prod *r)
 {

@@ -14,11 +14,11 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
                                                                                      , nethuns_len(hdr)
                                                                                      , nethuns_offvlan_tci(hdr)
                                                                                      , nethuns_offvlan_tpid(hdr)
-                                                                                     , nethuns_pktvlan_tci(frame)
-                                                                                     , nethuns_pktvlan_tpid(frame)
-                                                                                     , nethuns_vlan_tci(hdr, frame)
-                                                                                     , nethuns_vlan_tpid(hdr, frame)
-                                                                                     , nethuns_vlan_vid(nethuns_vlan_tci(hdr, frame))
+                                                                                     , nethuns_vlan_tci(frame)
+                                                                                     , nethuns_vlan_tpid(frame)
+                                                                                     , nethuns_vlan_tci_(hdr, frame)
+                                                                                     , nethuns_vlan_tpid_(hdr, frame)
+                                                                                     , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
                                                                                      , nethuns_rxhash(hdr));
     for(; i < 14; i++)
     {
@@ -55,6 +55,10 @@ try
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
         ,   .xdp_prog        = nullptr
+        ,   .xdp_prog_sec    = nullptr
+        ,   .xsk_map_name    = nullptr
+        ,   .reuse_maps      = false
+        ,   .pin_dir         = nullptr
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -104,6 +108,10 @@ try
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
         ,   .xdp_prog        = nullptr
+        ,   .xdp_prog_sec    = nullptr
+        ,   .xsk_map_name    = nullptr
+        ,   .reuse_maps      = false
+        ,   .pin_dir         = nullptr
         };
 
         char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -135,7 +143,7 @@ try
             if ((pkt_id = nethuns_recv(in, &pkthdr, &frame)))
             {
                 dump_packet(pkthdr, frame);
-                nethuns_pcap_write(out, pkthdr, frame, nethuns_len(pkthdr));
+                nethuns_pcap_store(out, pkthdr, frame, nethuns_len(pkthdr));
 
                 nethuns_release(in, pkt_id);
                 i++;

@@ -2,61 +2,70 @@ cmake_minimum_required(VERSION 3.0)
 
 project (nethuns)
 
-include (Nethuns.cmake)
-
 #
 # Compiler options...
 #
 
-# set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")   
+# set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")
 # set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")
 
-set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")   
+set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
-
 
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+option(NETHUNS_OPT_LIBPCAP              "Enable libpcap support" ON)
+option(NETHUNS_OPT_BUILTIN_PCAP_READER  "Enable builtin pcap reader" OFF)
+option(NETHUNS_OPT_TPACKET_V3           "Enable TPACKET v3 support" OFF)
+option(NETHUNS_OPT_XDP                  "Enable XDP" OFF)
+option(NETHUNS_OPT_NETMAP               "Enable Netmap support" OFF)
+
 add_definitions(-D_GNU_SOURCE)
-include_directories(/usr/local/include/ src) 
-if (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
+
+find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
+find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
+
+include_directories(${LIBPCAP_INCLUDE_DIR})
+include_directories(/usr/local/include/ src)
+
+if (NETHUNS_OPT_XDP)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include/uapi)
-endif() 
-option(NETHUNS_BUILD_TESTS "Build regression tests" OFF)
+endif()
 
 #
 # define the list of library to link...
 #
 
-set(NETHUNS_DEP)
+set(NETHUNS_LIBS)
 
-set(NETHUNS_SRC src/nethuns/nethuns.c 
-		src/nethuns/global.c
-                src/nethuns/sockets/pcap_reader.c)
+set(NETHUNS_SRC src/nethuns/nethuns.c
+                src/nethuns/global.c)
 
-if (NETHUNS_BUILTIN_PCAP_READER)
-    message("Nethuns: using built-in pcap file reader!")
+if (NETHUNS_OPT_BUILTIN_PCAP_READER)
+    	message("Nethuns: using built-in pcap reader")
+	add_definitions(-DNETHUNS_USE_BUILTIN_PCAP_READER)
 else()
-    list(APPEND NETHUNS_DEP -lpcap)
-
-    list(APPEND OTHER_LIB -lpcap)
-    message("Nethuns: using libpcap to read files!")
+    list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
+    message("Nethuns: using libpcap to read files")
 endif()
 
-list(APPEND OTHER_LIB -pthread)
-
-if (NETHUNS_CAPTURE_SOCKET STREQUAL "tpacket3")
-
+if (NETHUNS_OPT_TPACKET_V3)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/tpacket_v3.c)
-    
-elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "netmap")
+    message("Nethuns: tpcaket v3 ENABLED")
+endif()
 
+if (NETHUNS_OPT_NETMAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/netmap.c)
-    
-elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
-    
+    list(APPEND NETHUNS_DEP -lnetmap)
+    list(APPEND OTHER_LIB -lnetmap)
+    message("Nethuns: netmap ENABLED")	
+endif()
+
+if (NETHUNS_OPT_XDP)
+
+    message("Nethuns: xdp ENABLED")
     find_package(ZLIB)
 
     set(LIBBPF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src/libbpf.a)
@@ -75,68 +84,29 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "xdp")
     add_dependencies(libbpf build_libbpf)
 
     list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp.c)
-    list(APPEND NETHUNS_SRC src/nethuns/sockets/xdp/xsk_ext.c)
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/xsk_ext.c)
 
-    list(APPEND NETHUNS_DEP libbpf)
-    list(APPEND NETHUNS_DEP -lelf)
-    list(APPEND NETHUNS_DEP ZLIB::ZLIB)
-
-elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
-
-    list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
-    list(APPEND NETHUNS_DEP -lpcap)
-    list(APPEND OTHER_LIB -lpcap)
+    list(APPEND NETHUNS_LIBS libbpf)
+    list(APPEND NETHUNS_LIBS -lelf)
+    list(APPEND NETHUNS_LIBS ZLIB::ZLIB)
 
 endif()
 
+if (NETHUNS_OPT_LIBPCAP)
+    message("Nethuns: libpcap ENABLEd")
+    list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
+    list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
+endif()
 
 add_library(nethuns STATIC ${NETHUNS_SRC})
 
-target_link_libraries(nethuns ${NETHUNS_DEP})
+target_link_libraries(nethuns PRIVATE ${NETHUS_LIBS})
 
-link_directories(${nethuns_BINARY_DIR})
+install(TARGETS nethuns DESTINATION /usr/local/lib)
 
-#
-# Build tests..
-#
-
-if (NETHUNS_BUILD_TESTS)
-
-    add_executable(nethuns-test         test/test.c)
-    add_executable(nethuns-send         test/send.cpp)
-    add_executable(nethuns-meter        test/meter.cpp)
-    add_executable(nethuns-filter       test/filter.cpp)
-    add_executable(nethuns-file-pcap    test/file-pcap.cpp)
-    add_executable(nethuns-file-pcap-mt test/file-pcap-mt.cpp)
-    add_executable(nethuns-forward      test/forward.cpp)
-    add_executable(nethuns-forward-mt   test/forward-mt.cpp)
-    add_executable(nethuns-meter-mt     test/meter-mt.cpp)
-
-    add_executable(pure-pcap-meter      test/pure-meter-pcap.cpp)
-    add_executable(pure-pcap-meter-mt   test/pure-meter-pcap-mt.cpp)
-    add_executable(pure-pcap-forward    test/pure-forward-pcap.cpp)
-    add_executable(pure-pcap-forward-mt test/pure-forward-pcap-mt.cpp)
-
-
-    target_link_libraries(nethuns-test       	${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-send       	${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-forward    	${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-forward-mt 	${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-file-pcap  	${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-file-pcap-mt  ${OTHER_LIB} nethuns -pthread)
-
-    target_link_libraries(nethuns-meter      ${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-meter-mt   ${OTHER_LIB} nethuns)
-    target_link_libraries(nethuns-filter     ${OTHER_LIB} nethuns)
-
-    target_link_libraries(pure-pcap-forward      -lpcap  -pthread)
-    target_link_libraries(pure-pcap-forward-mt   -lpcap  -pthread)
-    target_link_libraries(pure-pcap-meter        -lpcap  -pthread)
-    target_link_libraries(pure-pcap-meter-mt     -lpcap  -pthread)
-
+install(DIRECTORY src/nethuns/ 	   	DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
+install(DIRECTORY libbpf/src/      	DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+if (NETHUNS_OPT_XDP)
+    install(FILES     libbpf/src/libbpf.a   DESTINATION /usr/local/lib/)
 endif()
-
-install_targets(/lib nethuns)
-
-install(DIRECTORY src/nethuns/ DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h")
-

@@ -1,13 +1,13 @@
-#include "global.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#if defined (NETHUNS_USE_XDP)
+#if defined __linux__
 #include <sys/resource.h>
 #endif
 
-#include <nethuns/nethuns.h>
+#include "global.h"
+#include "api.h"
 
 struct nethuns_global __nethuns_global;
 
@@ -24,7 +24,7 @@ nethuns_global_init() {
 		exit(EXIT_FAILURE);
     }
 
-#if defined (NETHUNS_USE_XDP)
+#if defined __linux__
     {
         struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 

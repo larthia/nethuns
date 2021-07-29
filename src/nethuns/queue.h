@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/compiler.h"
+#include "misc/compiler.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,7 +45,7 @@ static inline
 struct nethuns_spsc_queue *
 nethuns_spsc_init(size_t nslots, size_t size)
 {
-	if (nslots & (nslots-1)) { 
+	if (nslots & (nslots-1)) {
 		return NULL;
 	}
 
@@ -161,8 +161,8 @@ void *nethuns_spsc_pop(struct nethuns_spsc_queue *fifo)
 
 	elem = nethuns_slot_addr(fifo, r);
 
-	next = nethuns_spsc_next_index(fifo, r); 
-	
+	next = nethuns_spsc_next_index(fifo, r);
+
 	__atomic_store_n(&fifo->tail, next, __ATOMIC_RELEASE);
 
 	return elem;

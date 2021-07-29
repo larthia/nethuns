@@ -1,10 +1,22 @@
 #pragma once
 
-#include "pcap_reader.h"
+#include "define.h"
+#include "vlan.h"
 
-#ifdef NETHUNS_USE_TPACKET_V3
+#if !defined NETHUNS_SOCKET
+#error NETHUNS_SOCKET is not defined.
+#endif
 
-#include "tpacket_v3.h"
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
+
+#include "sockets/tpacket_v3.h"
+
+#define nethuns_pcap_open(...)      nethuns_pcap_open_tpacket_v3(__VA_ARGS__)
+#define nethuns_pcap_close(...)     nethuns_pcap_close_tpacket_v3(__VA_ARGS__)
+#define nethuns_pcap_read(...)      nethuns_pcap_read_tpacket_v3(__VA_ARGS__)
+#define nethuns_pcap_write(...)     nethuns_pcap_write_tpacket_v3(__VA_ARGS__)
+#define nethuns_pcap_store(...)     nethuns_pcap_store_tpacket_v3(__VA_ARGS__)
+#define nethuns_pcap_rewind(...)    nethuns_pcap_rewind_tpacket_v3(__VA_ARGS__)
 
 #define nethuns_open(...)           nethuns_open_tpacket_v3(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_tpacket_v3(__VA_ARGS__)
@@ -34,9 +46,16 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_tpacket_v3(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_tpacket_v3(__VA_ARGS__)
 
-#elif defined(NETHUNS_USE_NETMAP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
 
-#include "netmap.h"
+#include "sockets/netmap.h"
+
+#define nethuns_pcap_open(...)      nethuns_pcap_open_netmap(__VA_ARGS__)
+#define nethuns_pcap_close(...)     nethuns_pcap_close_netmap(__VA_ARGS__)
+#define nethuns_pcap_read(...)      nethuns_pcap_read_netmap(__VA_ARGS__)
+#define nethuns_pcap_write(...)     nethuns_pcap_write_netmap(__VA_ARGS__)
+#define nethuns_pcap_store(...)     nethuns_pcap_store_netmap(__VA_ARGS__)
+#define nethuns_pcap_rewind(...)    nethuns_pcap_rewind_netmap(__VA_ARGS__)
 
 #define nethuns_open(...)           nethuns_open_netmap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_netmap(__VA_ARGS__)
@@ -45,6 +64,7 @@
 #define nethuns_recv(...)           nethuns_recv_netmap(__VA_ARGS__)
 #define nethuns_flush(...)          nethuns_flush_netmap(__VA_ARGS__)
 #define nethuns_send(...)           nethuns_send_netmap(__VA_ARGS__)
+#define nethuns_get_buf_addr(...)   nethuns_get_buf_addr_netmap(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_netmap(__VA_ARGS__)
 
 #define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_netmap(__VA_ARGS__)
@@ -66,9 +86,16 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_netmap(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_netmap(__VA_ARGS__)
 
-#elif defined (NETHUNS_USE_DEVPCAP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
 
-#include "libpcap.h"
+#include "sockets/libpcap.h"
+
+#define nethuns_pcap_open(...)      nethuns_pcap_open_libpcap(__VA_ARGS__)
+#define nethuns_pcap_close(...)     nethuns_pcap_close_libpcap(__VA_ARGS__)
+#define nethuns_pcap_read(...)      nethuns_pcap_read_libpcap(__VA_ARGS__)
+#define nethuns_pcap_write(...)     nethuns_pcap_write_libpcap(__VA_ARGS__)
+#define nethuns_pcap_store(...)     nethuns_pcap_store_libpcap(__VA_ARGS__)
+#define nethuns_pcap_rewind(...)    nethuns_pcap_rewind_libpcap(__VA_ARGS__)
 
 #define nethuns_open(...)           nethuns_open_libpcap(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_libpcap(__VA_ARGS__)
@@ -99,9 +126,16 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_libpcap(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_libpcap(__VA_ARGS__)
 
-#elif defined (NETHUNS_USE_XDP)
+#elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
 
-#include "xdp.h"
+#include "sockets/xdp.h"
+
+#define nethuns_pcap_open(...)      nethuns_pcap_open_xdp(__VA_ARGS__)
+#define nethuns_pcap_close(...)     nethuns_pcap_close_xdp(__VA_ARGS__)
+#define nethuns_pcap_read(...)      nethuns_pcap_read_xdp(__VA_ARGS__)
+#define nethuns_pcap_write(...)     nethuns_pcap_write_xdp(__VA_ARGS__)
+#define nethuns_pcap_store(...)     nethuns_pcap_store_xdp(__VA_ARGS__)
+#define nethuns_pcap_rewind(...)    nethuns_pcap_rewind_xdp(__VA_ARGS__)
 
 #define nethuns_open(...)           nethuns_open_xdp(__VA_ARGS__)
 #define nethuns_close(...)          nethuns_close_xdp(__VA_ARGS__)
@@ -110,6 +144,7 @@
 #define nethuns_recv(...)           nethuns_recv_xdp(__VA_ARGS__)
 #define nethuns_flush(...)          nethuns_flush_xdp(__VA_ARGS__)
 #define nethuns_send(...)           nethuns_send_xdp(__VA_ARGS__)
+#define nethuns_get_buf_addr(...)   nethuns_get_buf_addr_xdp(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_xdp(__VA_ARGS__)
 
 #define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_xdp(__VA_ARGS__)
@@ -132,8 +167,16 @@
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_xdp(__VA_ARGS__)
 #define nethuns_offvlan_tpid(...)   nethuns_offvlan_tpid_xdp(__VA_ARGS__)
 
-#else
-
-#error "Nethuns: socket type not specified!"
-
 #endif
+
+static inline uint16_t
+nethuns_vlan_tpid_(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
+{
+    return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tpid(hdr) : nethuns_vlan_tpid(payload);
+}
+
+static inline uint16_t
+nethuns_vlan_tci_(__maybe_unused nethuns_pkthdr_t const *hdr, const uint8_t *payload)
+{
+    return nethuns_offvlan_tpid(hdr) ? nethuns_offvlan_tci(hdr) : nethuns_vlan_tci(payload);
+}

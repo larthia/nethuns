@@ -3,16 +3,12 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#ifndef _GNU_SOURCE 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
-#include "util/hashmap.h"
-#include "util/compiler.h"
-
-#if defined (NETHUNS_USE_XDP)
-#include <linux/bpf.h>
-#endif
+#include "misc/hashmap.h"
+#include "misc/compiler.h"
 
 struct nethuns_netinfo {
     int      promisc_refcnt;
@@ -53,7 +49,7 @@ extern "C" {
 	{
 	    pthread_mutex_lock(&__nethuns_global.m);
 	}
-	
+
 	static inline
 	void nethuns_unlock_global()
 	{
@@ -66,4 +62,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-

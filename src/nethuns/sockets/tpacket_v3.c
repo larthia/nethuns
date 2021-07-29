@@ -1,11 +1,17 @@
-#include "../nethuns.h"
-#include "../util/compiler.h"
-#include "../util/macro.h"
-
-#include "tpacket_v3.h"
+#define NETHUNS_SOCKET NETHUNS_SOCKET_TPACKET3
 #include "ring.h"
 
+#define SOCKET_TYPE tpacket_v3 
+#include "file.inc"
+
+#include "../api.h"
+#include "../misc/compiler.h"
+
+#include "tpacket_v3.h"
+
+
 #include <linux/version.h>
+#include <linux/types.h>
 
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -13,6 +19,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <string.h>
+
 
 struct nethuns_socket_tpacket_v3 *
 nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
@@ -30,16 +37,14 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     err = setsockopt(fd, SOL_PACKET, PACKET_VERSION, &v, sizeof(v));
     if (err < 0) {
         nethuns_perror(errbuf, "unsupported PACKET_VERSION");
-        close(fd);
-        return NULL;
+	goto err_close;
     }
 
     sock = calloc(1, sizeof(struct nethuns_socket_tpacket_v3));
     if (!sock)
     {
         nethuns_perror(errbuf, "open: could not allocate socket");
-        close(fd);
-        return NULL;
+	goto err_close;
     }
 
     sock->rx_ring.req.tp_block_size     = opt->numpackets * opt->packetsize;
@@ -53,9 +58,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     err = setsockopt(fd, SOL_PACKET, PACKET_RX_RING, &sock->rx_ring.req, sizeof(sock->rx_ring.req));
     if (err < 0) {
         nethuns_perror(errbuf, "setsockopt RX_RING");
-        free(sock);
-        close(fd);
-        return NULL;
+	goto err_free_sock;
     }
 
     sock->tx_ring.req.tp_block_size     = opt->numpackets * opt->packetsize;
@@ -66,9 +69,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     err = setsockopt(fd, SOL_PACKET, PACKET_TX_RING, &sock->tx_ring.req, sizeof(sock->tx_ring.req));
     if (err < 0) {
         nethuns_perror(errbuf, "setsockopt TX_RING");
-        free(sock);
-        close(fd);
-        return NULL;
+	goto err_free_sock;
     }
 
     /* map memory */
@@ -80,9 +81,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 
     if (sock->rx_ring.map == MAP_FAILED) {
         nethuns_perror(errbuf, "mmap");
-        free(sock);
-        close(fd);
-        return NULL;
+	goto err_free_sock;
     }
 
     sock->tx_ring.map = sock->rx_ring.map + (sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr);
@@ -92,11 +91,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->rx_ring.rd = calloc(1, sock->rx_ring.req.tp_block_nr * sizeof(*(sock->rx_ring.rd)));
     if (!sock->rx_ring.rd)
     {
-        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
-                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
-        free(sock);
-        close(fd);
-        return NULL;
+	    goto err_unmap;
     }
 
     for (i = 0; i < sock->rx_ring.req.tp_block_nr; ++i) {
@@ -109,12 +104,7 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->tx_ring.rd = calloc(1, sock->tx_ring.req.tp_block_nr * sizeof(*(sock->tx_ring.rd)));
     if (!sock->tx_ring.rd)
     {
-        free(sock->rx_ring.rd);
-        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
-                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
-        free(sock);
-        close(fd);
-        return NULL;
+	goto err_free_rx;
     }
 
     for (i = 0; i < sock->tx_ring.req.tp_block_nr; ++i) {
@@ -130,16 +120,16 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
         setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS, &one, sizeof(one));
     }
 
-    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.ring) < 0)
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.rx_ring) < 0)
     {
         nethuns_perror(errbuf, "ring: could not allocate ring");
-        free(sock->rx_ring.rd);
-        free(sock->tx_ring.rd);
-        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
-                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
-        free(sock);
-        close(fd);
-        return NULL;
+	goto err_free_tx;
+    }
+
+    if (nethuns_make_ring(opt->numblocks * opt->numpackets * opt->packetsize / 16, 0, &sock->base.tx_ring) < 0)
+    {
+        nethuns_perror(errbuf, "ring: could not allocate ring");
+	goto err_free_nring;
     }
 
     sock->base.opt          = *opt;
@@ -165,6 +155,21 @@ nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
     sock->tx_pfd.revents    = 0;
 
     return sock;
+
+    err_free_nring:
+	nethuns_delete_ring(&sock->base.rx_ring);
+    err_free_tx:
+        free(sock->tx_ring.rd);
+    err_free_rx:
+        free(sock->rx_ring.rd);
+    err_unmap:
+        munmap(sock->rx_ring.map, sock->rx_ring.req.tp_block_size * sock->rx_ring.req.tp_block_nr +
+                                  sock->tx_ring.req.tp_block_size * sock->tx_ring.req.tp_block_nr);
+    err_free_sock:
+        free(sock);
+    err_close:
+        close(fd);
+        return NULL;
 }
 
 
@@ -220,6 +225,8 @@ int nethuns_bind_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, const char *dev
 
     /* save device name.. */
 
+    nethuns_socket(s)->queue   = queue;
+    nethuns_socket(s)->ifindex = (int)if_nametoindex(dev);
     nethuns_socket(s)->devname = strdup(dev);
 
     /* set promisc interface */
@@ -266,10 +273,10 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
     pb = __nethuns_block_tpacket_v3(&s->rx_ring, s->rx_block_mod);
 
     if (unlikely(  (pb->hdr.block_status & TP_STATUS_USER) == 0                      /* real ring is full or.. */
-                || (s->base.ring.head - s->base.ring.tail) == (s->base.ring.size-1)  /* virtual ring is full   */
+                || (s->base.rx_ring.head - s->base.rx_ring.tail) == (s->base.rx_ring.size-1)  /* virtual ring is full   */
                 ))
     {
-        nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
+        nethuns_ring_free_slots(&s->base.rx_ring, __nethuns_blocks_free, s);
         // poll(&s->rx_pfd, 1, -1);
         return 0;
     }
@@ -297,11 +304,11 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             {
                 s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
 
-                slot = nethuns_ring_next(&s->base.ring);
+                slot = nethuns_ring_next_slot(&s->base.rx_ring);
                 slot->id = s->rx_block_idx;
                 __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
-                return s->base.ring.head;
+                return s->base.rx_ring.head;
             }
         }
 
@@ -310,7 +317,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
         return 0;
     }
 
-    nethuns_ring_free_slots(&s->base.ring, __nethuns_blocks_free, s);
+    nethuns_ring_free_slots(&s->base.rx_ring, __nethuns_blocks_free, s);
 
     s->rx_block_idx++;
     s->rx_block_mod = (s->rx_block_mod + 1) % s->rx_ring.req.tp_block_nr;
@@ -383,7 +390,7 @@ nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *pack
     __sync_synchronize();
 
     s->tx_frame_idx++;
-    return 1;
+    return len;
 }
 
 
