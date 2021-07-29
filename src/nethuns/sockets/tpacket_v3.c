@@ -1,3 +1,7 @@
+#ifdef NETHUNS_SOCKET
+#undef NETHUNS_SOCKET
+#endif
+
 #define NETHUNS_SOCKET NETHUNS_SOCKET_TPACKET3
 #include "ring.h"
 
