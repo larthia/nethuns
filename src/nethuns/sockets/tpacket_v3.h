@@ -16,8 +16,20 @@
 #include <sys/socket.h>
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
+
 #include <linux/types.h>
+
+//
+// Workaround: if __LINUX_TYPES_H is defined, then we are compiling against the broken linux/types.h of libbpf.
+// To fix it, we need to add the following typedefs before including <linux/ip.h> 
+// https://patchwork.ozlabs.org/project/netdev/patch/20190518004639.20648-2-mcroce@redhat.com/
+
+#ifdef __LINUX_TYPES_H
+typedef __u16 __bitwise __sum16;
+typedef __u32 __bitwise __wsum;
+#endif
 #include <linux/ip.h>
+
 
 #include "../types.h"
 
