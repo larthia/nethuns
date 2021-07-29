@@ -5,7 +5,7 @@
 #define NETHUNS_SOCKET NETHUNS_SOCKET_TPACKET3
 #include "ring.h"
 
-#define SOCKET_TYPE tpacket_v3 
+#define SOCKET_TYPE tpacket_v3
 #include "file.inc"
 
 #include "../api.h"
