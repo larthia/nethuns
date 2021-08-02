@@ -83,6 +83,9 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 int
 nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned int len);
 
+uint8_t *
+nethuns_get_buf_addr_xdp(struct nethuns_socket_xdp *s, uint64_t pktid);
+
 int
 nethuns_flush_xdp(__maybe_unused struct nethuns_socket_xdp *s);
 
