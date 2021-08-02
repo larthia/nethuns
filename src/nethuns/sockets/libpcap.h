@@ -53,6 +53,11 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 int
 nethuns_send_libpcap(struct nethuns_socket_libpcap *s, uint8_t const *packet, unsigned int len);
 
+static inline uint8_t *
+nethuns_get_buf_addr_libpcap(__maybe_unused nethuns_socket_t * s, __maybe_unused uint64_t pktid) {
+    return NULL;
+}
+
 int
 nethuns_flush_libpcap(__maybe_unused struct nethuns_socket_libpcap *s);
 

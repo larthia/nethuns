@@ -118,6 +118,11 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
 int
 nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *packet, unsigned int len);
 
+static inline uint8_t *
+nethuns_get_buf_addr_tpacket_v3(__maybe_unused nethuns_socket_t * s, __maybe_unused uint64_t pktid) {
+    return NULL;
+}
+
 int
 nethuns_flush_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
 

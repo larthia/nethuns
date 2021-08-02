@@ -25,6 +25,7 @@
 #define nethuns_recv(...)           nethuns_recv_tpacket_v3(__VA_ARGS__)
 #define nethuns_flush(...)          nethuns_flush_tpacket_v3(__VA_ARGS__)
 #define nethuns_send(...)           nethuns_send_tpacket_v3(__VA_ARGS__)
+#define nethuns_get_buf_addr(...)   nethuns_get_buf_addr_tpacket_v3(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_tpacket_v3(__VA_ARGS__)
 
 #define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_tpacket_v3(__VA_ARGS__)
@@ -104,6 +105,7 @@
 #define nethuns_recv(...)           nethuns_recv_libpcap(__VA_ARGS__)
 #define nethuns_flush(...)          nethuns_flush_libpcap(__VA_ARGS__)
 #define nethuns_send(...)           nethuns_send_libpcap(__VA_ARGS__)
+#define nethuns_get_buf_addr(...)   nethuns_get_buf_addr_libpcap(__VA_ARGS__)
 #define nethuns_fanout(...)         nethuns_fanout_libpcap(__VA_ARGS__)
 
 #define nethuns_tstamp_sec(...)     nethuns_tstamp_sec_libpcap(__VA_ARGS__)
