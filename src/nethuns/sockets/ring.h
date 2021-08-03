@@ -157,10 +157,16 @@ nethuns_ring_free_slots(struct nethuns_ring *ring, nethuns_free_slot_t cb, void 
     return n;
 }
 
-#define nethuns_release(_sock, _pktid) do \
+#define nethuns_rx_release(_sock, _pktid) do \
 { \
     __atomic_store_n(&nethuns_ring_get_slot(&nethuns_socket(_sock)->rx_ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
 } while (0)
+
+#define nethuns_tx_release(_sock, _pktid) do \
+{ \
+    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_socket(_sock)->tx_ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+} while (0)
+
 
 static inline int
 nethuns_send_slot(nethuns_socket_t *sock, uint64_t pktid, size_t len)

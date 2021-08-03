@@ -1,7 +1,11 @@
+#ifdef NETHUNS_SOCKET
+#undef NETHUNS_SOCKET
+#endif
+
 #define NETHUNS_SOCKET NETHUNS_SOCKET_LIBPCAP
 #include "ring.h"
 
-#define SOCKET_TYPE libpcap 
+#define SOCKET_TYPE libpcap
 #include "file.inc"
 
 #include "../misc/compiler.h"

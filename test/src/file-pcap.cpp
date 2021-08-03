@@ -82,7 +82,7 @@ try
                 std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
             }
 
-            nethuns_release(p, pkt_id);
+            nethuns_rx_release(p, pkt_id);
         }
         while (nethuns_pkt_is_ok(pkt_id));
 
@@ -145,7 +145,7 @@ try
                 dump_packet(pkthdr, frame);
                 nethuns_pcap_store(out, pkthdr, frame, nethuns_len(pkthdr));
 
-                nethuns_release(in, pkt_id);
+                nethuns_rx_release(in, pkt_id);
                 i++;
             }
         }

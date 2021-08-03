@@ -1,7 +1,11 @@
+#ifdef NETHUNS_SOCKET
+#undef NETHUNS_SOCKET
+#endif
+
 #define NETHUNS_SOCKET NETHUNS_SOCKET_XDP
 #include "ring.h"
 
-#define SOCKET_TYPE xdp 
+#define SOCKET_TYPE xdp
 #include "file.inc"
 
 #include "../misc/compiler.h"
@@ -756,7 +760,7 @@ nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned i
     uint64_t tail = s->base.tx_ring.tail;
     struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&s->base.tx_ring, tail);
 	uint8_t *frame = xsk_umem__get_data(s->xsk->umem->buffer, tx_frame(s, tail));
-  
+
     if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED)) {
         return 0;
     }

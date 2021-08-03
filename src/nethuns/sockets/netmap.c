@@ -1,8 +1,12 @@
+#ifdef NETHUNS_SOCKET
+#undef NETHUNS_SOCKET
+#endif
+
 #define NETHUNS_SOCKET NETHUNS_SOCKET_NETMAP
 #include "ring.h"
 #include "netmap.h"
 
-#define SOCKET_TYPE netmap 
+#define SOCKET_TYPE netmap
 #include "file.inc"
 
 #include "../misc/compiler.h"
@@ -352,7 +356,7 @@ nethuns_flush_netmap(struct nethuns_socket_netmap *s)
     struct netmap_slot *nslot;
     uint32_t buf_idx;
 
-    prev_tails = alloca((s->p->last_tx_ring - s->p->first_tx_ring + 1) * sizeof(*prev_tails)); 
+    prev_tails = alloca((s->p->last_tx_ring - s->p->first_tx_ring + 1) * sizeof(*prev_tails));
 
     // try to push packets marked for transmission
     for (i = s->p->first_tx_ring; i <= s->p->last_tx_ring; i++)
