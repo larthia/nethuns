@@ -333,14 +333,6 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
     return 0;
 }
 
-uint8_t *
-nethuns_get_buf_addr_netmap(struct nethuns_socket_netmap *s, uint64_t pktid)
-{
-    return (uint8_t*)NETMAP_BUF(s->some_ring,
-            nethuns_ring_get_slot(&nethuns_socket(s)->tx_ring, pktid)->pkthdr.buf_idx);
-}
-
-
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len)
 {

@@ -58,6 +58,13 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len);
 
+static inline uint8_t *
+nethuns_get_buf_addr_netmap(struct nethuns_socket_netmap *s, uint64_t pktid)
+{
+    return (uint8_t*)NETMAP_BUF(s->some_ring,
+            nethuns_ring_get_slot(&nethuns_socket(s)->tx_ring, pktid)->pkthdr.buf_idx);
+}
+
 int
 nethuns_flush_netmap(struct nethuns_socket_netmap *s);
 
@@ -66,7 +73,6 @@ nethuns_stats_netmap(struct nethuns_socket_netmap *s, struct nethuns_stat *stats
 
 int
 nethuns_fanout_netmap(__maybe_unused struct nethuns_socket_netmap *s, __maybe_unused int group, __maybe_unused const char *fanout);
-
 
 int nethuns_fd_netmap(__maybe_unused struct nethuns_socket_netmap *s);
 
