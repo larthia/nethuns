@@ -5,8 +5,8 @@
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <netinet/ether.h>
-#include <netinet/ip.h>
 #include <netinet/in.h>
+#include <linux/ip.h>
 #include <sys/socket.h>
 
 #include <thread>
@@ -77,14 +77,14 @@ std::string print_addrs(const unsigned char* frame)
         vlan_hdr = reinterpret_cast<const struct vlan_ethhdr*>(frame);
 
     // access IP header
-    const struct ip* ip_hdr = (vlan_hdr) ?
-                              reinterpret_cast<const struct ip*>(vlan_hdr + 1) :
-                              reinterpret_cast<const struct ip*> (e_hdr + 1);
+    const struct iphdr* ip_hdr = (vlan_hdr) ?
+                              reinterpret_cast<const struct iphdr*>(vlan_hdr + 1) :
+                              reinterpret_cast<const struct iphdr*> (e_hdr + 1);
     if (ip_hdr == nullptr)
         throw std::runtime_error("Error: IP header parsing");
 
-    ipsrc = reinterpret_cast<uint32_t>(ip_hdr->ip_src.s_addr);      // IP src (binary format)
-    ipdst = reinterpret_cast<uint32_t>(ip_hdr->ip_dst.s_addr);      // IP dst (binary format)
+    ipsrc = reinterpret_cast<uint32_t>(ip_hdr->saddr);      // IP src (binary format)
+    ipdst = reinterpret_cast<uint32_t>(ip_hdr->daddr);      // IP dst (binary format)
 
     inet_ntop(AF_INET, reinterpret_cast<const void *>(&ipsrc), ipsrc_buf, sizeof(ipsrc_buf));  // convert IPv4 address from binary to text form
     inet_ntop(AF_INET, reinterpret_cast<const void *>(&ipdst), ipdst_buf, sizeof(ipdst_buf));  // convert IPv4 address from binary to text form
