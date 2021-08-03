@@ -159,7 +159,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     }
     else
     {
-        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d%s", dev, nethuns_socket(s)->queue, flags);
+        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d%s", dev, queue, flags);
     }
 
     s->p = nmport_prepare(nm_dev);
