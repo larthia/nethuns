@@ -159,7 +159,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
     }
     else
     {
-        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d%s", dev, nethuns_socket(s)->queue, flags);
+        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d%s", dev, queue, flags);
     }
 
     s->p = nmport_prepare(nm_dev);
@@ -340,7 +340,18 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len)
 {
-    return nmport_inject(s->p, packet, len);
+    struct nethuns_socket_base *b = nethuns_socket(s);
+    struct nethuns_ring_slot *slot = nethuns_ring_get_slot(&b->tx_ring,
+            b->tx_ring.tail);
+    uint8_t *dst;
+
+    if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED))
+        return -1;
+    dst = nethuns_get_buf_addr_netmap(s, b->tx_ring.tail);
+    nm_pkt_copy(packet, dst, len);
+    nethuns_send_slot(s, b->tx_ring.tail, len);
+    b->tx_ring.tail++;
+    return 1;
 }
 
 
