@@ -1,3 +1,7 @@
+# Copyright 2021 Larthia, University of Pisa. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
 cmake_minimum_required(VERSION 3.0)
 
 project (nethuns-test)
