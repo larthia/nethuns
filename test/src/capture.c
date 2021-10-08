@@ -44,6 +44,8 @@ main(int argc, char *argv[])
         return 0;
     }
 
+    nethuns_init();
+
     struct nethuns_socket_options opt =
     {
         .numblocks       = 4
@@ -52,6 +54,7 @@ main(int argc, char *argv[])
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
     ,   .mode            = nethuns_socket_rx_tx
+    ,   .timestamp       = true
     ,   .promisc         = true
     ,   .rxhash          = true
     ,   .tx_qdisc_bypass = false
@@ -81,7 +84,8 @@ main(int argc, char *argv[])
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    for(int i =0; i < 50000; i++)
+    fprintf(stderr, "reading...\n");
+    for(int i =0; i < 1000;)
     {
         uint64_t pkt_id;
 
@@ -89,9 +93,10 @@ main(int argc, char *argv[])
         {
             dump_packet(pkthdr, frame);
             nethuns_rx_release(s, pkt_id);
+            i++;
+        } else {
+            usleep(1);
         }
-
-        usleep(1);
     }
 
     printf("done.\n");

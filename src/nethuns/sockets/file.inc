@@ -8,8 +8,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <time.h>
 #include <string.h>
+#include <inttypes.h>
 
 #ifndef NETHUNS_USE_BUILTIN_PCAP_READER
 #define PCAP_DONT_INCLUDE_PCAP_BPF_H
@@ -211,12 +213,12 @@ TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t co
 
     bytes = MIN(caplen, pcaphdr->caplen);
 
-    nethuns_tstamp_set_sec ((&slot->pkthdr), pcaphdr->ts.tv_sec);
+    nethuns_tstamp_set_sec (&slot->pkthdr, pcaphdr->ts.tv_sec);
     if (p->magic == NSEC_TCPDUMP_MAGIC) {
-        nethuns_tstamp_set_nsec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+        nethuns_tstamp_set_nsec(&slot->pkthdr, pcaphdr->ts.tv_usec);
     }
     else {
-        nethuns_tstamp_set_usec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+        nethuns_tstamp_set_usec(&slot->pkthdr, pcaphdr->ts.tv_usec);
     }
 
     nethuns_set_len (&slot->pkthdr, pcaphdr->len);
@@ -388,3 +390,5 @@ TEMPLATE(nethuns_pcap_rewind_,SOCKET_TYPE) (nethuns_pcap_t *s)
     return -1;
 }
 #endif
+
+

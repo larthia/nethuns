@@ -574,6 +574,14 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
     return 0;
 }
 
+int
+nethuns_check_xdp(size_t hsize, char *errbuf) {
+    if (hsize != sizeof(nethuns_pkthdr_t)) {
+        nethuns_perror(errbuf, "internal error: pkthdr size mismatch (expected %zu, got %zu)", sizeof(nethuns_pkthdr_t), hsize);
+        return -1;
+    }
+    return 0;
+}
 
 int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
 {
@@ -612,7 +620,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
         if (__nethuns_set_if_promisc(s, dev) < 0) {
             nethuns_perror(s->base.errbuf, "bind: could not set promisc (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
-	}
+	    }
     }
 
     nethuns_lock_global();
@@ -620,7 +628,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     struct nethuns_netinfo *info = nethuns_lookup_netinfo(dev);
 
     if (info->xdp_prog_id == 0) {
-	// the library has loaded the default program, retrieve its id
+	    // the library has loaded the default program, retrieve its id
         if (bpf_get_link_xdp_id(nethuns_socket(s)->ifindex, &info->xdp_prog_id, s->xdp_flags))
         {
             nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link_id: get link xpd failed");
@@ -702,17 +710,22 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
     // get timestamp...
 
-    struct timespec tp;
-    //clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
-
     struct xdp_pkthdr header = {
-        .sec     = (int32_t)tp.tv_sec
-      , .nsec    = (int32_t)tp.tv_nsec
+        .sec     = 0
+      , .nsec    = 0
       , .len     = len
       , .snaplen = len
     };
 
-    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt))
+    if (nethuns_socket(s)->opt.timestamp) {
+        struct timespec tp;
+        clock_gettime(CLOCK_REALTIME_COARSE, &tp);
+        header.sec  = (int32_t)tp.tv_sec;
+        header.nsec = (int32_t)tp.tv_nsec;
+    }
+
+    int filt = !nethuns_socket(s)->filter ? 1 : nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt);
+    if (filt > 0)
     {
         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
 
@@ -722,7 +735,16 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
         *pkthdr  = &slot->pkthdr;
         *payload =  pkt;
-        // TODO: this will give 0 when head wraps around
+
+        return ++s->base.rx_ring.head;
+    } else if (unlikely(filt<0)) {
+        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+        slot->packet = pkt;
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+        *pkthdr  = &slot->pkthdr;
+        *payload = NULL;
+
         return ++s->base.rx_ring.head;
     }
 

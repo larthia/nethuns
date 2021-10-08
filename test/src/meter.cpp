@@ -305,6 +305,8 @@ main(int argc, char *argv[])
         return 1;
     }
 
+    nethuns_init();
+
     std::cout << "\nTest " << argv[0] << " started with parameters \n"
                             << "* interface: " << interface << " \n"
                             << "* sockets: " << nsock << " \n"
@@ -326,6 +328,7 @@ main(int argc, char *argv[])
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_zero_copy
     ,   .mode            = nethuns_socket_rx_tx
+    ,   .timestamp       = true
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true

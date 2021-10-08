@@ -42,6 +42,8 @@ try
         return 0;
     }
 
+    nethuns_init();
+
     bool count = strcmp(argv[1],"count") == 0;
 
     if (strcmp(argv[1], "read") == 0 || strcmp(argv[1], "count") == 0)
@@ -57,6 +59,7 @@ try
         ,   .dir             = nethuns_in_out
         ,   .capture         = nethuns_cap_default
         ,   .mode            = nethuns_socket_rx_tx
+        ,   .timestamp       = true
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false
@@ -133,6 +136,7 @@ try
         ,   .dir             = nethuns_in_out
         ,   .capture         = nethuns_cap_default
         ,   .mode            = nethuns_socket_rx_tx
+        ,   .timestamp       = true
         ,   .promisc         = false
         ,   .rxhash          = false
         ,   .tx_qdisc_bypass = false

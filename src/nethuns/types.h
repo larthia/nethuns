@@ -46,6 +46,7 @@ struct nethuns_socket_options
     enum nethuns_capture_dir    dir;
     enum nethuns_capture_mode 	capture;
     enum nethuns_socket_mode 	mode;
+    bool                        timestamp;
     bool                        promisc;
     bool                        rxhash;
     bool                        tx_qdisc_bypass;

@@ -9,7 +9,7 @@
 #include <libnetmap.h>
 
 #include "../types.h"
-
+#include "../misc/compiler.h"
 
 struct nethuns_socket_netmap
 {
@@ -28,15 +28,16 @@ struct nethuns_socket_netmap
 extern "C" {
 #endif
 
+int nethuns_check_netmap(size_t hsize, char *errbuf);
 
 nethuns_pcap_t *
 nethuns_pcap_open_netmap(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
-int 
+int
 nethuns_pcap_close_netmap(nethuns_pcap_t *p);
 
 uint64_t
-nethuns_pcap_read_netmap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+nethuns_pcap_read_netmap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
 
 int
 nethuns_pcap_write_netmap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
@@ -44,12 +45,12 @@ nethuns_pcap_write_netmap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *h
 int
 nethuns_pcap_store_netmap(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
-int 
+int
 nethuns_pcap_rewind_netmap(nethuns_pcap_t *s);
 
 
 
-struct nethuns_socket_netmap * 
+struct nethuns_socket_netmap *
 nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf);
 
 int nethuns_close_netmap(struct nethuns_socket_netmap *s);
@@ -62,7 +63,7 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 int
 nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsigned int len);
 
-static inline uint8_t *
+static __always_inline uint8_t *
 nethuns_get_buf_addr_netmap(struct nethuns_socket_netmap *s, uint64_t pktid)
 {
     return (uint8_t*)NETMAP_BUF(s->some_ring,
@@ -83,68 +84,68 @@ int nethuns_fd_netmap(__maybe_unused struct nethuns_socket_netmap *s);
 void
 nethuns_dump_rings_netmap(__maybe_unused struct nethuns_socket_netmap *s);
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_tstamp_sec_netmap(struct netmap_pkthdr const *hdr) {
     return (uint32_t)hdr->ts.tv_sec;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_tstamp_usec_netmap(struct netmap_pkthdr const *hdr) {
     return (uint32_t)hdr->ts.tv_usec;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_tstamp_nsec_netmap(struct netmap_pkthdr const *hdr) {
     return (uint32_t)hdr->ts.tv_usec * 1000;
 }
 
-static inline
+static __always_inline
 void nethuns_tstamp_set_sec_netmap(struct netmap_pkthdr *hdr, uint32_t v) {
     hdr->ts.tv_sec = v;
 }
 
-static inline
+static __always_inline
 void nethuns_tstamp_set_usec_netmap(struct netmap_pkthdr *hdr, uint32_t v) {
     hdr->ts.tv_usec = v;
 }
 
-static inline
+static __always_inline
 void nethuns_tstamp_set_nsec_netmap(struct netmap_pkthdr *hdr, uint32_t v) {
     hdr->ts.tv_usec = v/1000;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_snaplen_netmap(struct netmap_pkthdr const *hdr) {
     return hdr->caplen;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_len_netmap(struct netmap_pkthdr const *hdr) {
     return hdr->len;
 }
 
-static inline void
+static __always_inline void
 nethuns_set_snaplen_netmap(struct netmap_pkthdr *hdr, uint32_t v) {
     hdr->caplen = v;
 }
 
-static inline void
+static __always_inline void
 nethuns_set_len_netmap(struct netmap_pkthdr *hdr, uint32_t v) {
     hdr->len = v;
 }
 
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_rxhash_netmap(__maybe_unused struct netmap_pkthdr const *hdr) {
     return 0;
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_offvlan_tpid_netmap(__maybe_unused struct netmap_pkthdr const *hdr) {
     return 0;
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_offvlan_tci_netmap(__maybe_unused struct netmap_pkthdr const *hdr) {
     return 0;
 }
@@ -152,4 +153,3 @@ nethuns_offvlan_tci_netmap(__maybe_unused struct netmap_pkthdr const *hdr) {
 #ifdef __cplusplus
 }
 #endif
-

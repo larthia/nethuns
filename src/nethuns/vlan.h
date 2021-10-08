@@ -7,26 +7,27 @@
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 #include "define.h"
+#include "misc/compiler.h"
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_vlan_vid(uint16_t tci)
 {
     return (tci & ((1<<13)-1));
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_vlan_pcp(uint16_t tci)
 {
     return (tci >> 13) & 7;
 }
 
-static inline int 
+static __always_inline int
 nethuns_vlan_dei(uint16_t tci)
 {
     return (tci >> 12) & 1;
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_vlan_tpid(const uint8_t *payload)
 {
     struct ether_header const *eth = (struct ether_header const *)payload;
@@ -35,7 +36,7 @@ nethuns_vlan_tpid(const uint8_t *payload)
     return 0;
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_vlan_tci(const uint8_t *payload)
 {
     struct ether_header const *eth = (struct ether_header const *)payload;

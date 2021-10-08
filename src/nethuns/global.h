@@ -20,7 +20,7 @@ struct nethuns_netinfo {
     uint32_t xdp_prog_id;
 };
 
-static inline
+static __always_inline
 void nethuns_netinfo_init(struct nethuns_netinfo *info)
 {
     info->promisc_refcnt  = 0;
@@ -28,7 +28,7 @@ void nethuns_netinfo_init(struct nethuns_netinfo *info)
     info->xdp_prog_id     = 0;
 }
 
-static inline
+static __always_inline
 void nethuns_netinfo_fini(__maybe_unused struct nethuns_netinfo *info)
 {
 }
@@ -45,16 +45,17 @@ extern "C" {
 
 	extern struct nethuns_global __nethuns_global;
 
-	extern void __attribute__((constructor)) nethuns_global_init();
-	extern void __attribute__((destructor)) nethuns_global_fini();
+	extern void nethuns_init_(size_t hsize, int socket);
 
-	static inline
+	extern void __attribute__((destructor)) nethuns_fini();
+
+	static __always_inline
 	void nethuns_lock_global()
 	{
 	    pthread_mutex_lock(&__nethuns_global.m);
 	}
 
-	static inline
+	static __always_inline
 	void nethuns_unlock_global()
 	{
 	    pthread_mutex_unlock(&__nethuns_global.m);

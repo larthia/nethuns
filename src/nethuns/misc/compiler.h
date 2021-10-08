@@ -5,18 +5,21 @@
 #pragma once
 
 #ifndef likely
-#define likely(x) __builtin_expect((x),1)
+# define likely(x) __builtin_expect((x),1)
 #endif
 
 #ifndef unlikely
-#define unlikely(x) __builtin_expect((x),0)
+# define unlikely(x) __builtin_expect((x),0)
 #endif
 
 #ifndef __cacheline_aligned
-#define __cacheline_aligned     __attribute__((aligned(64)))
+# define __cacheline_aligned     __attribute__((aligned(64)))
 #endif
 
 #ifndef  __maybe_unused
 # define __maybe_unused     __attribute__((unused))
 #endif
 
+#ifndef __always_inline
+# define __always_inline	inline __attribute__((always_inline))
+#endif

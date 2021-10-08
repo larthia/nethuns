@@ -24,9 +24,19 @@
 #include <net/if.h>
 
 #include <errno.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
+
+int
+nethuns_check_libpcap(size_t hsize, char *errbuf) {
+    if (hsize != sizeof(nethuns_pkthdr_t)) {
+        nethuns_perror(errbuf, "internal error: pkthdr size mismatch (expected %zu, got %zu)", sizeof(nethuns_pkthdr_t), hsize);
+        return -1;
+    }
+    return 0;
+}
 
 struct nethuns_socket_libpcap *
 nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
@@ -209,16 +219,25 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 
     if (ppayload)
     {
-        if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload))
-        {
+        int filt = !nethuns_socket(s)->filter ? 1 : nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload);
+        if (filt > 0) {
             memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
             memcpy(slot->packet, ppayload, bytes);
             slot->pkthdr.caplen = bytes;
-
             __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
             *pkthdr  = &slot->pkthdr;
             *payload =  slot->packet;
+
+            return ++s->base.rx_ring.head;
+
+        } else if (unlikely(filt < 0)) {
+            memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+            slot->pkthdr.caplen = bytes;
+            __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+            *pkthdr  = &slot->pkthdr;
+            *payload = NULL;
 
             return ++s->base.rx_ring.head;
         }

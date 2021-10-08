@@ -70,8 +70,8 @@ try
         return 0;
     }
 
-    queue = nethuns_spsc_init(65536, sizeof(pcap_pkt)); 
-    if (!queue) { 
+    queue = nethuns_spsc_init(65536, sizeof(pcap_pkt));
+    if (!queue) {
         throw std::runtime_error("nethuns_spsc: internal error");
     }
 

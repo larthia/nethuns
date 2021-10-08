@@ -6,6 +6,7 @@
 
 #include "../define.h"
 #include "../types.h"
+#include "../misc/compiler.h"
 
 struct nethuns_ring_slot;
 
@@ -13,7 +14,7 @@ typedef int (*nethuns_filter_t)(void *ctx, const nethuns_pkthdr_t *pkthdr, const
 
 #ifndef TEMPLATE_
 #define TEMPLATE_(x,y) x ## y
-#define TEMPLATE(x,y) TEMPLATE_(x,y) 
+#define TEMPLATE(x,y) TEMPLATE_(x,y)
 #endif
 
 struct nethuns_ring
@@ -91,14 +92,14 @@ struct nethuns_socket_pcapfile
 
 typedef struct nethuns_socket_pcapfile nethuns_pcap_t;
 
-static inline void
+static __always_inline void
 nethuns_set_filter(nethuns_socket_t * s, nethuns_filter_t filter, void *ctx)
 {
     nethuns_socket(s)->filter = filter;
     nethuns_socket(s)->filter_ctx = ctx;
 }
 
-static inline void
+static __always_inline void
 nethuns_clear_filter(nethuns_socket_t * s)
 {
     nethuns_socket(s)->filter = NULL;

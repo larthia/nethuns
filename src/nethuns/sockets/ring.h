@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 #include <limits.h>
 
@@ -43,11 +44,13 @@ struct nethuns_ring_slot
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_TPACKET3
     struct tpacket3_hdr     pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_NETMAP
-    struct netmap_pkthdr        pkthdr;
+    struct netmap_pkthdr    pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_LIBPCAP
     struct pcap_pkthdr      pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     struct xdp_pkthdr       pkthdr;
+#else
+#error "NETHUNS_SOCKET not defined"
 #endif
     uint64_t                id;
     int                     inuse;
@@ -57,7 +60,7 @@ struct nethuns_ring_slot
 };
 
 
-static inline
+static __always_inline
 size_t
 nethuns_lpow2(size_t n)
 {
@@ -66,7 +69,7 @@ nethuns_lpow2(size_t n)
     return 1UL << (sizeof(size_t) * CHAR_BIT - __builtin_clzl(n));
 }
 
-static inline
+static __always_inline
 int
 nethuns_make_ring(size_t nslots, size_t pktsize, struct nethuns_ring *r)
 {
@@ -84,7 +87,7 @@ nethuns_make_ring(size_t nslots, size_t pktsize, struct nethuns_ring *r)
     return r->ring ? 0 : -1;
 }
 
-static inline
+static __always_inline
 void
 nethuns_delete_ring(struct nethuns_ring *r)
 {
@@ -93,7 +96,7 @@ nethuns_delete_ring(struct nethuns_ring *r)
 }
 
 
-static inline
+static __always_inline
 struct nethuns_ring_slot *
 nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
 {
@@ -101,7 +104,7 @@ nethuns_ring_get_slot(struct nethuns_ring *ring, size_t n)
             ((char *)ring->ring + ((n & ring->mask) << ring->shift));
 }
 
-static inline
+static __always_inline
 uint64_t
 nethuns_slot_get_idx(struct nethuns_ring *ring, struct nethuns_ring_slot *s)
 {
@@ -109,7 +112,7 @@ nethuns_slot_get_idx(struct nethuns_ring *ring, struct nethuns_ring_slot *s)
 }
 
 
-static inline
+static __always_inline
 size_t
 nethuns_ring_num_free_slots(struct nethuns_ring *ring, size_t n)
 {
@@ -129,7 +132,7 @@ nethuns_ring_num_free_slots(struct nethuns_ring *ring, size_t n)
     return total;
 }
 
-static inline
+static __always_inline
 struct nethuns_ring_slot *
 nethuns_ring_next_slot(struct nethuns_ring *ring)
 {
@@ -140,7 +143,7 @@ nethuns_ring_next_slot(struct nethuns_ring *ring)
 typedef int(*nethuns_free_slot_t)(struct nethuns_ring_slot *slot, uint64_t id, void *user);
 
 
-static inline int
+static __always_inline int
 nethuns_ring_free_slots(struct nethuns_ring *ring, nethuns_free_slot_t cb, void *user)
 {
     int n = 0;
@@ -163,11 +166,11 @@ nethuns_ring_free_slots(struct nethuns_ring *ring, nethuns_free_slot_t cb, void 
 
 #define nethuns_tx_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_socket(_sock)->tx_ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+    __atomic_store_n(&(nethuns_ring_get_slot(&nethuns_socket(_sock)->tx_ring, (_pktid)-1)->inuse), 0, __ATOMIC_RELEASE); \
 } while (0)
 
 
-static inline int
+static __always_inline int
 nethuns_send_slot(nethuns_socket_t *sock, uint64_t pktid, size_t len)
 {
     struct nethuns_ring_slot * slot = nethuns_ring_get_slot(&nethuns_socket(sock)->tx_ring, pktid);
@@ -178,17 +181,16 @@ nethuns_send_slot(nethuns_socket_t *sock, uint64_t pktid, size_t len)
     return 1;
 }
 
-static inline
+static __always_inline
 size_t
 nethuns_rxring_get_size(nethuns_socket_t *s)
 {
     return nethuns_socket(s)->rx_ring.mask + 1;
 }
 
-static inline
+static __always_inline
 size_t
 nethuns_txring_get_size(nethuns_socket_t *s)
 {
     return nethuns_socket(s)->tx_ring.mask + 1;
 }
-

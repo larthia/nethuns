@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
--- stack runghc --resolver lts-18.9 --package optparse-applicative --package ansi-terminal --allow-different-user --install-ghc
+-- stack runghc --resolver lts-20.11 --package optparse-applicative --package ansi-terminal --allow-different-user --install-ghc
 --
 
 {-# LANGUAGE RecordWildCards #-}

@@ -31,6 +31,15 @@
 #include <string.h>
 
 
+int
+nethuns_check_tpacket_v3(size_t hsize, char *errbuf) {
+    if (hsize != sizeof(nethuns_pkthdr_t)) {
+        nethuns_perror(errbuf, "internal error: pkthdr size mismatch (expected %zu, got %zu)", sizeof(nethuns_pkthdr_t), hsize);
+        return -1;
+    }
+    return 0;
+}
+
 struct nethuns_socket_tpacket_v3 *
 nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 {
@@ -276,7 +285,7 @@ __nethuns_blocks_free(__maybe_unused struct nethuns_ring_slot *slot,  uint64_t b
 
 
 uint64_t
-nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **pkt)
+nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload)
 {
     struct block_descr_v3 * pb;
 
@@ -307,19 +316,24 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
             (s->base.opt.dir == nethuns_in  && sll->sll_pkttype != PACKET_OUTGOING) ||
             (s->base.opt.dir == nethuns_out && sll->sll_pkttype == PACKET_OUTGOING))
         {
-            *pkthdr    = s->rx_ppd;
-            *pkt       = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
+            uint8_t const *ppayload = (uint8_t *)(s->rx_ppd) + s->rx_ppd->tp_mac;
 
-            if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, *pkthdr, *pkt))
-            {
-                s->rx_ppd  = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+            int filt = !nethuns_socket(s)->filter ? 1 : nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, s->rx_ppd, ppayload);
+            if (filt > 0) {
+                *pkthdr  = s->rx_ppd;
+                *payload = ppayload;
 
-                slot = nethuns_ring_next_slot(&s->base.rx_ring);
-                slot->id = s->rx_block_idx;
-                __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
-
-                return s->base.rx_ring.head;
+            } else if (unlikely(filt <0)) {
+                *pkthdr  = s->rx_ppd;
+                *payload = NULL;
             }
+
+            slot = nethuns_ring_next_slot(&s->base.rx_ring);
+            slot->id = s->rx_block_idx;
+            __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+            s->rx_ppd = (struct tpacket3_hdr *) ((uint8_t *) s->rx_ppd + s->rx_ppd->tp_next_offset);
+            return s->base.rx_ring.head;
         }
 
         /* discard this packet */
@@ -337,7 +351,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
 }
 
 
-static inline int
+static __always_inline int
 __nethuns_flush_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
@@ -405,7 +419,7 @@ nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *pack
 
 
 
-static inline
+static __always_inline
 int __fanout_code(int strategy, int defrag, int rollover)
 {
     if (defrag)   strategy |= PACKET_FANOUT_FLAG_DEFRAG;

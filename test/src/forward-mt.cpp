@@ -43,6 +43,7 @@ int consumer(std::string dev)
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
     ,   .mode            = nethuns_socket_rx_tx
+    ,   .timestamp       = true
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
@@ -102,6 +103,8 @@ try
         return 0;
     }
 
+    nethuns_init();
+
     queue = nethuns_spsc_init(65536, sizeof(nethuns_packet));
     if (!queue) {
         throw std::runtime_error("nethuns_spsc: internal error");
@@ -120,6 +123,7 @@ try
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
     ,   .mode            = nethuns_socket_rx_tx
+    ,   .timestamp       = true
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true
