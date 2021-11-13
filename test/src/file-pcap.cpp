@@ -38,11 +38,13 @@ try
 {
     if (argc < 3)
     {
-        fprintf(stderr,"usage: %s [read file| capture ifname]\n", argv[0]);
+        fprintf(stderr,"usage: %s [read filepcap | count filepcap | capture ifname]\n", argv[0]);
         return 0;
     }
 
-    if (strcmp(argv[1], "read") == 0)
+    bool count = strcmp(argv[1],"count") == 0;
+
+    if (strcmp(argv[1], "read") == 0 || strcmp(argv[1], "count") == 0)
     {
         nethuns_pcap_t *p;
 
@@ -77,21 +79,44 @@ try
 
         uint64_t pkt_id;
 
+        uint64_t total = 0;
+        uint64_t errors = 0;
         do
         {
             pkt_id = nethuns_pcap_read(p, &pkthdr, &frame);
 
-            if (nethuns_pkt_is_valid(pkt_id))
-            {
-                std::cerr << nethuns_tstamp_sec(pkthdr) << ":" << nethuns_tstamp_nsec(pkthdr) << " caplen:" << nethuns_snaplen(pkthdr) << " len:" << nethuns_len(pkthdr) << ": PACKET!" << std::endl;
+            if (nethuns_pkt_is_valid(pkt_id)) {
+              total++;
+              if (count) {
+                if ((total % 1000000) == 0) {
+                    std::cerr << "packet: " << total << std::endl;
+                  }
+              } else {
+                std::cerr << nethuns_tstamp_sec(pkthdr) << ":"
+                          << nethuns_tstamp_nsec(pkthdr)
+                          << " caplen:" << nethuns_snaplen(pkthdr)
+                          << " len:" << nethuns_len(pkthdr) << ": PACKET!"
+                          << std::endl;
+              }
+
+              nethuns_rx_release(p, pkt_id);
+
+            } else {
+                errors++;
+                if (nethuns_pkt_is_err(pkt_id)) {
+                  //std::cerr << "err: " << nethun s_error(p) << std::endl;
+                }
+
+                if ((errors % 1000000) == 0) {
+                    std::cerr << "errors: " << errors << std::endl;
+                  }
             }
-
-            nethuns_rx_release(p, pkt_id);
         }
-        while (nethuns_pkt_is_ok(pkt_id));
+        while (!nethuns_pkt_is_eof(pkt_id));
 
-        if (nethuns_pkt_is_err(pkt_id))
-            std::cerr << "err: " << nethuns_error(p) << std::endl;
+        std::cerr << "total packet: " << total << std::endl;
+        std::cerr << "total errors: " << errors << std::endl;
+        std::cerr << "total       : " << (total + errors) << std::endl;
 
         nethuns_pcap_close(p);
     }
