@@ -145,7 +145,7 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
 {
     static const int NMDEVSZ = 128;
     char nm_dev[NMDEVSZ];
-    const char *flags = "";
+    const char *flags = "", *prefix = "netmap:";
     struct nethuns_socket_base *b = nethuns_socket(s);
     uint32_t extra_bufs;
     uint32_t scan;
@@ -159,13 +159,18 @@ int nethuns_bind_netmap(struct nethuns_socket_netmap *s, const char *dev, int qu
         flags = "/T";
     }
 
+    if (!strncmp(dev, "vale", 4))
+    {
+        prefix = "";
+    }
+
     if (queue == NETHUNS_ANY_QUEUE)
     {
-        snprintf(nm_dev, NMDEVSZ, "netmap:%s%s", dev, flags);
+        snprintf(nm_dev, NMDEVSZ, "%s%s%s", prefix, dev, flags);
     }
     else
     {
-        snprintf(nm_dev, NMDEVSZ, "netmap:%s-%d%s", dev, queue, flags);
+        snprintf(nm_dev, NMDEVSZ, "%s%s-%d%s", prefix, dev, queue, flags);
     }
 
     s->p = nmport_prepare(nm_dev);
