@@ -11,4 +11,6 @@ struct xdp_pkthdr {
 	uint32_t nsec;
 	uint32_t len;
 	uint32_t snaplen;
+	unsigned char *packet;
+	uint64_t addr;
 };

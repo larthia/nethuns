@@ -691,7 +691,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     /* process the packet */
 
         uint64_t addr;
-	slot->addr = addr = xsk_ring_cons__rx_desc(&s->xsk->rx, s->idx_rx)->addr;
+	slot->pkthdr.addr = addr = xsk_ring_cons__rx_desc(&s->xsk->rx, s->idx_rx)->addr;
 	uint32_t len  = xsk_ring_cons__rx_desc(&s->xsk->rx, s->idx_rx++)->len;
 	s->rcvd--;
 
@@ -716,7 +716,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     {
         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
 
-        slot->packet = pkt;
+        slot->pkthdr.packet = pkt;
 
         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 

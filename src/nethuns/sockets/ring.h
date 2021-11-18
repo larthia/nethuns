@@ -53,12 +53,7 @@ struct nethuns_ring_slot
     int                     inuse;
     int32_t                 len;
 
-#if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
-    unsigned char           *packet;
-    uint64_t 		    addr;
-#else
     unsigned char           packet[];
-#endif
 };
 
 
