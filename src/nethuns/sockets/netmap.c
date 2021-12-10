@@ -70,7 +70,7 @@ nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
 
     if (s->tx)
     {
-        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.tx_ring) < 0)
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.tx_ring) < 0)
         {
             nethuns_perror(errbuf, "open: failed to allocate ring");
             goto err_del_ring;

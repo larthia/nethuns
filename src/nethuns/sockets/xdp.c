@@ -494,7 +494,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 	s->first_rx_frame = 0;
 	s->first_tx_frame = 0;
     if (s->rx) {
-        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.rx_ring) < 0)
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.rx_ring) < 0)
         {
             nethuns_perror(errbuf, "open: failed to allocate ring");
             goto err0;
@@ -503,7 +503,7 @@ nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
     }
 
     if (s->tx) {
-        if (nethuns_make_ring(opt->numblocks * opt->numpackets, 0, &s->base.tx_ring) < 0)
+        if (nethuns_make_ring(opt->numblocks * opt->numpackets, opt->packetsize, &s->base.tx_ring) < 0)
         {
             nethuns_perror(errbuf, "open: failed to allocate ring");
             goto err1;
