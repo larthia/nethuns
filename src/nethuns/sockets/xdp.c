@@ -698,7 +698,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 	addr = xsk_umem__add_offset_to_addr(addr);
 	unsigned char *pkt = xsk_umem__get_data(s->xsk->umem->buffer, addr);
 
-    __atomic_add_fetch(&s->xsk->rx_npkts, 1, __ATOMIC_RELAXED);
+    //__atomic_add_fetch(&s->xsk->rx_npkts, 1, __ATOMIC_RELAXED);
 
     // get timestamp...
 
@@ -721,7 +721,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
         *pkthdr  = &slot->pkthdr;
-        *payload =  slot->packet;
+        *payload =  pkt;
         // TODO: this will give 0 when head wraps around
         return ++s->base.rx_ring.head;
     }
@@ -797,7 +797,7 @@ nethuns_flush_xdp(struct nethuns_socket_xdp *s)
 	xsk_ring_cons__release(&s->xsk->umem->cq, cmpl);
 	s->xsk->outstanding_tx -= cmpl;
     //printf("cmpl %d outstanding %d\n", cmpl, s->xsk->outstanding_tx);
-    __atomic_add_fetch(&s->xsk->tx_npkts, cmpl, __ATOMIC_RELAXED);
+    //__atomic_add_fetch(&s->xsk->tx_npkts, cmpl, __ATOMIC_RELAXED);
 
     toflush = 0;
     for (i = 0; i < s->base.tx_ring.size; i++) {

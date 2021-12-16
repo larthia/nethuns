@@ -4,10 +4,13 @@
 
 #pragma once
 
-#include <netinet/if_ether.h>
-#include <arpa/inet.h>
-#include <net/ethernet.h>
-#include <net/if.h>
+//#include <netinet/if_ether.h>
+//#include <arpa/inet.h>
+//#include <net/ethernet.h>
+//#include <net/if.h>
+#ifndef IFNAMSIZ
+#define IFNAMSIZ 16
+#endif
 
 #include "misc/compiler.h"
 #include "sockets/base.h"
