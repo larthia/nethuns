@@ -27,10 +27,10 @@ option(NETHUNS_OPT_NETMAP               "Enable Netmap support" OFF)
 add_definitions(-D_GNU_SOURCE)
 
 find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
-find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
+find_library(LIBPCAP_LIBRARY NAMES libpcap.a PATHS /usr/local/opt/libpcap/lib)
 
 include_directories(${LIBPCAP_INCLUDE_DIR})
-include_directories(/usr/local/include/ src)
+include_directories(/usr/local/opt/libpcap/include /usr/local/include/ src)
 
 if (NETHUNS_OPT_XDP)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
@@ -102,9 +102,22 @@ if (NETHUNS_OPT_LIBPCAP)
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()
 
+add_custom_command(
+	OUTPUT  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c 
+	        ${CMAKE_SOURCE_DIR}/src/nethuns/_version.c # fake target that is never created, here just to trigger the execution of makeRevision script
+    COMMAND ${CMAKE_SOURCE_DIR}/script/make_revision.sh ${CMAKE_SOURCE_DIR}  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c.in ${CMAKE_SOURCE_DIR}/src/nethuns/version.c
+)
+
+
+add_custom_target(revision ALL DEPENDS ${CMAKE_SOURCE_DIR}/src/nethuns/version.c)
+
+list(APPEND NETHUNS_SRC src/nethuns/version.c)
+
 add_library(nethuns STATIC ${NETHUNS_SRC})
 
 target_link_libraries(nethuns PRIVATE ${NETHUS_LIBS})
+
+add_dependencies(nethuns revision)
 
 install(TARGETS nethuns DESTINATION /usr/local/lib)
 

@@ -49,15 +49,6 @@ nethuns_perror(char *buf, const char *msg, ...)
     va_end(ap);
 }
 
-
-const char *
-nethuns_version ()
-{
-    static const char ver[] = "nethuns v1.0";
-    return ver;
-}
-
-
 int
 nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags)
 {

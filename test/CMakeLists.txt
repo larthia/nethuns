@@ -19,6 +19,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-
 include_directories(/usr/local/include/ . ../src)
 link_directories(/usr/local/lib)
 
+add_executable(nethuns-version      src/version.c)
 add_executable(nethuns-test         src/test.c)
 add_executable(nethuns-send         src/send.cpp)
 add_executable(nethuns-meter        src/meter.cpp)
@@ -37,6 +38,7 @@ add_executable(pure-pcap-forward-mt src/pure-forward-pcap-mt.cpp)
 
 target_link_libraries(nethuns-file-pcap-mt  ${NETHUNS_LIBS} -pthread)
 
+target_link_libraries(nethuns-version       ${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-test       	${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-meter-mt      	${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-send       	${NETHUNS_LIBS} -pthread)

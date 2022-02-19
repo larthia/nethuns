@@ -1,0 +1,7 @@
+
+const char *
+nethuns_version ()
+{
+    static const char ver[] = "nethuns $VERSION$";
+    return ver;
+}
