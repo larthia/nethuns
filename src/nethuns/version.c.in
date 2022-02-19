@@ -1,7 +1,14 @@
 
 const char *
-nethuns_version ()
+nethuns_version()
 {
     static const char ver[] = "nethuns $VERSION$";
     return ver;
+}
+
+const char *
+nethuns_components()
+{
+    static const char ret[] = "libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$";
+    return ret;
 }

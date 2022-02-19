@@ -105,7 +105,7 @@ endif()
 add_custom_command(
 	OUTPUT  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c 
 	        ${CMAKE_SOURCE_DIR}/src/nethuns/_version.c # fake target that is never created, here just to trigger the execution of makeRevision script
-    COMMAND ${CMAKE_SOURCE_DIR}/script/make_revision.sh ${CMAKE_SOURCE_DIR}  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c.in ${CMAKE_SOURCE_DIR}/src/nethuns/version.c
+            COMMAND ${CMAKE_SOURCE_DIR}/script/make_revision.sh ${CMAKE_SOURCE_DIR}  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c.in ${CMAKE_SOURCE_DIR}/src/nethuns/version.c ${NETHUNS_OPT_LIBPCAP} ${NETHUNS_OPT_XDP} ${NETHUNS_OPT_NETMAP} ${NETHUNS_OPT_TPACKET_V3}
 )
 
 

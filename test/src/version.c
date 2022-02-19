@@ -14,5 +14,6 @@
 int
 main(int argc, char *argv[])
 {
-    printf("%s\n", nethuns_version());
+    printf("version: %s\n", nethuns_version());
+    printf("libraries: %s\n", nethuns_components());
 }
