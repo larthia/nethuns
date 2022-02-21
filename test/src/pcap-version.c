@@ -4,16 +4,12 @@
  * license that can be found in the LICENSE file.
  */
 
-#include <nethuns/nethuns.h>
+#include <pcap/pcap.h>
 #include <stdio.h>
 #include <unistd.h>
-
-
-
 
 int
 main(int argc, char *argv[])
 {
-    printf("version_full: %s\n", nethuns_version_full());
-    printf("version: %s\n", nethuns_version());
+    printf("version: %s\n", pcap_lib_version());
 }

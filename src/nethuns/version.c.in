@@ -1,14 +1,21 @@
+#ifdef NETHUNS_HAVE_LIBPCAP
+#include <pcap/pcap.h>
+#endif
+
+const char *
+nethuns_version_full()
+{
+#ifdef NETHUNS_HAVE_LIBPCAP
+    char *ret;
+    asprintf(&ret, "nethuns $VERSION$; %s; libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$", pcap_lib_version());
+    return ret;
+#else
+    return "nethuns $VERSION$; libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$";
+#endif
+}
 
 const char *
 nethuns_version()
 {
-    static const char ver[] = "nethuns $VERSION$";
-    return ver;
-}
-
-const char *
-nethuns_components()
-{
-    static const char ret[] = "libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$";
-    return ret;
+    return "nethuns $VERSION$";
 }

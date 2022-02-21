@@ -26,8 +26,8 @@ option(NETHUNS_OPT_NETMAP               "Enable Netmap support" OFF)
 
 add_definitions(-D_GNU_SOURCE)
 
-find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
-find_library(LIBPCAP_LIBRARY NAMES libpcap.a PATHS /usr/local/opt/libpcap/lib)
+find_library(LIBPCAP_LIBRARY NAMES libpcap.a PATHS "/usr/local/opt/licap/lib" NO_DEFAULT_PATH)
+find_path(LIBPCAP_INCLUDE_DIR NAMES pcap/pcap.h PATHS "/usr/local/opt/libpcap/include/" NO_DEFAULT_PATH)
 
 include_directories(${LIBPCAP_INCLUDE_DIR})
 include_directories(/usr/local/opt/libpcap/include /usr/local/include/ src)
@@ -57,19 +57,25 @@ endif()
 
 if (NETHUNS_OPT_TPACKET_V3)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/tpacket_v3.c)
-    message("Nethuns: tpcaket v3 ENABLED")
+
+    message("Nethuns: tpcaketv3 ENABLED")
+    add_definitions(-DNETHUNS_HAVE_TPACKET_V3)
 endif()
 
 if (NETHUNS_OPT_NETMAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/netmap.c)
     list(APPEND NETHUNS_DEP -lnetmap)
     list(APPEND OTHER_LIB -lnetmap)
-    message("Nethuns: netmap ENABLED")	
+
+    message("Nethuns: netmap ENABLED")
+    add_definitions(-DNETHUNS_HAVE_NETMAP)
 endif()
 
 if (NETHUNS_OPT_XDP)
 
     message("Nethuns: xdp ENABLED")
+    add_definitions(-DNETHUNS_HAVE_XDP)
+
     find_package(ZLIB)
 
     set(LIBBPF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src/libbpf.a)
@@ -97,13 +103,16 @@ if (NETHUNS_OPT_XDP)
 endif()
 
 if (NETHUNS_OPT_LIBPCAP)
-    message("Nethuns: libpcap ENABLEd")
+
+    message("Nethuns: libpcap ENABLED")
+    add_definitions(-DNETHUNS_HAVE_LIBPCAP)
+
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()
 
 add_custom_command(
-	OUTPUT  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c 
+	OUTPUT  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c
 	        ${CMAKE_SOURCE_DIR}/src/nethuns/_version.c # fake target that is never created, here just to trigger the execution of makeRevision script
             COMMAND ${CMAKE_SOURCE_DIR}/script/make_revision.sh ${CMAKE_SOURCE_DIR}  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c.in ${CMAKE_SOURCE_DIR}/src/nethuns/version.c ${NETHUNS_OPT_LIBPCAP} ${NETHUNS_OPT_XDP} ${NETHUNS_OPT_NETMAP} ${NETHUNS_OPT_TPACKET_V3}
 )

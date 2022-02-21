@@ -88,7 +88,7 @@ extern "C" {
     void nethuns_fprintf(FILE *out, const char *msg, ...);
 
     const char * nethuns_version();
-    const char * nethuns_components();
+    const char * nethuns_version_full();
 
     // filter functions
     //
