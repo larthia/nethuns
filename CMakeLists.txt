@@ -112,13 +112,13 @@ if (NETHUNS_OPT_LIBPCAP)
 endif()
 
 add_custom_command(
-	OUTPUT  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c
-	        ${CMAKE_SOURCE_DIR}/src/nethuns/_version.c # fake target that is never created, here just to trigger the execution of makeRevision script
-            COMMAND ${CMAKE_SOURCE_DIR}/script/make_revision.sh ${CMAKE_SOURCE_DIR}  ${CMAKE_SOURCE_DIR}/src/nethuns/version.c.in ${CMAKE_SOURCE_DIR}/src/nethuns/version.c ${NETHUNS_OPT_LIBPCAP} ${NETHUNS_OPT_XDP} ${NETHUNS_OPT_NETMAP} ${NETHUNS_OPT_TPACKET_V3}
+	OUTPUT  ${CMAKE_CURRENT_SOURCE_DIR}/src/nethuns/version.c
+	        ${CMAKE_CURRENT_SOURCE_DIR}/src/nethuns/_version.c # fake target that is never created, here just to trigger the execution of makeRevision script
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/script/make_revision.sh ${CMAKE_CURRENT_SOURCE_DIR}  ${CMAKE_CURRENT_SOURCE_DIR}/src/nethuns/version.c.in ${CMAKE_CURRENT_SOURCE_DIR}/src/nethuns/version.c ${NETHUNS_OPT_LIBPCAP} ${NETHUNS_OPT_XDP} ${NETHUNS_OPT_NETMAP} ${NETHUNS_OPT_TPACKET_V3}
 )
 
 
-add_custom_target(revision ALL DEPENDS ${CMAKE_SOURCE_DIR}/src/nethuns/version.c)
+add_custom_target(revision ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/nethuns/version.c)
 
 list(APPEND NETHUNS_SRC src/nethuns/version.c)
 
