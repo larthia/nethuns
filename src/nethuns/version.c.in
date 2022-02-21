@@ -7,7 +7,9 @@ nethuns_version_full()
 {
 #ifdef NETHUNS_HAVE_LIBPCAP
     char *ret;
-    asprintf(&ret, "nethuns $VERSION$; %s; libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$", pcap_lib_version());
+    if (asprintf(&ret, "nethuns $VERSION$; %s; libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$", pcap_lib_version()) < 0) {
+    	return "nethuns $VERSION$; libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$";
+    }
     return ret;
 #else
     return "nethuns $VERSION$; libpcap:$PCAP_TOGGLE$ xdp:$XDP_TOGGLE$ netmap:$NETMAP_TOGGLE$ tpacket3:$TPACKET3_TOGGLE$";
