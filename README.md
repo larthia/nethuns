@@ -251,6 +251,9 @@ Interested people can cite our work by using the following reference:
 }
 ```
 
+You can also have a look at the [dedicated page](https://www.growkudos.com/publications/10.1145%25252F3544912.3544917/) available on the [Kudos Research Showcase](https://info.growkudos.com/discover-showcase) platform.
+
+
 # Credits
 
 ## Authors
