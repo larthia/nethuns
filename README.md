@@ -108,12 +108,12 @@ Usage:  nethuns-send [ options ]
 Use --help (or -h) to see full option list and a complete description.
 
 Required options: 
-			[ -i <ifname> ] 	 set network interface 
+            [ -i <ifname> ]      set network interface 
 Other options: 
-			[ -b <batch_sz> ] 	 set batch size 
-			[ -n <nsock> ] 		 set number of sockets 
-			[ -m ] 			     enable multithreading 
-			[ -z ] 			     enable send zero-copy 
+            [ -b <batch_sz> ]    set batch size 
+            [ -n <nsock> ]       set number of sockets 
+            [ -m ]               enable multithreading 
+            [ -z ]               enable send zero-copy 
 ```
 The default batch size for packet transmission is 1 (no batching). The number of sockets to use can be specified, and by default is 1. If multithreading is enabled, and there is more than one socket in use, each socket is handled by a separated thread. Moreover, zero-copy mode can be enabled; by default, the classic send that requires a copy is used.
 
@@ -138,12 +138,12 @@ Usage:  nethuns-meter [ options ]
 Use --help (or -h) to see full option list and a complete description.
 
 Required options: 
-			[ -i <ifname> ] 	 set network interface 
+            [ -i <ifname> ]      set network interface 
 Other options: 
-			[ -n <nsock> ] 		 set number of sockets 
-			[ -m ] 			     enable multithreading 
-			[ -s <sockid> ] 	 enable per socket stats 
-			[ -d ] 			     enable extra debug printing 
+            [ -n <nsock> ]       set number of sockets 
+            [ -m ]               enable multithreading 
+            [ -s <sockid> ]      enable per socket stats 
+            [ -d ]               enable extra debug printing 
 ```
 The number of sockets to use can be specified (by default, it is 1). If multithreading is enabled, and there is more than one socket in use, each socket is handled by a separated thread. Moreover, some other options are available for tuning the printing of statistics for a given socket, and other information for debug purposes.
 
@@ -171,16 +171,16 @@ A traffic generator has been implemented by porting over Nethuns the [`nmreplay`
 
 The "nethunized" `nmreplay` user-space application has been included in the `/test` directory in this repository and can be run with the following command line options:
 ```
-nmreplay  	[-f pcap-file] 				set pcap file to replay
-			[-i netmap-interface] 		set interface to use as output
-			[-b batch size] 			set max batch size for tx
-			[-B bandwidth] 				set bandwidth to use for tx
-			[-D delay] 					add additional delay to packet tx
-			[-L loss] 					simulate packet/bit errors
-			[-w wait-link] 				set wait (seconds) before tx
-			[-v] 						enable verbose mode
+nmreplay    [-f pcap-file]            set pcap file to replay
+            [-i netmap-interface]     set interface to use as output
+            [-b batch size]           set max batch size for tx
+            [-B bandwidth]            set bandwidth to use for tx
+            [-D delay]                add additional delay to packet tx
+            [-L loss]                 simulate packet/bit errors
+            [-w wait-link]            set wait (seconds) before tx
+            [-v]                      enable verbose mode
 ```
-The default batch size for packet transmission is 1 (no batching). 
+The default batch size for packet transmission is 1 (no batching).
 
 To test this application, we can use two server machines PC1 and PC2: PC1 replays a pcap file at the highest possible rate by running the "nethunized" `nmreplay`, and PC2 is used as a traffic receiver, running for example the `pkt-gen` Netmap application in rx mode or the `nethuns-meter` application.
 
