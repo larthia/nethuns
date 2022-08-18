@@ -1,5 +1,6 @@
 [![License: New BSD](https://img.shields.io/github/license/larthia/nethuns?color=blue&label=License)](https://opensource.org/licenses/BSD-3-Clause)
 [![Release](https://img.shields.io/github/v/tag/larthia/nethuns?color=blue&label=Release)](https://github.com/larthia/nethuns/releases/latest)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Flarthia%2Fnethuns&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=Hits&edge_flat=false)](https://hits.seeyoufarm.com)
 [![Contributors](https://img.shields.io/github/contributors/larthia/nethuns?color=green&label=Contributors)](https://github.com/larthia/nethuns/graphs/contributors)
 [![Commits since v0.1](https://img.shields.io/github/commits-since/larthia/nethuns/v0.1/master?color=green&label=Commits%20since%20v0.1)](https://github.com/larthia/nethuns/commits/master)
 [![Last commit](https://img.shields.io/github/last-commit/larthia/nethuns?label=Last%20commit)](https://github.com/larthia/nethuns/commits/master)
