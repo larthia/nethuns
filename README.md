@@ -196,6 +196,30 @@ The user-space datapath of OVS accesses network ports through a generic “netde
 To test the OVS application with the `netdev-nethuns` device, backed by either the `AF_XDP` or the `netmap` engines, we can use two server machines PC1 and PC2. PC1 runs an OVS bridge over two 40 Gbps links (connecting the two machines in our testbed configuration), and PC2 sends minimally sized packets on the first link and measures the packets per second received from the second link.
 
 
+# Using the library to implement a brand new application
+
+So, how can you start using the Nethuns library to implement your own
+application from scratch?
+
+1. You need to include the `nethuns.h` header file and use the abstractions provided by the [Nethuns API](https://github.com/larthia/nethuns#nethuns-basic-api) in your network application. You can start by having a look to the source code of the examples available in the `/test` directory of the project.
+
+2. Once the application is implemented, you need to build it. You can work on a machine like the ones we used in our experiments, where you previously compiled and installed the Nethuns library. Compiling the application is required before its execution can begin.
+
+    The underlying framework to be used can be set as a compilation option. This is as simple as initializing the MACRO `NETHUNS_SOCKET` to a value in the range $[0, 3]$ where:
+    * $0$ means LIBPCAP
+    * $1$ means NETMAP
+    * $2$ means XDP
+    * $3$ means TPACKET_V3
+	
+	As an example, if you want to use Netmap, you can set up in your application Makefile
+	```
+	-DNETHUNS_SOCKET=1
+	```
+
+3. You are now all set up to run your application over the selected
+underlying network engine!
+
+
 # About the license
 
 This work is licensed under the 3-Clause BSD License (New BSD License).
