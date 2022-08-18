@@ -65,8 +65,8 @@ The Nethuns library relies on the following dependencies:
 # Building the library
 The Nethuns library has to be built against any of the available underlying engines before you can use it. Assuming to be on a Linux distribution, the build process can be done by executing the following steps from inside the main directory of the project:
 ```
-$ mkdir build && cd build
-$ ccmake ..
+mkdir build && cd build
+ccmake ..
 ```
 At this point, a configuration menu should appear to the user, which can select one or more network I/O frameworks to build among those available, as well as set up some other building options (see an example below). 
 ```
@@ -83,9 +83,9 @@ NETHUNS_OPT_XDP                  ON
 
 Press `c` to process the configuration files with the current options, `enter` to set the value of a given option, `g` to generate the build files and exit, `q` to quit `ccmake` without generating build files. Once the build files have been generated with the correct options, the library can be finally built and installed (the default path is `/usr/local`) by issuing the commands:
 ```
-$ cmake .
-$ make -j<#cores>
-$ sudo make install
+cmake .
+make -j<#cores>
+sudo make install
 ```
 
 <br>
@@ -95,10 +95,10 @@ A whole suite of tests can be found under the `/test` directory in this reposito
 
 To build the tests, you first need to select the engine you actually intend to use among the ones built with the library. After the configuration has been generated, you can use `cmake` as done in the previous steps to compile the library. This translates in executing the following steps from inside the main directory of the project:
 ```
-$ cd test
-$ ccmake .
-$ cmake .
-$ make -j<#cores>
+cd test
+ccmake .
+cmake .
+make -j<#cores>
 ```
 
 ## Testing packet transmission
