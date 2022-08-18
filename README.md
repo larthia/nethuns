@@ -203,6 +203,30 @@ This work is licensed under the 3-Clause BSD License (New BSD License).
 `SPDX-License-Identifier: BSD-3-Clause`
 
 
+# Cite our work
+
+Interested people can cite our work by using the following reference:
+```
+@article{10.1145/3544912.3544917,
+    author = {Bonelli, Nicola and Del Vigna, Fabio and Fais, Alessandra and Lettieri, Giuseppe and Procissi, Gregorio},
+    title = {{Programming Socket-Independent Network Functions with Nethuns}},
+    year = {2022},
+    issue_date = {April 2022},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {52},
+    number = {2},
+    issn = {0146-4833},
+    url = {https://doi.org/10.1145/3544912.3544917},
+    doi = {10.1145/3544912.3544917},
+    journal = {SIGCOMM Computer Communication Review},
+    month = {jun},
+    pages = {35–48},
+    numpages = {14},
+    keywords = {programming abstraction, high-speed packet processing, OS independence, software data plane, socket independence}
+}
+```
+
 # Credits
 
 ## Authors
