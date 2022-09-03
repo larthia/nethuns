@@ -43,12 +43,6 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
 
     size_t snaplen;
 
-    if (opt->dir != nethuns_in_out)
-    {
-        nethuns_perror(errbuf, "pcap_open: unsupported catpure direction (%d)", (int)opt->dir);
-        return NULL;
-    }
-
     pcap = (struct nethuns_socket_pcapfile *)malloc(sizeof(struct nethuns_socket_pcapfile));
     if (!pcap)
     {
@@ -160,7 +154,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
 }
 
 
-int 
+int
 TEMPLATE(nethuns_pcap_close_,SOCKET_TYPE) (nethuns_pcap_t *p)
 {
     if (p->r) {
@@ -382,7 +376,7 @@ TEMPLATE(nethuns_pcap_store_,SOCKET_TYPE) (nethuns_pcap_t *s, nethuns_pkthdr_t c
 #endif
 
 
-int 
+int
 TEMPLATE(nethuns_pcap_rewind_,SOCKET_TYPE) (nethuns_pcap_t *s)
 #ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 {
