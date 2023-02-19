@@ -39,17 +39,16 @@ add_executable(pure-pcap-meter-mt   src/pure-meter-pcap-mt.cpp)
 add_executable(pure-pcap-forward    src/pure-forward-pcap.cpp)
 add_executable(pure-pcap-forward-mt src/pure-forward-pcap-mt.cpp)
 
-
 target_link_libraries(nethuns-file-pcap-mt  ${NETHUNS_LIBS} -pthread)
 
 target_link_libraries(nethuns-test       	${NETHUNS_LIBS} -pthread)
-target_link_libraries(nethuns-meter-mt      	${NETHUNS_LIBS} -pthread)
+target_link_libraries(nethuns-meter-mt      ${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-send       	${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-forward    	${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-forward-mt 	${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-file-pcap  	${NETHUNS_LIBS} -pthread)
-target_link_libraries(nethuns-meter         	${NETHUNS_LIBS} -pthread)
-target_link_libraries(nethuns-filter        	${NETHUNS_LIBS} -pthread)
+target_link_libraries(nethuns-meter         ${NETHUNS_LIBS} -pthread)
+target_link_libraries(nethuns-filter        ${NETHUNS_LIBS} -pthread)
 
 target_link_libraries(pure-pcap-forward      -pthread ${LIBPCAP_LIBRARY})
 target_link_libraries(pure-pcap-forward-mt   -pthread ${LIBPCAP_LIBRARY})

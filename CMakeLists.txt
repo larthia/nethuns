@@ -104,7 +104,7 @@ if (NETHUNS_OPT_XDP)
 endif()
 
 if (NETHUNS_OPT_LIBPCAP)
-    message("Nethuns: libpcap ENABLEd")
+    message("Nethuns: libpcap ENABLED")
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()
