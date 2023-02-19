@@ -12,7 +12,10 @@ set(NETHUNS_CAPTURE_SOCKET "libpcap" CACHE STRING "Nethuns underlying capture en
 set_property(CACHE NETHUNS_CAPTURE_SOCKET PROPERTY STRINGS libpcap tpacket3 xdp netmap)
 
 set(NETHUNS_LIBS)
-    
+   
+set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/usr/local/include" "/opt/include" "/opt/homebrew/include" "/opt/homebrew/opt/libpcap/include")
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/usr/local/lib" "/opt/lib" "/opt/homebrew/lib" "/opt/homebrew/opt/libpcap/lib")
+
 find_library(LIBPCAP_LIBRARY pcap)
 find_library(LIBBPF_LIBRARY bpf)
 find_library(LIBELF_LIBRARY elf)

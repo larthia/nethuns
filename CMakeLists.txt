@@ -10,11 +10,15 @@ project (nethuns)
 # Compiler options...
 #
 
-# set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")
-# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow -fsanitize=address -fsanitize=undefined")
+string(FIND "${CMAKE_CXX_COMPILER_ID}" "Clang" CLANG_SUBSTRING_INDEX)
+if ("${CLANG_SUBSTRING_INDEX}" GREATER -1)
+    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -fomit-frame-pointer -Wall -Wextra -Wshadow")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -fomit-frame-pointer -Wall -Wextra -Wshadow")
+else()
+    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
+endif()
 
-set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -26,8 +30,11 @@ option(NETHUNS_OPT_NETMAP               "Enable Netmap support" OFF)
 
 add_definitions(-D_GNU_SOURCE)
 
-find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
+set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/usr/local/include" "/opt/include" "/opt/homebrew/include" "/opt/homebrew/opt/libpcap/include")
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/usr/local/lib" "/opt/lib" "/opt/homebrew/lib" "/opt/homebrew/opt/libpcap/lib")
+
 find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
+find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
 
 include_directories(${LIBPCAP_INCLUDE_DIR})
 include_directories(/usr/local/include/ src)
