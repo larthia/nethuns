@@ -21,7 +21,13 @@ else()
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 endif()
 
-include_directories(/usr/local/include/ . ../src)
+set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/usr/local/include" "/opt/include" "/opt/homebrew/include" "/opt/homebrew/opt/libpcap/include")
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/usr/local/lib" "/opt/lib" "/opt/homebrew/lib" "/opt/homebrew/opt/libpcap/lib")
+
+find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
+find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
+
+include_directories(${LIBPCAP_INCLUDE_DIR} /usr/local/include/ . ../src)
 link_directories(/usr/local/lib)
 
 add_executable(nethuns-test         src/test.c)

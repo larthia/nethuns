@@ -46,6 +46,7 @@
 
 #define nethuns_rxhash(...)         nethuns_rxhash_tpacket_v3(__VA_ARGS__)
 #define nethuns_dump_rings(...)     nethuns_dump_rings_tpacket_v3(__VA_ARGS__)
+#define nethuns_pcap_dump_rings(...) nethuns_pcap_dump_rings_tpacket_v3(__VA_ARGS__)
 #define nethuns_stats(...)          nethuns_stats_tpacket_v3(__VA_ARGS__)
 
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_tpacket_v3(__VA_ARGS__)
@@ -86,6 +87,7 @@
 
 #define nethuns_rxhash(...)         nethuns_rxhash_netmap(__VA_ARGS__)
 #define nethuns_dump_rings(...)     nethuns_dump_rings_netmap(__VA_ARGS__)
+#define nethuns_pcap_dump_rings(...) nethuns_pcap_dump_rings_netmap(__VA_ARGS__)
 #define nethuns_stats(...)          nethuns_stats_netmap(__VA_ARGS__)
 
 #define nethuns_offvlan_tci(...)    nethuns_offvlan_tci_netmap(__VA_ARGS__)
@@ -125,6 +127,7 @@
 #define nethuns_set_len(...)        nethuns_set_len_libpcap(__VA_ARGS__)
 
 #define nethuns_dump_rings(...)     nethuns_dump_rings_libpcap(__VA_ARGS__)
+#define nethuns_pcap_dump_rings(...)     nethuns_pcap_dump_rings_libpcap(__VA_ARGS__)
 #define nethuns_stats(...)          nethuns_stats_libpcap(__VA_ARGS__)
 
 #define nethuns_rxhash(...)         nethuns_rxhash_libpcap(__VA_ARGS__)
@@ -166,6 +169,7 @@
 #define nethuns_set_len(...)        nethuns_set_len_xdp(__VA_ARGS__)
 
 #define nethuns_dump_rings(...)     nethuns_dump_rings_xdp(__VA_ARGS__)
+#define nethuns_pcap_dump_rings(...)     nethuns_pcap_dump_rings_xdp(__VA_ARGS__)
 #define nethuns_stats(...)          nethuns_stats_xdp(__VA_ARGS__)
 
 #define nethuns_rxhash(...)         nethuns_rxhash_xdp(__VA_ARGS__)

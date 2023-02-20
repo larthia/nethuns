@@ -26,11 +26,11 @@ extern "C" {
 nethuns_pcap_t *
 nethuns_pcap_open_libpcap(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
-int 
+int
 nethuns_pcap_close_libpcap(nethuns_pcap_t *p);
 
 uint64_t
-nethuns_pcap_read_libpcap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+nethuns_pcap_read_libpcap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
 
 int
 nethuns_pcap_write_libpcap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
@@ -38,9 +38,11 @@ nethuns_pcap_write_libpcap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *
 int
 nethuns_pcap_store_libpcap(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
-int 
+int
 nethuns_pcap_rewind_libpcap(nethuns_pcap_t *s);
 
+void
+nethuns_pcap_dump_rings_libpcap(nethuns_pcap_t *s);
 
 struct nethuns_socket_libpcap *
 nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf);

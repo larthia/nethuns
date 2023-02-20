@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 #include <limits.h>
 
@@ -48,6 +49,8 @@ struct nethuns_ring_slot
     struct pcap_pkthdr      pkthdr;
 #elif NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     struct xdp_pkthdr       pkthdr;
+#else
+#error "NETHUNS_SOCKET not defined"
 #endif
     uint64_t                id;
     int                     inuse;
@@ -55,7 +58,7 @@ struct nethuns_ring_slot
 
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     unsigned char           *packet;
-    uint64_t 		    addr;
+    uint64_t 		        addr;
 #else
     unsigned char           packet[];
 #endif
@@ -168,7 +171,7 @@ nethuns_ring_free_slots(struct nethuns_ring *ring, nethuns_free_slot_t cb, void 
 
 #define nethuns_tx_release(_sock, _pktid) do \
 { \
-    __atomic_store_n(&nethuns_ring_get_slot(&nethuns_socket(_sock)->tx_ring, (_pktid)-1)->inuse, 0, __ATOMIC_RELEASE); \
+    __atomic_store_n(&(nethuns_ring_get_slot(&nethuns_socket(_sock)->tx_ring, (_pktid)-1)->inuse), 0, __ATOMIC_RELEASE); \
 } while (0)
 
 
@@ -196,4 +199,3 @@ nethuns_txring_get_size(nethuns_socket_t *s)
 {
     return nethuns_socket(s)->tx_ring.mask + 1;
 }
-

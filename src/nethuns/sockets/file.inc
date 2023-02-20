@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <time.h>
 #include <string.h>
 
@@ -160,7 +161,7 @@ TEMPLATE(nethuns_pcap_open_,SOCKET_TYPE) (struct nethuns_socket_options *opt, co
 }
 
 
-int 
+int
 TEMPLATE(nethuns_pcap_close_,SOCKET_TYPE) (nethuns_pcap_t *p)
 {
     if (p->r) {
@@ -217,12 +218,12 @@ TEMPLATE(nethuns_pcap_read_,SOCKET_TYPE) (nethuns_pcap_t *p, nethuns_pkthdr_t co
 
     bytes = MIN(caplen, pcaphdr->caplen);
 
-    nethuns_tstamp_set_sec ((&slot->pkthdr), pcaphdr->ts.tv_sec);
+    nethuns_tstamp_set_sec (&slot->pkthdr, pcaphdr->ts.tv_sec);
     if (p->magic == NSEC_TCPDUMP_MAGIC) {
-        nethuns_tstamp_set_nsec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+        nethuns_tstamp_set_nsec(&slot->pkthdr, pcaphdr->ts.tv_usec);
     }
     else {
-        nethuns_tstamp_set_usec((&slot->pkthdr), pcaphdr->ts.tv_usec);
+        nethuns_tstamp_set_usec(&slot->pkthdr, pcaphdr->ts.tv_usec);
     }
 
     nethuns_set_len (&slot->pkthdr, pcaphdr->len);
@@ -382,7 +383,7 @@ TEMPLATE(nethuns_pcap_store_,SOCKET_TYPE) (nethuns_pcap_t *s, nethuns_pkthdr_t c
 #endif
 
 
-int 
+int
 TEMPLATE(nethuns_pcap_rewind_,SOCKET_TYPE) (nethuns_pcap_t *s)
 #ifdef NETHUNS_USE_BUILTIN_PCAP_READER
 {
@@ -394,3 +395,41 @@ TEMPLATE(nethuns_pcap_rewind_,SOCKET_TYPE) (nethuns_pcap_t *s)
     return -1;
 }
 #endif
+
+
+void
+TEMPLATE(nethuns_pcap_dump_rings_,SOCKET_TYPE) (nethuns_pcap_t *s)
+{
+    struct nethuns_ring *rx_ring = &s->base.rx_ring;
+    struct nethuns_ring *tx_ring = &s->base.tx_ring;
+    size_t i;
+
+    fprintf(stdout, "(RX) dev:%s ifindex:%d queue:%d\n", nethuns_socket(s)->devname, nethuns_socket(s)->ifindex, nethuns_socket(s)->queue);
+    fprintf(stdout, "     size:%lu pktsize:%lu head:%llu tail:%llu mask:%lu shift:%lu ring@%p [slot_size:%lu, offset:%lu]\n",
+        rx_ring->size, rx_ring->pktsize, rx_ring->head, rx_ring->tail, rx_ring->mask, rx_ring->shift, rx_ring->ring, sizeof(struct nethuns_ring_slot)
+        , offsetof(struct nethuns_ring_slot, inuse));
+
+    for (i = 0; i < rx_ring->size; i++) {
+        struct nethuns_ring_slot * slot = nethuns_ring_get_slot(rx_ring, i);
+        int inuse = __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE);
+        if (inuse) {
+            fprintf(stdout, "     rx-slot[%zd]@%p inuse:%d(@%p) ring_id:%llu len:%d\n", i, slot, inuse, &slot->inuse, slot->id, slot->len);
+        } else {
+            fprintf(stdout, "     rx-slot[%zd]@%p free\n", i, slot);
+        }
+    }
+
+    fprintf(stdout, "(TX) dev:%s ifindex:%d queue:%d\n", nethuns_socket(s)->devname, nethuns_socket(s)->ifindex, nethuns_socket(s)->queue);
+    fprintf(stdout, "     size:%lu pktsize:%lu head:%llu tail:%llu mask:%lu shift:%lu ring@%p\n",
+        tx_ring->size, tx_ring->pktsize, tx_ring->head, tx_ring->tail, tx_ring->mask, tx_ring->shift, tx_ring->ring);
+
+    for (i = 0; i < tx_ring->size; i++) {
+        struct nethuns_ring_slot * slot = nethuns_ring_get_slot(tx_ring, i);
+        int inuse = __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE);
+        if (inuse) {
+            fprintf(stdout, "     tx-slot[%zd]@%p inuse:%d(@%p) ring_id:%llu len:%d\n", i, slot, inuse, &slot->inuse, slot->id, slot->len);
+        } else {
+            fprintf(stdout, "     tx-slot[%zd]@%p free\n", i, slot);
+        }
+    }
+}

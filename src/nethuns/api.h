@@ -52,6 +52,7 @@ extern "C" {
     int nethuns_fanout(nethuns_socket_t * s, int group, const char *fanout);
 
     void nethuns_dump_rings(nethuns_socket_t * s);
+    void nethuns_pcap_dump_rings(nethuns_pcap_t * s);
 
     int nethuns_stats(nethuns_socket_t * s, struct nethuns_stat *);
 
