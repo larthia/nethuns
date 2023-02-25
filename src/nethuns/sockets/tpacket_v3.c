@@ -32,7 +32,7 @@
 
 
 struct nethuns_socket_tpacket_v3 *
-nethuns_open_tpacket_v3(struct nethuns_socket_options const *opt, char *errbuf)
+nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_tpacket_v3 * sock;
     int fd, err, v = TPACKET_V3;

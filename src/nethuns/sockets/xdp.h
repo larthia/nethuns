@@ -73,7 +73,7 @@ int
 nethuns_pcap_rewind_xdp(nethuns_pcap_t *s);
 
 struct nethuns_socket_xdp *
-nethuns_open_xdp(struct nethuns_socket_options const *opt, char *errbuf);
+nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf);
 
 int
 nethuns_close_xdp(struct nethuns_socket_xdp *s);

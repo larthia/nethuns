@@ -415,7 +415,7 @@ unload_xdp_program(struct nethuns_socket_xdp *s)
 
 
 struct nethuns_socket_xdp *
-nethuns_open_xdp(struct nethuns_socket_options const *opt, char *errbuf)
+nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf)
 {
     struct nethuns_socket_xdp *s;
     unsigned int n;

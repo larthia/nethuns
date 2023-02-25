@@ -50,7 +50,7 @@ nethuns_pcap_rewind_netmap(nethuns_pcap_t *s);
 
 
 struct nethuns_socket_netmap *
-nethuns_open_netmap(struct nethuns_socket_options const *opt, char *errbuf);
+nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf);
 
 int nethuns_close_netmap(struct nethuns_socket_netmap *s);
 

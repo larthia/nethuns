@@ -5,7 +5,7 @@
 #include "hdr/options.h"
 
 static int
-run_capture(struct options const *opt) {
+run_capture(struct options *opt) {
     char errbuf[NETHUNS_ERRBUF_SIZE];
     nethuns_socket_t *s;
 
@@ -48,7 +48,7 @@ run_capture(struct options const *opt) {
 }
 
 static int
-run_meter(struct options const *opt) {
+run_meter(struct options *opt) {
     char errbuf[NETHUNS_ERRBUF_SIZE];
     nethuns_socket_t *s;
 
@@ -57,7 +57,7 @@ run_meter(struct options const *opt) {
 }
 
 int
-run(struct options const *opt) {
+run(struct options *opt) {
     if (opt->meter)
         return run_meter(opt);
     else
