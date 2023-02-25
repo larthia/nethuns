@@ -119,14 +119,13 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool v
 {
     const char *tstamp = print_timestamp(nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr));
 
-    printf("%s [%u:%u] snap:%u len:%u [tci:%x tpid:%x vid:%d] rxhash:0x%x > ", tstamp, nethuns_tstamp_sec(hdr)
-                                                                            , nethuns_tstamp_nsec(hdr)
-                                                                            , nethuns_snaplen(hdr)
-                                                                            , nethuns_len(hdr)
-                                                                            , nethuns_vlan_tci_(hdr, frame)
-                                                                            , nethuns_vlan_tpid_(hdr, frame)
-                                                                            , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
-                                                                            , nethuns_rxhash(hdr));
+    printf("%s snap:%u len:%u [tci:%x tpid:%x vid:%d] rxhash:0x%x > ", tstamp
+                                                                     , nethuns_snaplen(hdr)
+                                                                     , nethuns_len(hdr)
+                                                                     , nethuns_vlan_tci_(hdr, frame)
+                                                                     , nethuns_vlan_tpid_(hdr, frame)
+                                                                     , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
+                                                                     , nethuns_rxhash(hdr));
 
     dump_parsed_packet(hdr, frame, verbose);
 }
