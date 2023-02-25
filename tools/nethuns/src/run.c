@@ -34,7 +34,7 @@ run_capture(struct options *opt) {
 
         if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
-            dump_packet(pkthdr, frame, opt->verbose);
+            dump_frame(pkthdr, frame, opt->verbose);
             nethuns_rx_release(s, pkt_id);
             i++;
         } else {
