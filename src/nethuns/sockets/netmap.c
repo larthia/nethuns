@@ -28,7 +28,7 @@
 
 
 struct nethuns_socket_netmap *
-nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)
+nethuns_open_netmap(struct nethuns_socket_options const *opt, char *errbuf)
 {
     struct nethuns_socket_netmap *s;
 

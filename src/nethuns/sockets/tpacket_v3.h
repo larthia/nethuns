@@ -25,7 +25,7 @@
 
 //
 // Workaround: if __LINUX_TYPES_H is defined, then we are compiling against the broken linux/types.h of libbpf.
-// To fix it, we need to add the following typedefs before including <linux/ip.h> 
+// To fix it, we need to add the following typedefs before including <linux/ip.h>
 // https://patchwork.ozlabs.org/project/netdev/patch/20190518004639.20648-2-mcroce@redhat.com/
 
 #ifdef __LINUX_TYPES_H
@@ -91,11 +91,11 @@ extern "C" {
 nethuns_pcap_t *
 nethuns_pcap_open_tpacket_v3(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
-int 
+int
 nethuns_pcap_close_tpacket_v3(nethuns_pcap_t *p);
 
 uint64_t
-nethuns_pcap_read_tpacket_v3(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+nethuns_pcap_read_tpacket_v3(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
 
 int
 nethuns_pcap_write_tpacket_v3(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
@@ -103,12 +103,12 @@ nethuns_pcap_write_tpacket_v3(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr cons
 int
 nethuns_pcap_store_tpacket_v3(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
-int 
+int
 nethuns_pcap_rewind_tpacket_v3(nethuns_pcap_t *s);
 
 
 struct nethuns_socket_tpacket_v3 *
-nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf);
+nethuns_open_tpacket_v3(struct nethuns_socket_options const *opt, char *errbuf);
 
 int
 nethuns_close_tpacket_v3(struct nethuns_socket_tpacket_v3 *s);
@@ -229,4 +229,3 @@ nethuns_offvlan_tpid_tpacket_v3(struct tpacket3_hdr const *hdr) {
 #ifdef __cplusplus
 }
 #endif
-

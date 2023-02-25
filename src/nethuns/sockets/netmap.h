@@ -32,11 +32,11 @@ extern "C" {
 nethuns_pcap_t *
 nethuns_pcap_open_netmap(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
-int 
+int
 nethuns_pcap_close_netmap(nethuns_pcap_t *p);
 
 uint64_t
-nethuns_pcap_read_netmap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+nethuns_pcap_read_netmap(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
 
 int
 nethuns_pcap_write_netmap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
@@ -44,13 +44,13 @@ nethuns_pcap_write_netmap(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *h
 int
 nethuns_pcap_store_netmap(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
-int 
+int
 nethuns_pcap_rewind_netmap(nethuns_pcap_t *s);
 
 
 
-struct nethuns_socket_netmap * 
-nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf);
+struct nethuns_socket_netmap *
+nethuns_open_netmap(struct nethuns_socket_options const *opt, char *errbuf);
 
 int nethuns_close_netmap(struct nethuns_socket_netmap *s);
 
@@ -152,4 +152,3 @@ nethuns_offvlan_tci_netmap(__maybe_unused struct netmap_pkthdr const *hdr) {
 #ifdef __cplusplus
 }
 #endif
-

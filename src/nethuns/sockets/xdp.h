@@ -57,11 +57,11 @@ extern "C" {
 nethuns_pcap_t *
 nethuns_pcap_open_xdp(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
-int 
+int
 nethuns_pcap_close_xdp(nethuns_pcap_t *p);
 
 uint64_t
-nethuns_pcap_read_xdp(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload); 
+nethuns_pcap_read_xdp(nethuns_pcap_t *p, nethuns_pkthdr_t const **pkthdr, uint8_t const **payload);
 
 int
 nethuns_pcap_write_xdp(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
@@ -69,16 +69,16 @@ nethuns_pcap_write_xdp(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *head
 int
 nethuns_pcap_store_xdp(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
 
-int 
+int
 nethuns_pcap_rewind_xdp(nethuns_pcap_t *s);
 
 struct nethuns_socket_xdp *
-nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf);
+nethuns_open_xdp(struct nethuns_socket_options const *opt, char *errbuf);
 
-int 
+int
 nethuns_close_xdp(struct nethuns_socket_xdp *s);
 
-int 
+int
 nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue);
 
 uint64_t
@@ -189,4 +189,3 @@ rx_frame(struct nethuns_socket_xdp *s, uint64_t idx)
 #ifdef __cplusplus
 }
 #endif
-

@@ -30,7 +30,7 @@
 
 
 struct nethuns_socket_libpcap *
-nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf)
+nethuns_open_libpcap(struct nethuns_socket_options const *opt, char *errbuf)
 {
     struct nethuns_socket_libpcap *sock;
 
