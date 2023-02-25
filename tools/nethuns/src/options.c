@@ -29,11 +29,13 @@ void help(const char* progname) {
             "  -i device         Name of the device to capture packets from\n"
             "  -q queue          Queue ID to capture packets from (default -1)\n"
             "  -v                Enable verbose output\n"
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
             "  -P xdp_prog       Name of the XDP program to load\n"
             "  -S xdp_prog_sec   Name of the XDP program section to load\n"
             "  -K xsk_map_name   Name of the XDP shared memory map\n"
             "  -d pin_dir        Directory to pin XDP program and maps in\n"
             "  -R                Reuse existing maps when loading XDP program\n"
+#endif
             "  -Y                Run meter, don't print packets\n"
             "  -V                Print version information and exit\n"
             "  -h                Print this help message and exit\n",
@@ -68,7 +70,11 @@ parse_opt(int argc, char *argv[]) {
     };
 
     int c;
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
     while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:P:S:K:d:RYh?V")) != -1)
+#else
+    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:Yh?V")) != -1)
+#endif
     {
         switch (c)
         {
@@ -137,6 +143,7 @@ parse_opt(int argc, char *argv[]) {
         case 'v':
             ret.verbose = true;
             break;
+#if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
         case 'P':
             ret.sopt.xdp_prog = optarg;
             break;
@@ -152,6 +159,7 @@ parse_opt(int argc, char *argv[]) {
         case 'R':
             ret.sopt.reuse_maps = true;
             break;
+#endif
         case 'Y':
             ret.meter = true;
             break;
