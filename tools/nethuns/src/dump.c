@@ -5,7 +5,12 @@
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
+#include <netinet/if_ether.h>
+#ifdef __linux__
 #include <netinet/ether.h>
+#else
+#include <net/ethernet.h>
+#endif
 
 #include <ctype.h>
 #include <sys/time.h>
