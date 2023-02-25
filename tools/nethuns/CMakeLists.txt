@@ -31,9 +31,8 @@ include_directories(${LIBPCAP_INCLUDE_DIR} /usr/local/include/ . ../src)
 link_directories(/usr/local/lib)
 
 add_executable(nethuns-dump src/main.c
-                      src/options.c
-                      src/dump.c
-                      src/run.c
-                  )
+                            src/options.c
+                            src/dump.c
+                            src/run.c)
 
 target_link_libraries(nethuns-dump ${NETHUNS_LIBS} ${LIBPCAP_LIBRARY} -pthread)
