@@ -30,7 +30,7 @@ find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
 include_directories(${LIBPCAP_INCLUDE_DIR} /usr/local/include/ . ../src)
 link_directories(/usr/local/lib)
 
-add_executable(nethuns-test         src/test.c)
+add_executable(nethuns-capture      src/capture.c)
 add_executable(nethuns-send         src/send.cpp)
 add_executable(nethuns-meter        src/meter.cpp)
 add_executable(nethuns-filter       src/filter.cpp)
@@ -47,7 +47,7 @@ add_executable(pure-pcap-forward-mt src/pure-forward-pcap-mt.cpp)
 
 target_link_libraries(nethuns-file-pcap-mt  ${NETHUNS_LIBS} -pthread)
 
-target_link_libraries(nethuns-test       	${NETHUNS_LIBS} -pthread)
+target_link_libraries(nethuns-capture       ${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-meter-mt      ${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-send       	${NETHUNS_LIBS} -pthread)
 target_link_libraries(nethuns-forward    	${NETHUNS_LIBS} -pthread)
