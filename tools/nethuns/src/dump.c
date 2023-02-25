@@ -27,16 +27,7 @@ print_timestamp(uint32_t sec, uint32_t nsec) {
 
 void dump_parsed_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool verbose)
 {
-    struct timeval tv;
-    tv.tv_sec = nethuns_tstamp_sec(hdr);
-    tv.tv_usec = nethuns_tstamp_nsec(hdr) / 1000;
-
-    char timestr[64];
-    time_t t = (time_t)tv.tv_sec;
     uint32_t i = 0;
-
-    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-    snprintf(timestr + strlen(timestr), sizeof(timestr) - strlen(timestr), ".%06d", (int)tv.tv_usec);
 
     // non offloaded vlan offset, if any
     uint32_t vlan_offset = 0;
@@ -48,7 +39,7 @@ void dump_parsed_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame,
     // IP header
     struct ip *ip_hdr = (struct ip *)(frame + sizeof(struct ether_header) + vlan_offset);
     uint32_t ip_hdr_len = ip_hdr->ip_hl * 4;
-    if (ip_hdr->ip_v == 4 && ip_hdr_len >= 20 && ip_hdr_len <= nethuns_len(hdr) - sizeof(struct ether_header) + vlan_offset)
+    if (ip_hdr->ip_v == 4 && ip_hdr_len >= 20 && ip_hdr_len <= (nethuns_len(hdr) - sizeof(struct ether_header) + vlan_offset))
     {
         printf("IP: %s -> %s: ", inet_ntoa(ip_hdr->ip_src), inet_ntoa(ip_hdr->ip_dst));
 
@@ -62,7 +53,6 @@ void dump_parsed_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame,
                 printf("TCP: %d -> %d\n", ntohs(tcp_hdr->th_sport), ntohs(tcp_hdr->th_dport));
             }
         }
-
         // UDP header
         else if (ip_hdr->ip_p == IPPROTO_UDP)
         {
@@ -90,8 +80,12 @@ void dump_parsed_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame,
             {
                 printf("%02x ", frame[i]);
             }
+
+            printf("\n");
         }
 
+    } else {
+        printf("Non IPv4 packet\n");
     }
 
     if (verbose)
