@@ -42,6 +42,8 @@ try
         return 0;
     }
 
+    nethuns_init();
+
     bool count = strcmp(argv[1],"count") == 0;
 
     if (strcmp(argv[1], "read") == 0 || strcmp(argv[1], "count") == 0)

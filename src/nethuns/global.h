@@ -45,8 +45,8 @@ extern "C" {
 
 	extern struct nethuns_global __nethuns_global;
 
-	extern void __attribute__((constructor)) nethuns_global_init();
-	extern void __attribute__((destructor)) nethuns_global_fini();
+	extern void nethuns_init();
+	extern void __attribute__((destructor)) nethuns_fini();
 
 	static inline
 	void nethuns_lock_global()

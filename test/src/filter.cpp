@@ -68,6 +68,8 @@ try
         return 0;
     }
 
+    nethuns_init();
+
     struct nethuns_socket_options opt =
     {
         .numblocks       = 1

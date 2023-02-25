@@ -44,6 +44,8 @@ main(int argc, char *argv[])
         return 0;
     }
 
+    nethuns_init();
+
     struct nethuns_socket_options opt =
     {
         .numblocks       = 4

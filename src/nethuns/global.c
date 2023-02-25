@@ -17,13 +17,10 @@
 
 struct nethuns_global __nethuns_global;
 
-
-void __attribute__ ((constructor))
-nethuns_global_init() {
-
+void
+nethuns_init() {
     pthread_mutex_init(&__nethuns_global.m, NULL);
-
-    nethuns_fprintf(stderr, "initializing...\n");
+    nethuns_fprintf(stderr, "initializing %s...\n", nethuns_version());
 
     if (hashmap_create(64, &__nethuns_global.netinfo_map)) {
 		nethuns_fprintf(stderr, "could not create netinfo hashmap\n");
@@ -43,9 +40,11 @@ nethuns_global_init() {
 }
 
 void __attribute__ ((destructor))
-nethuns_global_fini() {
-    nethuns_fprintf(stderr, "cleanup...\n");
-    hashmap_destroy(&__nethuns_global.netinfo_map);
+nethuns_fini() {
+    if (__nethuns_global.netinfo_map.data != NULL) {
+        nethuns_fprintf(stderr, "cleanup...\n");
+        hashmap_destroy(&__nethuns_global.netinfo_map);
+    }
 }
 
 struct nethuns_netinfo *

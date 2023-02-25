@@ -42,6 +42,8 @@ try
         return 0;
     }
 
+    nethuns_init();
+
     queue = nethuns_spsc_init(65536, sizeof(nethuns_packet));
     if (!queue) {
         throw std::runtime_error("nethuns_spsc: internal error");

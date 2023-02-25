@@ -212,6 +212,8 @@ main(int argc, char *argv[])
         return 1;
     }
 
+    nethuns_init();
+
     std::cout << "\nTest " << argv[0] << " started with parameters \n"
                             << "* interface: " << interface << " \n"
                             << "* batch_size: " << batch_size << " \n"

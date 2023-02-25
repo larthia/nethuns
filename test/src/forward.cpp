@@ -56,6 +56,8 @@ try
         return 0;
     }
 
+    nethuns_init();
+
     std::thread(meter).detach();
 
     struct nethuns_socket_options in_opt =

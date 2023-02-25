@@ -15,7 +15,6 @@
 #include "types.h"
 
 #define NETHUNS_GLOBAL \
-    void (*__nethuns_init)() = nethuns_global_init; \
     void (*__nethuns_fini)() = nethuns_global_fini;
 
 
