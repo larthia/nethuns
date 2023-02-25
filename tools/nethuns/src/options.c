@@ -158,8 +158,10 @@ parse_opt(int argc, char *argv[]) {
             fprintf(stderr, "version: %s, %s\n", version, nethuns_version());
             exit(EXIT_SUCCESS);
         case 'h':
+	    __attribute__ ((fallthrough));
         case '?':
             help("nethuns");
+	    break;
         default:
             fprintf(stderr, "invalid option: %c", c);
             exit(EXIT_FAILURE);

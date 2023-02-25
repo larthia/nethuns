@@ -6,7 +6,6 @@
 
 #include <ctype.h>
 
-#define __USE_MISC
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
@@ -41,7 +40,7 @@ void dump_parsed_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame,
 
     // non offloaded vlan offset, if any
     uint32_t vlan_offset = 0;
-    if (nethuns_vlan_tci(hdr) != 0)
+    if (nethuns_vlan_tci(frame) != 0)
     {
         vlan_offset = 4;
     }
