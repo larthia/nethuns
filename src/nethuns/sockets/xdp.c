@@ -702,15 +702,19 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
     // get timestamp...
 
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
-
     struct xdp_pkthdr header = {
-        .sec     = (int32_t)tp.tv_sec
-      , .nsec    = (int32_t)tp.tv_nsec
+        .sec     = 0
+      , .nsec    = 0
       , .len     = len
       , .snaplen = len
     };
+
+    if (nethuns_socket(s)->opt.timestamp) {
+        struct timespec tp;
+        clock_gettime(CLOCK_REALTIME_COARSE, &tp);
+        header.sec  = (int32_t)tp.tv_sec;
+        header.nsec = (int32_t)tp.tv_nsec;
+    }
 
     if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt))
     {

@@ -328,6 +328,7 @@ main(int argc, char *argv[])
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_zero_copy
     ,   .mode            = nethuns_socket_rx_tx
+    ,   .timestamp       = true
     ,   .promisc         = true
     ,   .rxhash          = false
     ,   .tx_qdisc_bypass = true

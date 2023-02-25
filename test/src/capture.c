@@ -54,6 +54,7 @@ main(int argc, char *argv[])
     ,   .dir             = nethuns_in_out
     ,   .capture         = nethuns_cap_default
     ,   .mode            = nethuns_socket_rx_tx
+    ,   .timestamp       = true
     ,   .promisc         = true
     ,   .rxhash          = true
     ,   .tx_qdisc_bypass = false
