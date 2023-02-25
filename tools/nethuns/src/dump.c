@@ -318,8 +318,8 @@ dump_frame(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool verbose
     if (nethuns_vlan_tpid_(hdr, frame)) {
 
         printf("%s len:%u/%u [tci:%x tpid:%x vid:%d] %s", tstamp
-                                                             , nethuns_len(hdr)
                                                              , nethuns_snaplen(hdr)
+                                                             , nethuns_len(hdr)
                                                              , nethuns_vlan_tci_(hdr, frame)
                                                              , nethuns_vlan_tpid_(hdr, frame)
                                                              , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
@@ -328,8 +328,8 @@ dump_frame(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool verbose
     } else {
 
         printf("%s len:%u/%u %s", tstamp
-                                     , nethuns_len(hdr)
                                      , nethuns_snaplen(hdr)
+                                     , nethuns_len(hdr)
                                      , rxhash);
     }
 
