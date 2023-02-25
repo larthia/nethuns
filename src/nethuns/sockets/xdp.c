@@ -703,7 +703,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
     // get timestamp...
 
     struct timespec tp;
-    //clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
+    clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
 
     struct xdp_pkthdr header = {
         .sec     = (int32_t)tp.tv_sec
