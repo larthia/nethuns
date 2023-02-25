@@ -32,7 +32,6 @@
 typedef __u16 __bitwise __sum16;
 typedef __u32 __bitwise __wsum;
 #endif
-#include <linux/ip.h>
 
 
 #include "../types.h"
