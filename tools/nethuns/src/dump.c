@@ -16,6 +16,26 @@
 #include <sys/time.h>
 #include <sys/param.h>
 
+#ifdef __APPLE__
+
+char *
+ether_ntoa_r(const struct ether_addr *addr, char *buf)
+{
+    static const char lookup[] = "0123456789abcdef";
+    unsigned long x = 0U;
+    for(unsigned long i = 0; i < sizeof(addr->octet); i++)
+    {
+        buf[x++] = lookup[addr->octet[i] >> 4];
+        buf[x++] = lookup[addr->octet[i] & 0xf];
+        if (i < (sizeof(addr->octet)-1))
+            buf[x++]= ':';
+    }
+    buf[x] = '\0';
+    return buf;
+}
+#endif
+
+
 const char *
 print_timestamp(uint32_t sec, uint32_t nsec) {
     static char timestr[64];
@@ -211,8 +231,7 @@ dump_arp_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame) {
         return;
     }
 
-    char eth_src[INET_ADDRSTRLEN];
-    char eth_dst[INET_ADDRSTRLEN];
+    char eth_src[20], eth_dst[20];
 
     struct ether_arp *arp_hdr = (struct ether_arp *)(frame + sizeof(struct ether_header));
 
