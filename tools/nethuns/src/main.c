@@ -6,6 +6,7 @@
 
 #include <nethuns/nethuns.h>
 #include <stdio.h>
+#include <signal.h>
 
 #include "nethuns/define.h"
 #include "nethuns/types.h"
@@ -14,11 +15,19 @@
 #include "hdr/dump.h"
 #include "hdr/run.h"
 
+void sighandler(int sig)
+{
+    exit(0);
+}
+
 int
 main(int argc, char *argv[])
 {
     struct options opt = parse_opt(argc, argv);
 
     validate_options(&opt);
+
+    signal(SIGINT, sighandler);
+
     return run(&opt);
 }

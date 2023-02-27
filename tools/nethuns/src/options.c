@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include <nethuns/nethuns.h>
 
@@ -13,7 +14,7 @@ void help(const char* progname) {
     fprintf(stdout,
             "Usage: %s [-b num_blocks] [-r num_packets] [-s packet_size] [-t timeout_ms]\n"
             "           [-Q direction] [-C capture_mode] [-M socket_mode] [-p] [-x] [-i device]\n"
-            "           [-q queue] [-v] [-P xdp_prog] [-S xdp_prog_sec] [-K xsk_map_name]\n"
+            "           [-q queue] [-c count] [-v] [-P xdp_prog] [-S xdp_prog_sec] [-K xsk_map_name]\n"
             "           [-d pin_dir] [-R] [-Y] [-V] [-h]\n"
             "\n"
             "Options:\n"
@@ -28,6 +29,7 @@ void help(const char* progname) {
             "  -x                Enable bypass of the tx queue discipline\n"
             "  -i device         Name of the device to capture packets from\n"
             "  -q queue          Queue ID to capture packets from (default -1)\n"
+            "  -c count          Exit after capturing count packets\n"
             "  -v                Enable verbose output\n"
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
             "  -P xdp_prog       Name of the XDP program to load\n"
@@ -48,6 +50,7 @@ parse_opt(int argc, char *argv[]) {
     struct options ret = {
         .dev = NULL,
         .queue = NETHUNS_ANY_QUEUE,
+        .count = UINT64_MAX,
         .meter = false,
         .sopt = {
                     .numblocks       = 1
@@ -71,9 +74,9 @@ parse_opt(int argc, char *argv[]) {
 
     int c;
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
-    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:P:S:K:d:RYh?V")) != -1)
+    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:c:P:S:K:d:RYh?V")) != -1)
 #else
-    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:Yh?V")) != -1)
+    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:c:Yh?V")) != -1)
 #endif
     {
         switch (c)
@@ -140,6 +143,9 @@ parse_opt(int argc, char *argv[]) {
         case 'q':
             ret.queue = atoi(optarg);
             break;
+        case 'c':
+            ret.count = atoi(optarg);
+            break;
         case 'v':
             ret.verbose = true;
             break;
@@ -169,7 +175,7 @@ parse_opt(int argc, char *argv[]) {
         case 'h':
 	    __attribute__ ((fallthrough));
         case '?':
-            help("nethuns");
+            help("nethuns-dump");
 	    break;
         default:
             fprintf(stderr, "invalid option: %c", c);

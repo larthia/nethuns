@@ -27,8 +27,7 @@ run_capture(struct options *opt) {
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
-    fprintf(stderr, "reading...\n");
-    for(int i =0; i < 1000;)
+    for(uint64_t i =0; i < opt->count;)
     {
         uint64_t pkt_id;
 
