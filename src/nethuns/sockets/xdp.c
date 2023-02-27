@@ -612,7 +612,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
         if (__nethuns_set_if_promisc(s, dev) < 0) {
             nethuns_perror(s->base.errbuf, "bind: could not set promisc (%s)", nethuns_dev_queue_name(dev, queue));
             return -1;
-	}
+	    }
     }
 
     nethuns_lock_global();
@@ -620,7 +620,7 @@ int nethuns_bind_xdp(struct nethuns_socket_xdp *s, const char *dev, int queue)
     struct nethuns_netinfo *info = nethuns_lookup_netinfo(dev);
 
     if (info->xdp_prog_id == 0) {
-	// the library has loaded the default program, retrieve its id
+	    // the library has loaded the default program, retrieve its id
         if (bpf_get_link_xdp_id(nethuns_socket(s)->ifindex, &info->xdp_prog_id, s->xdp_flags))
         {
             nethuns_perror(nethuns_socket(s)->errbuf, "bpf_get_link_id: get link xpd failed");

@@ -15,9 +15,11 @@
 #include "hdr/dump.h"
 #include "hdr/run.h"
 
+int sig_shutdown;
+
 void sighandler(int sig)
 {
-    exit(0);
+    __atomic_store_n(&sig_shutdown, 1, __ATOMIC_RELAXED);
 }
 
 int

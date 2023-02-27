@@ -4,6 +4,8 @@
 #include "hdr/dump.h"
 #include "hdr/options.h"
 
+extern int sig_shutdown;
+
 static int
 run_capture(struct options *opt) {
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -37,10 +39,14 @@ run_capture(struct options *opt) {
             nethuns_rx_release(s, pkt_id);
             i++;
         } else {
+            if (__atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
+                goto done;
+            }
             usleep(1);
         }
     }
 
+done:
     printf("done.\n");
     nethuns_close(s);
     return 0;
