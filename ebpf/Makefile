@@ -18,8 +18,8 @@ CFLAGS_BPF += -I$(KERNEL)/arch/x86/include
 all: net_xdp.o
 
 net_xdp.o: net_xdp.c
-	$(CLANG) -c $< $(CFLAGS) $(CFLAGS_BPF) -D__KERNEL__ -D__BPF_TRACING__  -Wno-unused-value -Wno-pointer-sign -Wno-compare-distinct-pointer-types -Wno-gnu-variable-sized-type-not-at-end -Wno-address-of-packed-member -Wno-tautological-compare -Wno-unknown-warning-option -O2 -emit-llvm -c -o -| llc -march=bpf -filetype=obj  -o $@
-	
+	$(CLANG) -g -c $< $(CFLAGS) $(CFLAGS_BPF) -D__KERNEL__ -D__BPF_TRACING__  -Wno-unused-value -Wno-pointer-sign -Wno-compare-distinct-pointer-types -Wno-gnu-variable-sized-type-not-at-end -Wno-address-of-packed-member -Wno-tautological-compare -Wno-unknown-warning-option -O2 -emit-llvm -c -o -| llc -march=bpf -filetype=obj  -o $@
+
 clean:
 	rm -f net_xdp.o
 
