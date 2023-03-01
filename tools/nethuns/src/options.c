@@ -10,6 +10,21 @@
 
 static const char *version = "0.1";
 
+void
+parse_device(const char *dev, struct dev_queue *dq)
+{
+    const char *at;
+    at = strchr(dev, '@') ? : strchr(dev, ':');
+
+    if (at == NULL) {
+        dq->name = dev;
+        dq->queue = NETHUNS_ANY_QUEUE;
+    } else {
+        dq->name = strndup(dev, at - dev);
+        dq->queue = atoi(at+1);
+    }
+}
+
 void help(const char* progname) {
     fprintf(stdout,
             "Usage: %s [-b num_blocks] [-r num_packets] [-s packet_size] [-t timeout_ms]\n"
@@ -27,8 +42,7 @@ void help(const char* progname) {
             "  -M socket_mode    Socket mode (rx_tx/rx/tx)\n"
             "  -p                Disable promiscuous mode\n"
             "  -x                Enable bypass of the tx queue discipline\n"
-            "  -i device         Name of the device to capture packets from\n"
-            "  -q queue          Queue ID to capture packets from (default -1)\n"
+            "  -i device         Name of the device to capture packets from (e.g. eth0 or enp0s1@2)\n"
             "  -c count          Exit after capturing count packets\n"
             "  -v                Enable verbose output\n"
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
@@ -48,8 +62,7 @@ void help(const char* progname) {
 struct options
 parse_opt(int argc, char *argv[]) {
     struct options ret = {
-        .dev = NULL,
-        .queue = NETHUNS_ANY_QUEUE,
+        .num_devs = 0,
         .count = UINT64_MAX,
         .meter = false,
         .sopt = {
@@ -137,12 +150,15 @@ parse_opt(int argc, char *argv[]) {
         case 'x':
             ret.sopt.tx_qdisc_bypass = true;
             break;
-        case 'i':
-            ret.dev = optarg;
-            break;
-        case 'q':
-            ret.queue = atoi(optarg);
-            break;
+        case 'i': {
+                if (ret.num_devs < MAX_DEVICES) {
+                    parse_device(optarg, &ret.dev[ret.num_devs]);
+                    ret.num_devs++;
+                } else {
+                    fprintf(stderr, "too many devices!\n");
+                    exit(EXIT_FAILURE);
+                }
+            } break;
         case 'c':
             ret.count = atoi(optarg);
             break;
@@ -178,7 +194,7 @@ parse_opt(int argc, char *argv[]) {
             help("nethuns-dump");
 	    break;
         default:
-            fprintf(stderr, "invalid option: %c", c);
+            fprintf(stderr, "invalid option: %c\n", c);
             exit(EXIT_FAILURE);
         }
     }

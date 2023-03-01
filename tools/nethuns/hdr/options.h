@@ -3,9 +3,16 @@
 
 #include <stdint.h>
 
-struct options {
-    const char *dev;
+#define MAX_DEVICES     128
+
+struct dev_queue {
+    const char *name;
     int queue;
+};
+
+struct options {
+    struct dev_queue dev[MAX_DEVICES];
+    int num_devs;
     uint64_t count;
     bool verbose;
     bool meter;

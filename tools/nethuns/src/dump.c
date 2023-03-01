@@ -11,6 +11,7 @@
 #else
 #include <net/ethernet.h>
 #endif
+#include <pthread.h>
 
 #include <ctype.h>
 #include <sys/time.h>
@@ -37,8 +38,7 @@ ether_ntoa_r(const struct ether_addr *addr, char *buf)
 
 
 const char *
-print_timestamp(uint32_t sec, uint32_t nsec) {
-    static char timestr[64];
+print_timestamp(uint32_t sec, uint32_t nsec, char *timestr) {
     struct timeval tv;
     tv.tv_sec = sec;
     tv.tv_usec = nsec/ 1000;
@@ -303,11 +303,17 @@ dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool verbos
 }
 
 
+pthread_mutex_t tty = PTHREAD_MUTEX_INITIALIZER;
+
+
 void
-dump_frame(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool verbose)
+dump_frame(nethuns_pkthdr_t const *hdr, const unsigned char *frame, const char *dev, int queue, bool verbose)
 {
-    const char *tstamp = print_timestamp(nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr));
+    static char timestr[64];
+
+    const char *tstamp = print_timestamp(nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr), timestr);
     char rxhash[24];
+    char dq[256];
 
     if (nethuns_rxhash(hdr)) {
         snprintf(rxhash, sizeof(rxhash), "rxhash:0x%x ", nethuns_rxhash(hdr));
@@ -315,23 +321,35 @@ dump_frame(nethuns_pkthdr_t const *hdr, const unsigned char *frame, bool verbose
         rxhash[0] ='\0';
     }
 
+    if (queue != NETHUNS_ANY_QUEUE) {
+        snprintf(dq, sizeof(dq), "%s:%d", dev, queue);
+    } else {
+        snprintf(dq, sizeof(dq), "%s", dev);
+    }
+
+    pthread_mutex_lock(&tty);
+
     if (nethuns_vlan_tpid_(hdr, frame)) {
 
-        printf("%s len:%u/%u [tci:%x tpid:%x vid:%d] %s", tstamp
-                                                             , nethuns_snaplen(hdr)
-                                                             , nethuns_len(hdr)
-                                                             , nethuns_vlan_tci_(hdr, frame)
-                                                             , nethuns_vlan_tpid_(hdr, frame)
-                                                             , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
-                                                             , rxhash);
+        printf("%s %s len:%u/%u [tci:%x tpid:%x vid:%d] %s", tstamp
+                                                           , dq
+                                                           , nethuns_snaplen(hdr)
+                                                           , nethuns_len(hdr)
+                                                           , nethuns_vlan_tci_(hdr, frame)
+                                                           , nethuns_vlan_tpid_(hdr, frame)
+                                                           , nethuns_vlan_vid(nethuns_vlan_tci_(hdr, frame))
+                                                           , rxhash);
 
     } else {
 
-        printf("%s len:%u/%u %s", tstamp
-                                     , nethuns_snaplen(hdr)
-                                     , nethuns_len(hdr)
-                                     , rxhash);
+        printf("%s %s len:%u/%u %s", tstamp
+                                   , dq
+                                   , nethuns_snaplen(hdr)
+                                   , nethuns_len(hdr)
+                                   , rxhash);
     }
 
     dump_packet(hdr, frame, verbose);
+
+    pthread_mutex_unlock(&tty);
 }
