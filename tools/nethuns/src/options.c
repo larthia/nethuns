@@ -53,6 +53,7 @@ void help(const char* progname) {
             "  -R                Reuse existing maps when loading XDP program\n"
 #endif
             "  -Y                Run meter, don't print packets\n"
+            "  -X                Run relaxed stats\n"
             "  -V                Print version information and exit\n"
             "  -h                Print this help message and exit\n",
             progname);
@@ -65,6 +66,7 @@ parse_opt(int argc, char *argv[]) {
         .num_devs = 0,
         .count = UINT64_MAX,
         .meter = false,
+        .relaxed_stats = false,
         .sopt = {
                     .numblocks       = 1
                 ,   .numpackets      = 4096
@@ -87,9 +89,9 @@ parse_opt(int argc, char *argv[]) {
 
     int c;
 #if NETHUNS_SOCKET == NETHUNS_SOCKET_XDP
-    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:c:P:S:K:d:RYh?V")) != -1)
+    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:c:P:S:K:d:RYXh?V")) != -1)
 #else
-    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:c:Yh?V")) != -1)
+    while ((c = getopt(argc, argv, "b:r:s:t:Q:C:M:i:pvq:c:YXh?V")) != -1)
 #endif
     {
         switch (c)
@@ -185,6 +187,9 @@ parse_opt(int argc, char *argv[]) {
         case 'Y':
             ret.meter = true;
             break;
+        case 'X':
+            ret.relaxed_stats = true;
+            break;
         case 'V':
             fprintf(stderr, "version: %s, %s\n", version, nethuns_version());
             exit(EXIT_SUCCESS);
@@ -206,7 +211,7 @@ parse_opt(int argc, char *argv[]) {
 void
 validate_options(const struct options *opt)
 {
-    if (!opt->dev)
+    if (opt->num_devs == 0)
     {
         fprintf(stderr, "no device specified\n");
         exit(EXIT_FAILURE);

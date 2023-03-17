@@ -19,6 +19,7 @@ int sig_shutdown;
 
 void sighandler(int sig)
 {
+    (void)sig;
     __atomic_store_n(&sig_shutdown, 1, __ATOMIC_RELAXED);
 }
 

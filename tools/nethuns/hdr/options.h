@@ -16,6 +16,7 @@ struct options {
     uint64_t count;
     bool verbose;
     bool meter;
+    bool relaxed_stats;
     struct nethuns_socket_options sopt;
 };
 
