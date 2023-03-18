@@ -29,7 +29,9 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/usr/local/lib" "/opt/lib" "/opt/h
 find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
 find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
 
-include_directories(${LIBPCAP_INCLUDE_DIR} /usr/local/include/ . ../src)
+include_directories(${LIBPCAP_INCLUDE_DIR})
+include_directories(/usr/local/include/ . ../src)
+
 link_directories(/usr/local/lib)
 
 add_executable(nethuns-dump src/main.c

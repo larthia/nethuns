@@ -36,7 +36,7 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/usr/local/lib" "/opt/lib" "/opt/h
 find_library(LIBPCAP_LIBRARY NAMES libpcap.a)
 find_path(LIBPCAP_INCLUDE_DIR pcap/pcap.h)
 
-include_directories(${LIBPCAP_INCLUDE_DIR})
+include_directories(BEFORE ${LIBPCAP_INCLUDE_DIR})
 include_directories(/usr/local/include/ src)
 
 if (NETHUNS_OPT_XDP)
@@ -72,7 +72,7 @@ if (NETHUNS_OPT_NETMAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/netmap.c)
     list(APPEND NETHUNS_DEP -lnetmap)
     list(APPEND OTHER_LIB -lnetmap)
-    message("Nethuns: netmap ENABLED")	
+    message("Nethuns: netmap ENABLED")
     add_definitions(-DNETHUNS_USE_NETMAP)
 endif()
 
@@ -120,9 +120,10 @@ target_link_libraries(nethuns PRIVATE ${NETHUS_LIBS})
 
 install(TARGETS nethuns DESTINATION /usr/local/lib)
 
-install(DIRECTORY src/nethuns/ 	   	DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
-install(DIRECTORY libbpf/src/      	DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+install(DIRECTORY src/nethuns/ 	   	    DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
+install(DIRECTORY libbpf/src/      	    DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
 install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+
 if (NETHUNS_OPT_XDP)
     install(FILES     libbpf/src/libbpf.a   DESTINATION /usr/local/lib/)
 endif()
@@ -130,5 +131,3 @@ endif()
 configure_file(scripts/Nethuns.cmake Nethuns.cmake @ONLY)
 
 install(FILES ${CMAKE_BINARY_DIR}/Nethuns.cmake DESTINATION /usr/local/share/nethuns/)
-
-
