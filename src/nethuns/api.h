@@ -18,6 +18,15 @@
 #define NETHUNS_GLOBAL \
     void (*__nethuns_fini)() = nethuns_global_fini;
 
+/*
+    pktid is a 64 bit unsigned integer that uniquely identifies a packet.
+
+    pktid == -2 means EOF
+    pktid == -1 means error
+    pktid == 0 means null packet (Polling mode)
+    pktid > 0 means valid packet
+*/
+
 #define nethuns_error(_sock)        ({nethuns_const_socket(_sock)->errbuf;})
 #define nethuns_pkt_is_valid(_n)    ((_n + 2) > 2)
 #define nethuns_pkt_is_null(_n)     ((_n) == 0)
