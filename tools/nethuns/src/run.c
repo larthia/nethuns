@@ -5,6 +5,7 @@
 #include "hdr/dump.h"
 #include "hdr/options.h"
 #include "hdr/stats.h"
+#include "nethuns/api.h"
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -44,26 +45,36 @@ run_capture_dev(void *_args) {
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
+    struct stats *st = &global_stats[args->id];
+
     for(uint64_t i =0; i < opt->count;)
     {
         uint64_t pkt_id;
 
-        if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
+        pkt_id = nethuns_recv(s, &pkthdr, &frame);
+        if (nethuns_pkt_is_valid(pkt_id))
         {
             dump_frame(pkthdr, frame, opt->dev[args->id].name, opt->dev[args->id].queue, opt->verbose);
+
+            __atomic_fetch_add(&st->pkt_count, 1, __ATOMIC_RELAXED);
+            __atomic_fetch_add(&st->byte_count, nethuns_len(pkthdr), __ATOMIC_RELAXED);
+
             nethuns_rx_release(s, pkt_id);
             i++;
         } else {
-            if (__atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
-                goto done;
+            if(nethuns_pkt_is_err(pkt_id)) {
+                break;
             }
             usleep(1);
         }
+
+        if (__atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
+            break;
+        }
     }
-done:
+
     nethuns_close(s);
     return (void *)0;
-
 }
 
 static void *
@@ -85,6 +96,8 @@ run_capture_file(void *_args) {
     const unsigned char *frame;
     const nethuns_pkthdr_t *pkthdr;
 
+    struct stats *st = &global_stats[args->id];
+
     for(uint64_t i =0; i < opt->count;)
     {
         uint64_t pkt_id;
@@ -93,24 +106,26 @@ run_capture_file(void *_args) {
         if (nethuns_pkt_is_valid(pkt_id))
         {
             dump_frame(pkthdr, frame, opt->dev[args->id].name, opt->dev[args->id].queue, opt->verbose);
-            if (__atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
-                goto done;
-            }
+
+            __atomic_fetch_add(&st->pkt_count, 1, __ATOMIC_RELAXED);
+            __atomic_fetch_add(&st->byte_count, nethuns_len(pkthdr), __ATOMIC_RELAXED);
+
             nethuns_rx_release(s, pkt_id);
-            i++;
-        } else {
-            if(nethuns_pkt_is_eof(pkt_id)) {
+
+            if (__atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
                 break;
             }
-            if (__atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
-                goto done;
+            i++;
+            continue;
+        } else {
+            if(nethuns_pkt_is_eof(pkt_id) || nethuns_pkt_is_err(pkt_id) ||
+                __atomic_load_n(&sig_shutdown, __ATOMIC_RELAXED)) {
+                break;
             }
-            printf("id: %"PRIu64"\n", pkt_id);
-            usleep(1000000);
+            usleep(1);
         }
-
     }
-done:
+
     nethuns_pcap_close(s);
     return (void *)0;
 
@@ -161,13 +176,14 @@ run_meter_dev(void *_args) {
     {
         uint64_t pkt_id;
 
-        if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
+        pkt_id = nethuns_recv(s, &pkthdr, &frame);
+        if (nethuns_pkt_is_valid(pkt_id))
         {
             i++;
-            if (opt->relaxed_stats) {
+            if (opt->meter > 0) {
                 pkt_count++;
                 byte_count += nethuns_len(pkthdr);
-                if ((pkt_count & 127) == 0) {
+                if ((pkt_count & ((1 << opt->meter)-1)) == 0) {
                     __atomic_fetch_add(&st->pkt_count, pkt_count, __ATOMIC_RELAXED);
                     __atomic_fetch_add(&st->byte_count, byte_count, __ATOMIC_RELAXED);
                     pkt_count = 0;
@@ -224,10 +240,10 @@ run_meter_file(void *_args) {
         if (nethuns_pkt_is_valid(pkt_id))
         {
             i++;
-            if (opt->relaxed_stats) {
+            if (opt->meter > 0) {
                 pkt_count++;
                 byte_count += nethuns_len(pkthdr);
-                if ((pkt_count & 127) == 0) {
+                if ((pkt_count & ((1 << opt->meter)-1)) == 0) {
                     __atomic_fetch_add(&st->pkt_count, pkt_count, __ATOMIC_RELAXED);
                     __atomic_fetch_add(&st->byte_count, byte_count, __ATOMIC_RELAXED);
                     pkt_count = 0;
@@ -301,7 +317,17 @@ meter(void *opt)
         uint64_t pkt_delta = pkt_count - total_prev_pkt_count;
         uint64_t byte_delta = byte_count - total_prev_byte_count;
 
-        printf("packets: %" PRIu64 ", bytes: %" PRIu64", rate: %" PRIu64 " pps, %" PRIu64" bps\n", pkt_count, byte_count, pkt_delta, byte_delta * 8);
+        uint64_t bandwdith = byte_delta * 8;
+
+        if (bandwdith > 1e9) {
+            printf("packets: %" PRIu64 ", bytes: %" PRIu64", rate: %" PRIu64 " pps, %.2lf Gbps\n", pkt_count, byte_count, pkt_delta, (double)bandwdith/1e9);
+        } else if (bandwdith > 1e6) {
+            printf("packets: %" PRIu64 ", bytes: %" PRIu64", rate: %" PRIu64 " pps, %.2lf Mbps\n", pkt_count, byte_count, pkt_delta, (double)bandwdith/1e6);
+        } else if (bandwdith > 1e3) {
+            printf("packets: %" PRIu64 ", bytes: %" PRIu64", rate: %" PRIu64 " pps, %.2lf Kbps\n", pkt_count, byte_count, pkt_delta, (double)bandwdith/1e3);
+        } else {
+            printf("packets: %" PRIu64 ", bytes: %" PRIu64", rate: %" PRIu64 " pps, %.2lf bps\n", pkt_count, byte_count, pkt_delta, (double)bandwdith);
+        }
 
         total_prev_pkt_count = pkt_count;
         total_prev_byte_count = byte_count;
@@ -320,7 +346,7 @@ run(struct options *opt) {
 
     /* run the threads... */
 
-    void *(*callback)(void *) = opt->meter ? run_meter : run_capture;
+    void *(*callback)(void *) = opt->meter >= 0 ? run_meter : run_capture;
 
     for (int i = 0; i < opt->num_devs; i++)
     {
@@ -338,7 +364,10 @@ run(struct options *opt) {
     }
 
     pthread_t mtr;
-    if (opt->meter) {
+
+    printf("meter: %d\n", opt->meter);
+
+    if (opt->meter >= 0) {
         pthread_create(&mtr, NULL, meter, opt);
     }
 
@@ -349,7 +378,7 @@ run(struct options *opt) {
 
     __atomic_store_n(&sig_shutdown, 1, __ATOMIC_RELAXED);
 
-    if (opt->meter) {
+    if (opt->meter >= 0) {
         pthread_join(mtr, NULL);
     }
 

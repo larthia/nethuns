@@ -52,8 +52,7 @@ void help(const char* progname) {
             "  -d pin_dir        Directory to pin XDP program and maps in\n"
             "  -R                Reuse existing maps when loading XDP program\n"
 #endif
-            "  -Y                Run meter, don't print packets\n"
-            "  -X                Run relaxed stats\n"
+            "  -Y                Run meter, don't print packets (repeat the option n times to reduce the frequency (factor 2^n)\n"
             "  -V                Print version information and exit\n"
             "  -h                Print this help message and exit\n",
             progname);
@@ -65,8 +64,7 @@ parse_opt(int argc, char *argv[]) {
     struct options ret = {
         .num_devs = 0,
         .count = UINT64_MAX,
-        .meter = false,
-        .relaxed_stats = false,
+        .meter = -1,
         .sopt = {
                     .numblocks       = 1
                 ,   .numpackets      = 4096
@@ -185,10 +183,7 @@ parse_opt(int argc, char *argv[]) {
             break;
 #endif
         case 'Y':
-            ret.meter = true;
-            break;
-        case 'X':
-            ret.relaxed_stats = true;
+            ret.meter++;
             break;
         case 'V':
             fprintf(stderr, "version: %s, %s\n", version, nethuns_version());
