@@ -12,11 +12,11 @@ project (nethuns)
 
 string(FIND "${CMAKE_CXX_COMPILER_ID}" "Clang" CLANG_SUBSTRING_INDEX)
 if ("${CLANG_SUBSTRING_INDEX}" GREATER -1)
-    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -fomit-frame-pointer -Wall -Wextra -Wshadow")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -fomit-frame-pointer -Wall -Wextra -Wshadow")
+    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -Wno-unused-function -fomit-frame-pointer -Wall -Wextra -Wshadow")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -Wno-unused-function -std=c++17 -fomit-frame-pointer -Wall -Wextra -Wshadow")
 else()
-    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
+    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -g -O2 -Wno-unused-function -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -Wno-unused-function -std=c++17 -march=native -fomit-frame-pointer -Wall -Wextra -Wshadow")
 endif()
 
 
