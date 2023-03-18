@@ -10,7 +10,7 @@
 #include "vlan.h"
 #include "global.h"
 
-#if !defined NETHUNS_SOCKET
+#if !defined NETHUNS_SOCKET && !defined NETHUNS_USE_LIBPCAP
 #error NETHUNS_SOCKET is not defined.
 #endif
 
@@ -135,79 +135,79 @@ void nethuns_pcap_dump_rings(nethuns_pcap_t * s) \
 }
 
 #define __NETHUNS_TSTAMP_SEC(sock) static __always_inline \
-uint32_t nethuns_tstamp_sec(struct pcap_pkthdr const *hdr) \
+uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_tstamp_sec_ ## sock (hdr); \
 }
 
 #define __NETHUNS_TSTAMP_USEC(sock) static __always_inline \
-uint32_t nethuns_tstamp_usec(struct pcap_pkthdr const *hdr) \
+uint32_t nethuns_tstamp_usec(nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_tstamp_usec_ ## sock (hdr); \
 }
 
 #define __NETHUNS_TSTAMP_NSEC(sock) static __always_inline \
-uint32_t nethuns_tstamp_nsec(struct pcap_pkthdr const *hdr) \
+uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_tstamp_nsec_ ## sock (hdr); \
 }
 
 #define __NETHUNS_TSTAMP_SET_SEC(sock) static __always_inline \
-void nethuns_tstamp_set_sec(struct pcap_pkthdr *hdr, uint32_t v) \
+void nethuns_tstamp_set_sec(nethuns_pkthdr_t *hdr, uint32_t v) \
 { \
     nethuns_tstamp_set_sec_ ## sock (hdr, v); \
 }
 
 #define __NETHUNS_TSTAMP_SET_USEC(sock) static __always_inline \
-void nethuns_tstamp_set_usec(struct pcap_pkthdr *hdr, uint32_t v) \
+void nethuns_tstamp_set_usec(nethuns_pkthdr_t *hdr, uint32_t v) \
 { \
     nethuns_tstamp_set_usec_ ## sock (hdr, v); \
 }
 
 #define __NETHUNS_TSTAMP_SET_NSEC(sock) static __always_inline \
-void nethuns_tstamp_set_nsec(struct pcap_pkthdr *hdr, uint32_t v) \
+void nethuns_tstamp_set_nsec(nethuns_pkthdr_t *hdr, uint32_t v) \
 { \
     nethuns_tstamp_set_nsec_ ## sock (hdr, v); \
 }
 
 #define __NETHUNS_SNAPLEN(sock) static __always_inline \
-uint32_t nethuns_snaplen(struct pcap_pkthdr const *hdr) \
+uint32_t nethuns_snaplen(nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_snaplen_ ## sock (hdr); \
 }
 
 #define __NETHUNS_LEN(sock) static __always_inline \
-uint32_t nethuns_len(struct pcap_pkthdr const *hdr) \
+uint32_t nethuns_len(nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_len_ ## sock (hdr); \
 }
 
 #define __NETHUNS_SET_SNAPLEN(sock) static __always_inline \
-void nethuns_set_snaplen(struct pcap_pkthdr *hdr, uint32_t v) \
+void nethuns_set_snaplen(nethuns_pkthdr_t *hdr, uint32_t v) \
 { \
     nethuns_set_snaplen_ ## sock (hdr, v); \
 }
 
 #define __NETHUNS_SET_LEN(sock) static __always_inline \
-void nethuns_set_len(struct pcap_pkthdr *hdr, uint32_t v) \
+void nethuns_set_len(nethuns_pkthdr_t *hdr, uint32_t v) \
 { \
     nethuns_set_len_ ## sock (hdr, v); \
 }
 
 #define __NETHUNS_RXHASH(sock) static __always_inline \
-uint32_t nethuns_rxhash(__maybe_unused struct pcap_pkthdr const *hdr) \
+uint32_t nethuns_rxhash(__maybe_unused nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_rxhash_ ## sock (hdr); \
 }
 
 #define __NETHUNS_OFFVLAN_TPID(sock) static __always_inline \
-uint16_t nethuns_offvlan_tpid(__maybe_unused struct pcap_pkthdr const *hdr) \
+uint16_t nethuns_offvlan_tpid(__maybe_unused nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_offvlan_tpid_ ## sock (hdr); \
 }
 
 #define __NETHUNS_OFFVLAN_TCI(sock) static __always_inline \
-uint16_t nethuns_offvlan_tci(__maybe_unused struct pcap_pkthdr const *hdr) \
+uint16_t nethuns_offvlan_tci(__maybe_unused nethuns_pkthdr_t const *hdr) \
 { \
     return nethuns_offvlan_tci_ ## sock (hdr); \
 }
@@ -236,6 +236,7 @@ __NETHUNS_PCAP_READ(tpacket_v3)
 __NETHUNS_PCAP_WRITE(tpacket_v3)
 __NETHUNS_PCAP_STORE(tpacket_v3)
 __NETHUNS_PCAP_REWIND(tpacket_v3)
+__NETHUNS_PCAP_DUMP_RINGS(tpacket_v3)
 
 __NETHUNS_TSTAMP_SEC(tpacket_v3)
 __NETHUNS_TSTAMP_USEC(tpacket_v3)
@@ -275,6 +276,7 @@ __NETHUNS_PCAP_READ(netmap)
 __NETHUNS_PCAP_WRITE(netmap)
 __NETHUNS_PCAP_STORE(netmap)
 __NETHUNS_PCAP_REWIND(netmap)
+__NETHUNS_PCAP_DUMP_RINGS(netmap)
 
 __NETHUNS_TSTAMP_SEC(netmap)
 __NETHUNS_TSTAMP_USEC(netmap)
@@ -284,7 +286,7 @@ __NETHUNS_TSTAMP_SET_USEC(netmap)
 __NETHUNS_TSTAMP_SET_NSEC(netmap)
 __NETHUNS_SNAPLEN(netmap)
 __NETHUNS_LEN(netmap)
-__NETHUNS_SET_SNAPLnetmapEN()
+__NETHUNS_SET_SNAPLEN(netmap)
 __NETHUNS_SET_LEN(netmap)
 __NETHUNS_RXHASH(netmap)
 __NETHUNS_OFFVLAN_TCI(netmap)
@@ -314,6 +316,7 @@ __NETHUNS_PCAP_READ(libpcap)
 __NETHUNS_PCAP_WRITE(libpcap)
 __NETHUNS_PCAP_STORE(libpcap)
 __NETHUNS_PCAP_REWIND(libpcap)
+__NETHUNS_PCAP_DUMP_RINGS(libpcap)
 
 __NETHUNS_TSTAMP_SEC(libpcap)
 __NETHUNS_TSTAMP_USEC(libpcap)
@@ -338,6 +341,7 @@ __NETHUNS_OPEN(xdp)
 __NETHUNS_CLOSE(xdp)
 __NETHUNS_BIND(xdp)
 __NETHUNS_CHECK(xdp)
+__NETHUNS_FD(xdp)
 __NETHUNS_RECV(xdp)
 __NETHUNS_SEND(xdp)
 __NETHUNS_FLUSH(xdp)
@@ -352,20 +356,21 @@ __NETHUNS_PCAP_READ(xdp)
 __NETHUNS_PCAP_WRITE(xdp)
 __NETHUNS_PCAP_STORE(xdp)
 __NETHUNS_PCAP_REWIND(xdp)
+__NETHUNS_PCAP_DUMP_RINGS(xdp)
 
 __NETHUNS_TSTAMP_SEC(xdp)
 __NETHUNS_TSTAMP_USEC(xdp)
 __NETHUNS_TSTAMP_NSEC(xdp)
-__NETHUNS_TSTAMP_SET_SECxdp()
+__NETHUNS_TSTAMP_SET_SEC(xdp)
 __NETHUNS_TSTAMP_SET_USEC(xdp)
 __NETHUNS_TSTAMP_SET_NSEC(xdp)
 __NETHUNS_SNAPLEN(xdp)
 __NETHUNS_LEN(xdp)
-__NETHUNS_SET_SNAPLEN(xpd)
-__NETHUNS_SET_LEN(xpd)
-__NETHUNS_RXHASH(xpd)
-__NETHUNS_OFFVLAN_TCI(xpd)
-__NETHUNS_OFFVLAN_TPID(xpd)
+__NETHUNS_SET_SNAPLEN(xdp)
+__NETHUNS_SET_LEN(xdp)
+__NETHUNS_RXHASH(xdp)
+__NETHUNS_OFFVLAN_TCI(xdp)
+__NETHUNS_OFFVLAN_TPID(xdp)
 
 
 #endif

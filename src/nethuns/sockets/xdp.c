@@ -576,7 +576,7 @@ int nethuns_close_xdp(struct nethuns_socket_xdp *s)
 
 int
 nethuns_check_xdp(size_t hsize, char *errbuf) {
-    if (hsize != sizeof(nethuns_pktdhr_t)) {
+    if (hsize != sizeof(nethuns_pkthdr_t)) {
         nethuns_perror(errbuf, "internal error: pkthdr size mismatch (expected %zu, got %zu)", sizeof(nethuns_pkthdr_t), hsize);
         return -1;
     }

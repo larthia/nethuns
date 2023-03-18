@@ -6,6 +6,9 @@
 #include "hdr/options.h"
 #include "hdr/stats.h"
 
+#include <stdio.h>
+#include <inttypes.h>
+
 extern int sig_shutdown;
 
 struct stats global_stats[MAX_DEVICES];

@@ -12,8 +12,8 @@
 #include <sys/resource.h>
 #endif
 
-#include "global.h"
 #include "api.h"
+#include "global.h"
 #include "define.h"
 
 struct nethuns_global __nethuns_global;
@@ -21,7 +21,15 @@ struct nethuns_global __nethuns_global;
 #ifdef NETHUNS_USE_LIBPCAP
 int nethuns_check_libpcap(size_t hsize, char *errbuf);
 #endif
+#ifdef NETHUNS_USE_NETMAP
 int nethuns_check_netmap(size_t hsize, char *errbuf);
+#endif
+#ifdef NETHUNS_USE_XDP
+int nethuns_check_xdp(size_t hsize, char *errbuf);
+#endif
+#ifdef NETHUNS_USE_TPACKET_V3
+int nethuns_check_tpacket_v3(size_t hsize, char *errbuf);
+#endif
 
 void
 nethuns_init_(size_t hsize, int socket)
@@ -55,7 +63,7 @@ nethuns_init_(size_t hsize, int socket)
 #endif
 #ifdef NETHUNS_USE_TPACKET_V3
     case NETHUNS_SOCKET_TPACKET3: {
-        if (nethuns_check_tpacket3(hsize, errbuf) < 0) {
+        if (nethuns_check_tpacket_v3(hsize, errbuf) < 0) {
             nethuns_fprintf(stderr, "%s\n", errbuf);
             exit(EXIT_FAILURE);
         }

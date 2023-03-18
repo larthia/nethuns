@@ -35,7 +35,7 @@ typedef __u32 __bitwise __wsum;
 
 
 #include "../types.h"
-#icnlude "../misc/compiler.h"
+#include "../misc/compiler.h"
 
 struct ring_v3
 {
@@ -86,6 +86,7 @@ extern "C" {
 #endif
 
 
+int nethuns_check_tpacket_v3(size_t hsize, char *errbuf);
 
 nethuns_pcap_t *
 nethuns_pcap_open_tpacket_v3(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);

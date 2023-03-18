@@ -54,6 +54,8 @@ struct nethuns_socket_xdp
 extern "C" {
 #endif
 
+int nethuns_check_libpcap(size_t hsize, char *errbuf);
+
 nethuns_pcap_t *
 nethuns_pcap_open_xdp(struct nethuns_socket_options *opt, const char *filename, int mode, char *errbuf);
 
