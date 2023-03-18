@@ -62,19 +62,19 @@ extern "C" {
     static __always_inline int nethuns_pcap_rewind(nethuns_pcap_t *p);
     static __always_inline int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
 
-    static __always_inline uint32_t nethuns_tstamp_sec(struct pcap_pkthdr const *hdr);
-    static __always_inline uint32_t nethuns_tstamp_usec(struct pcap_pkthdr const *hdr);
-    static __always_inline uint32_t nethuns_tstamp_nsec(struct pcap_pkthdr const *hdr);
-    static __always_inline void nethuns_tstamp_set_sec(struct pcap_pkthdr *hdr, uint32_t v);
-    static __always_inline void nethuns_tstamp_set_usec(struct pcap_pkthdr *hdr, uint32_t v);
-    static __always_inline void nethuns_tstamp_set_nsec(struct pcap_pkthdr *hdr, uint32_t v);
-    static __always_inline uint32_t nethuns_snaplen(struct pcap_pkthdr const *hdr);
-    static __always_inline uint32_t nethuns_len(struct pcap_pkthdr const *hdr);
-    static __always_inline void nethuns_set_snaplen(struct pcap_pkthdr *hdr, uint32_t v);
-    static __always_inline void nethuns_set_len(struct pcap_pkthdr *hdr, uint32_t v);
-    static __always_inline uint32_t nethuns_rxhash(__maybe_unused struct pcap_pkthdr const *hdr);
-    static __always_inline uint16_t nethuns_offvlan_tpid(__maybe_unused struct pcap_pkthdr const *hdr);
-    static __always_inline uint16_t nethuns_offvlan_tci(__maybe_unused struct pcap_pkthdr const *hdr);
+    static __always_inline uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t const *hdr);
+    static __always_inline uint32_t nethuns_tstamp_usec(nethuns_pkthdr_t const *hdr);
+    static __always_inline uint32_t nethuns_tstamp_nsec(nethuns_pkthdr_t const *hdr);
+    static __always_inline void nethuns_tstamp_set_sec(nethuns_pkthdr_t *hdr, uint32_t v);
+    static __always_inline void nethuns_tstamp_set_usec(nethuns_pkthdr_t *hdr, uint32_t v);
+    static __always_inline void nethuns_tstamp_set_nsec(nethuns_pkthdr_t *hdr, uint32_t v);
+    static __always_inline uint32_t nethuns_snaplen(nethuns_pkthdr_t const *hdr);
+    static __always_inline uint32_t nethuns_len(nethuns_pkthdr_t const *hdr);
+    static __always_inline void nethuns_set_snaplen(nethuns_pkthdr_t *hdr, uint32_t v);
+    static __always_inline void nethuns_set_len(nethuns_pkthdr_t *hdr, uint32_t v);
+    static __always_inline uint32_t nethuns_rxhash(__maybe_unused nethuns_pkthdr_t const *hdr);
+    static __always_inline uint16_t nethuns_offvlan_tpid(__maybe_unused nethuns_pkthdr_t const *hdr);
+    static __always_inline uint16_t nethuns_offvlan_tci(__maybe_unused nethuns_pkthdr_t const *hdr);
 
     int nethuns_ioctl_if(nethuns_socket_t *s, const char *devname, unsigned long what, uint32_t *flags);
 
