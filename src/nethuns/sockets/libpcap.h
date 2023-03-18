@@ -44,8 +44,6 @@ nethuns_pcap_store_libpcap(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, ui
 int
 nethuns_pcap_rewind_libpcap(nethuns_pcap_t *s);
 
-void
-nethuns_pcap_dump_rings_libpcap(nethuns_pcap_t *s);
 
 struct nethuns_socket_libpcap *
 nethuns_open_libpcap(struct nethuns_socket_options *opt, char *errbuf);

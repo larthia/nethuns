@@ -128,12 +128,6 @@ int nethuns_pcap_rewind(nethuns_pcap_t *p) \
     return nethuns_pcap_rewind_ ## sock (p); \
 }
 
-#define __NETHUNS_PCAP_DUMP_RINGS(sock) static __always_inline \
-void nethuns_pcap_dump_rings(nethuns_pcap_t * s) \
-{ \
-    nethuns_pcap_dump_rings_ ## sock (s); \
-}
-
 #define __NETHUNS_TSTAMP_SEC(sock) static __always_inline \
 uint32_t nethuns_tstamp_sec(nethuns_pkthdr_t const *hdr) \
 { \
@@ -236,7 +230,6 @@ __NETHUNS_PCAP_READ(tpacket_v3)
 __NETHUNS_PCAP_WRITE(tpacket_v3)
 __NETHUNS_PCAP_STORE(tpacket_v3)
 __NETHUNS_PCAP_REWIND(tpacket_v3)
-__NETHUNS_PCAP_DUMP_RINGS(tpacket_v3)
 
 __NETHUNS_TSTAMP_SEC(tpacket_v3)
 __NETHUNS_TSTAMP_USEC(tpacket_v3)
@@ -276,7 +269,6 @@ __NETHUNS_PCAP_READ(netmap)
 __NETHUNS_PCAP_WRITE(netmap)
 __NETHUNS_PCAP_STORE(netmap)
 __NETHUNS_PCAP_REWIND(netmap)
-__NETHUNS_PCAP_DUMP_RINGS(netmap)
 
 __NETHUNS_TSTAMP_SEC(netmap)
 __NETHUNS_TSTAMP_USEC(netmap)
@@ -316,7 +308,6 @@ __NETHUNS_PCAP_READ(libpcap)
 __NETHUNS_PCAP_WRITE(libpcap)
 __NETHUNS_PCAP_STORE(libpcap)
 __NETHUNS_PCAP_REWIND(libpcap)
-__NETHUNS_PCAP_DUMP_RINGS(libpcap)
 
 __NETHUNS_TSTAMP_SEC(libpcap)
 __NETHUNS_TSTAMP_USEC(libpcap)
@@ -356,7 +347,6 @@ __NETHUNS_PCAP_READ(xdp)
 __NETHUNS_PCAP_WRITE(xdp)
 __NETHUNS_PCAP_STORE(xdp)
 __NETHUNS_PCAP_REWIND(xdp)
-__NETHUNS_PCAP_DUMP_RINGS(xdp)
 
 __NETHUNS_TSTAMP_SEC(xdp)
 __NETHUNS_TSTAMP_USEC(xdp)

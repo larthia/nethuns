@@ -398,39 +398,3 @@ TEMPLATE(nethuns_pcap_rewind_,SOCKET_TYPE) (nethuns_pcap_t *s)
 #endif
 
 
-void
-TEMPLATE(nethuns_pcap_dump_rings_,SOCKET_TYPE) (nethuns_pcap_t *s)
-{
-    struct nethuns_ring *rx_ring = &s->base.rx_ring;
-    struct nethuns_ring *tx_ring = &s->base.tx_ring;
-    size_t i;
-
-    fprintf(stdout, "(RX) dev:%s ifindex:%d queue:%d\n", nethuns_socket(s)->devname, nethuns_socket(s)->ifindex, nethuns_socket(s)->queue);
-    fprintf(stdout, "     size:%zu pktsize:%zu head:%" PRIu64 " tail:%" PRIu64 " mask:%zu shift:%zu ring@%p [slot_size:%lu, offset:%lu]\n",
-        rx_ring->size, rx_ring->pktsize, rx_ring->head, rx_ring->tail, rx_ring->mask, rx_ring->shift, rx_ring->ring, sizeof(struct nethuns_ring_slot)
-        , offsetof(struct nethuns_ring_slot, inuse));
-
-    for (i = 0; i < rx_ring->size; i++) {
-        struct nethuns_ring_slot * slot = nethuns_ring_get_slot(rx_ring, i);
-        int inuse = __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE);
-        if (inuse) {
-            fprintf(stdout, "     rx-slot[%zd]@%p inuse:%d(@%p) ring_id:%" PRIu64 " len:%d\n", i, slot, inuse, &slot->inuse, slot->id, slot->len);
-        } else {
-            fprintf(stdout, "     rx-slot[%zd]@%p free\n", i, slot);
-        }
-    }
-
-    fprintf(stdout, "(TX) dev:%s ifindex:%d queue:%d\n", nethuns_socket(s)->devname, nethuns_socket(s)->ifindex, nethuns_socket(s)->queue);
-    fprintf(stdout, "     size:%zu pktsize:%zu head:%" PRIu64 " tail:%" PRIu64 " mask:%zu shift:%zu ring@%p\n",
-        tx_ring->size, tx_ring->pktsize, tx_ring->head, tx_ring->tail, tx_ring->mask, tx_ring->shift, tx_ring->ring);
-
-    for (i = 0; i < tx_ring->size; i++) {
-        struct nethuns_ring_slot * slot = nethuns_ring_get_slot(tx_ring, i);
-        int inuse = __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE);
-        if (inuse) {
-            fprintf(stdout, "     tx-slot[%zd]@%p inuse:%d(@%p) ring_id:%" PRIu64 " len:%d\n", i, slot, inuse, &slot->inuse, slot->id, slot->len);
-        } else {
-            fprintf(stdout, "     tx-slot[%zd]@%p free\n", i, slot);
-        }
-    }
-}

@@ -61,7 +61,6 @@ extern "C" {
     static __always_inline int nethuns_pcap_store(nethuns_pcap_t * s, nethuns_pkthdr_t const *pkthdr, uint8_t const *packet, unsigned int len);
     static __always_inline int nethuns_pcap_rewind(nethuns_pcap_t *p);
     static __always_inline int nethuns_pcap_write(nethuns_pcap_t *s, struct nethuns_pcap_pkthdr const *header, uint8_t const *packet, unsigned int len);
-    static __always_inline void nethuns_pcap_dump_rings(nethuns_pcap_t * s);
 
     static __always_inline uint32_t nethuns_tstamp_sec(struct pcap_pkthdr const *hdr);
     static __always_inline uint32_t nethuns_tstamp_usec(struct pcap_pkthdr const *hdr);
