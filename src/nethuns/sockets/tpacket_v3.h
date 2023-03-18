@@ -35,7 +35,7 @@ typedef __u32 __bitwise __wsum;
 
 
 #include "../types.h"
-
+#icnlude "../misc/compiler.h"
 
 struct ring_v3
 {
@@ -121,7 +121,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
 int
 nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *packet, unsigned int len);
 
-static inline uint8_t *
+static __always_inline uint8_t *
 nethuns_get_buf_addr_tpacket_v3(__maybe_unused nethuns_socket_t * s, __maybe_unused uint64_t pktid) {
     return NULL;
 }
@@ -141,14 +141,14 @@ nethuns_fd_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
 void
 nethuns_dump_rings_tpacket_v3(__maybe_unused struct nethuns_socket_tpacket_v3 *s);
 
-static inline
+static __always_inline
 struct block_descr_v3 *
 __nethuns_block_mod_tpacket_v3(struct ring_v3 *ring, uint64_t id)
 {
     return (struct block_descr_v3 *) ring->rd[id % ring->req.tp_block_nr].iov_base;
 }
 
-static inline
+static __always_inline
 struct block_descr_v3 *
 __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 {
@@ -156,70 +156,70 @@ __nethuns_block_tpacket_v3(struct ring_v3 *ring, uint64_t id_mod)
 }
 
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_tstamp_sec_tpacket_v3(struct tpacket3_hdr const *hdr)
 {
     return hdr->tp_sec;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_tstamp_usec_tpacket_v3(struct tpacket3_hdr const *hdr)
 {
     return hdr->tp_nsec/1000;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_tstamp_nsec_tpacket_v3(struct tpacket3_hdr const *hdr)
 {
     return hdr->tp_nsec;
 }
 
-static inline
+static __always_inline
 void nethuns_tstamp_set_sec_tpacket_v3(struct tpacket3_hdr *hdr, uint32_t v) {
     hdr->tp_sec = v;
 }
 
-static inline
+static __always_inline
 void nethuns_tstamp_set_usec_tpacket_v3(struct tpacket3_hdr *hdr, uint32_t v) {
     hdr->tp_nsec = v *1000;
 }
 
-static inline
+static __always_inline
 void nethuns_tstamp_set_nsec_tpacket_v3(struct tpacket3_hdr *hdr, uint32_t v)  {
     hdr->tp_nsec = v;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_snaplen_tpacket_v3(struct tpacket3_hdr const *hdr) {
     return hdr->tp_snaplen;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_len_tpacket_v3(struct tpacket3_hdr const *hdr) {
     return hdr->tp_len;
 }
 
-static inline void
+static __always_inline void
 nethuns_set_snaplen_tpacket_v3(struct tpacket3_hdr *hdr, uint32_t v) {
     hdr->tp_snaplen = v;
 }
 
-static inline void
+static __always_inline void
 nethuns_set_len_tpacket_v3(struct tpacket3_hdr *hdr, uint32_t v) {
     hdr->tp_len = v;
 }
 
-static inline uint32_t
+static __always_inline uint32_t
 nethuns_rxhash_tpacket_v3(struct tpacket3_hdr const *hdr) {
     return hdr->hv1.tp_rxhash;
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_offvlan_tci_tpacket_v3(struct tpacket3_hdr const *hdr) {
     return hdr->hv1.tp_vlan_tci;
 }
 
-static inline uint16_t
+static __always_inline uint16_t
 nethuns_offvlan_tpid_tpacket_v3(struct tpacket3_hdr const *hdr) {
     return hdr->hv1.tp_vlan_tpid;
 }

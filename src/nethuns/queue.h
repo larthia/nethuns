@@ -45,7 +45,7 @@ struct nethuns_spsc_queue
 };
 
 
-static inline
+static __always_inline
 struct nethuns_spsc_queue *
 nethuns_spsc_init(size_t nslots, size_t size)
 {
@@ -69,12 +69,12 @@ nethuns_spsc_init(size_t nslots, size_t size)
 	return fifo;
 }
 
-static inline
+static __always_inline
 void *nethuns_slot_addr(struct nethuns_spsc_queue *fifo, size_t idx) {
 	return (char *)fifo->mem + fifo->size * idx;
 }
 
-static inline
+static __always_inline
 bool nethuns_spsc_is_empty(struct nethuns_spsc_queue const *fifo)
 {
 	return  __atomic_load_n(&fifo->head, __ATOMIC_RELAXED) ==
@@ -82,7 +82,7 @@ bool nethuns_spsc_is_empty(struct nethuns_spsc_queue const *fifo)
 }
 
 
-static inline
+static __always_inline
 bool nethuns_spsc_is_full(struct nethuns_spsc_queue const *fifo)
 {
 	return ((__atomic_load_n(&fifo->head, __ATOMIC_RELAXED) + 1) & (fifo->nslots_1)) ==
@@ -90,28 +90,28 @@ bool nethuns_spsc_is_full(struct nethuns_spsc_queue const *fifo)
 }
 
 
-static inline
+static __always_inline
 size_t nethuns_spsc_distance(struct nethuns_spsc_queue const *fifo, size_t h, size_t t)
 {
 	return (h - t) & fifo->nslots_1;
 }
 
 
-static inline
+static __always_inline
 void nethuns_spsc_consumer_sync(struct nethuns_spsc_queue *fifo)
 {
 	fifo->consumer.head_cache = __atomic_load_n(&fifo->head, __ATOMIC_ACQUIRE);
 }
 
 
-static inline
+static __always_inline
 void nethuns_spsc_producer_sync(struct nethuns_spsc_queue *fifo)
 {
 	fifo->producer.tail_cache = __atomic_load_n(&fifo->tail, __ATOMIC_ACQUIRE);
 }
 
 
-static inline
+static __always_inline
 size_t nethuns_spsc_len(struct nethuns_spsc_queue *fifo)
 {
 	size_t h = __atomic_load_n(&fifo->head, __ATOMIC_RELAXED);
@@ -120,14 +120,14 @@ size_t nethuns_spsc_len(struct nethuns_spsc_queue *fifo)
 }
 
 
-static inline
+static __always_inline
 size_t nethuns_spsc_next_index(struct nethuns_spsc_queue *fifo, size_t value)
 {
 	return (value + 1) & fifo->nslots_1;
 }
 
 
-static inline
+static __always_inline
 size_t nethuns_spsc_push(struct nethuns_spsc_queue *fifo, void *elem)
 {
     size_t w = __atomic_load_n(&fifo->head, __ATOMIC_RELAXED);
@@ -149,7 +149,7 @@ size_t nethuns_spsc_push(struct nethuns_spsc_queue *fifo, void *elem)
 }
 
 
-static inline
+static __always_inline
 void *nethuns_spsc_pop(struct nethuns_spsc_queue *fifo)
 {
     size_t w = fifo->consumer.head_cache;
@@ -173,7 +173,7 @@ void *nethuns_spsc_pop(struct nethuns_spsc_queue *fifo)
 }
 
 
-static inline
+static __always_inline
 void *nethuns_spsc_peek(struct nethuns_spsc_queue *fifo)
 {
     size_t w = fifo->consumer.head_cache;
@@ -189,7 +189,7 @@ void *nethuns_spsc_peek(struct nethuns_spsc_queue *fifo)
 }
 
 
-static inline
+static __always_inline
 void nethuns_spsc_consume(struct nethuns_spsc_queue *fifo)
 {
 	size_t next = nethuns_spsc_next_index(fifo, fifo->tail);
@@ -197,7 +197,7 @@ void nethuns_spsc_consume(struct nethuns_spsc_queue *fifo)
 }
 
 
-static inline
+static __always_inline
 void nethuns_spsc_free(struct nethuns_spsc_queue *fifo, void (*free_)(void *))
 {
 	void *ptr;

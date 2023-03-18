@@ -337,7 +337,7 @@ nethuns_recv_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, nethuns_pkthdr_t co
 }
 
 
-static inline int
+static __always_inline int
 __nethuns_flush_tpacket_v3(struct nethuns_socket_tpacket_v3 *s)
 {
     if (sendto(s->fd, NULL, 0, 0, NULL, 0) < 0) {
@@ -405,7 +405,7 @@ nethuns_send_tpacket_v3(struct nethuns_socket_tpacket_v3 *s, uint8_t const *pack
 
 
 
-static inline
+static __always_inline
 int __fanout_code(int strategy, int defrag, int rollover)
 {
     if (defrag)   strategy |= PACKET_FANOUT_FLAG_DEFRAG;
