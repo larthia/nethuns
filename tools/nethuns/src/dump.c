@@ -38,13 +38,13 @@ ether_ntoa_r(const struct ether_addr *addr, char *buf)
 
 
 const char *
-print_timestamp(uint32_t sec, uint32_t nsec, char *timestr) {
+print_timestamp(uint32_t sec, uint32_t nsec, char *timestr, size_t len) {
     struct timeval tv;
     tv.tv_sec = sec;
     tv.tv_usec = nsec/ 1000;
     time_t t = (time_t)tv.tv_sec;
-    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-    snprintf(timestr + strlen(timestr), sizeof(timestr) - strlen(timestr), ".%06d", (int)tv.tv_usec);
+    strftime(timestr, len, "%Y-%m-%d %H:%M:%S", gmtime(&t));
+    snprintf(timestr + strlen(timestr), len - strlen(timestr), ".%06d", (int)tv.tv_usec);
     return timestr;
 }
 
@@ -311,7 +311,7 @@ dump_frame(nethuns_pkthdr_t const *hdr, const unsigned char *frame, const char *
 {
     static char timestr[64];
 
-    const char *tstamp = print_timestamp(nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr), timestr);
+    const char *tstamp = print_timestamp(nethuns_tstamp_sec(hdr), nethuns_tstamp_nsec(hdr), timestr, sizeof(timestr));
     char rxhash[24];
     char dq[256];
 
