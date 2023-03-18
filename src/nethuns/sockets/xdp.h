@@ -72,6 +72,8 @@ nethuns_pcap_store_xdp(nethuns_pcap_t *s, nethuns_pkthdr_t const *pkthdr, uint8_
 int
 nethuns_pcap_rewind_xdp(nethuns_pcap_t *s);
 
+int nethuns_check_xdp(size_t hsize, char *errbuf);
+
 struct nethuns_socket_xdp *
 nethuns_open_xdp(struct nethuns_socket_options *opt, char *errbuf);
 

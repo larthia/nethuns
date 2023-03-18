@@ -45,7 +45,8 @@ extern "C" {
 
 	extern struct nethuns_global __nethuns_global;
 
-	extern void nethuns_init();
+	extern void nethuns_init_(size_t hsize, int socket);
+
 	extern void __attribute__((destructor)) nethuns_fini();
 
 	static __always_inline

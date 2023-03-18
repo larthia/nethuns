@@ -26,6 +26,13 @@
 #include <string.h>
 #include <unistd.h>
 
+int nethuns_check_netmap(size_t hsize, char *errbuf) {
+    if (hsize != sizeof(nethuns_pkthdr_t)) {
+        nethuns_perror(errbuf, "internal error: pkthdr size mismatch (expected %zu, got %zu)", sizeof(nethuns_pkthdr_t), hsize);
+        return -1;
+    }
+    return 0;
+}
 
 struct nethuns_socket_netmap *
 nethuns_open_netmap(struct nethuns_socket_options *opt, char *errbuf)

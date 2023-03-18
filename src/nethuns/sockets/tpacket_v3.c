@@ -31,6 +31,15 @@
 #include <string.h>
 
 
+int
+nethuns_check_tpacket_v3(size_t hsize, char *errbuf) {
+    if (hsize != sizeof(nethuns_pkthdr_t)) {
+        nethuns_perror(errbuf, "internal error: pkthdr size mismatch (expected %zu, got %zu)", sizeof(nethuns_pkthdr_t), hsize);
+        return -1;
+    }
+    return 0;
+}
+
 struct nethuns_socket_tpacket_v3 *
 nethuns_open_tpacket_v3(struct nethuns_socket_options *opt, char *errbuf)
 {

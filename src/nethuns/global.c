@@ -14,11 +14,59 @@
 
 #include "global.h"
 #include "api.h"
+#include "define.h"
 
 struct nethuns_global __nethuns_global;
 
+#ifdef NETHUNS_USE_LIBPCAP
+int nethuns_check_libpcap(size_t hsize, char *errbuf);
+#endif
+int nethuns_check_netmap(size_t hsize, char *errbuf);
+
 void
-nethuns_init() {
+nethuns_init_(size_t hsize, int socket)
+{
+    char errbuf[NETHUNS_ERRBUF_SIZE];
+
+    switch (socket) {
+#ifdef NETHUNS_USE_LIBPCAP
+    case NETHUNS_SOCKET_LIBPCAP: {
+        if (nethuns_check_libpcap(hsize, errbuf) < 0) {
+            nethuns_fprintf(stderr, "%s\n", errbuf);
+		    exit(EXIT_FAILURE);
+        }
+    } break;
+#endif
+#ifdef NETHUNS_USE_NETMAP
+    case NETHUNS_SOCKET_NETMAP: {
+        if (nethuns_check_netmap(hsize, errbuf) < 0) {
+            nethuns_fprintf(stderr, "%s\n", errbuf);
+		    exit(EXIT_FAILURE);
+        }
+    } break;
+#endif
+#ifdef NETHUNS_USE_XDP
+    case NETHUNS_SOCKET_XDP: {
+        if (nethuns_check_xdp(hsize, errbuf) < 0) {
+            nethuns_fprintf(stderr, "%s\n", errbuf);
+		    exit(EXIT_FAILURE);
+        }
+    } break;
+#endif
+#ifdef NETHUNS_USE_TPACKET_V3
+    case NETHUNS_SOCKET_TPACKET3: {
+        if (nethuns_check_tpacket3(hsize, errbuf) < 0) {
+            nethuns_fprintf(stderr, "%s\n", errbuf);
+            exit(EXIT_FAILURE);
+        }
+    } break;
+#endif
+    default: {
+        nethuns_fprintf(stderr, "unsupported socket type %d\n", socket);
+        exit(EXIT_FAILURE);
+    }
+    }
+
     pthread_mutex_init(&__nethuns_global.m, NULL);
     nethuns_fprintf(stderr, "initializing %s...\n", nethuns_version());
 
