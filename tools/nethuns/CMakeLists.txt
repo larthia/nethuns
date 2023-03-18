@@ -8,6 +8,8 @@ project (nethuns-dump)
 
 include(/usr/local/share/nethuns/Nethuns.cmake)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #
 # Compiler options...
 #
