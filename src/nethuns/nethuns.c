@@ -48,7 +48,7 @@ nethuns_perror(char *buf, const char *msg, ...)
 const char *
 nethuns_version ()
 {
-    static const char ver[] = "nethuns v1.0";
+    static const char ver[] = "nethuns v3.0";
     return ver;
 }
 
