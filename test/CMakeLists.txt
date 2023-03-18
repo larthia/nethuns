@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project (nethuns-test)
 
-include(../Nethuns.cmake)
+include(/usr/local/share/nethuns/Nethuns.cmake)
 
 #
 # Compiler options...

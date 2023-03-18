@@ -126,3 +126,9 @@ install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/s
 if (NETHUNS_OPT_XDP)
     install(FILES     libbpf/src/libbpf.a   DESTINATION /usr/local/lib/)
 endif()
+
+configure_file(scripts/Nethuns.cmake Nethuns.cmake @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/Nethuns.cmake DESTINATION /usr/local/share/nethuns/)
+
+
