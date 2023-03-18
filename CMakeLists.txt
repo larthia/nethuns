@@ -65,6 +65,7 @@ endif()
 if (NETHUNS_OPT_TPACKET_V3)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/tpacket_v3.c)
     message("Nethuns: tpcaket v3 ENABLED")
+    add_definitions(-DNETHUNS_USE_TPACKET_V3)
 endif()
 
 if (NETHUNS_OPT_NETMAP)
@@ -72,11 +73,14 @@ if (NETHUNS_OPT_NETMAP)
     list(APPEND NETHUNS_DEP -lnetmap)
     list(APPEND OTHER_LIB -lnetmap)
     message("Nethuns: netmap ENABLED")	
+    add_definitions(-DNETHUNS_USE_NETMAP)
 endif()
 
 if (NETHUNS_OPT_XDP)
 
     message("Nethuns: xdp ENABLED")
+    add_definitions(-DNETHUNS_USE_XDP)
+
     find_package(ZLIB)
 
     set(LIBBPF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src/libbpf.a)
@@ -105,6 +109,7 @@ endif()
 
 if (NETHUNS_OPT_LIBPCAP)
     message("Nethuns: libpcap ENABLED")
+    add_definitions(-DNETHUNS_USE_LIBPCAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
 endif()
