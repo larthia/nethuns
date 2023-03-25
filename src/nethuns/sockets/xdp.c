@@ -724,7 +724,8 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
         header.nsec = (int32_t)tp.tv_nsec;
     }
 
-    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt))
+    int filt = !nethuns_socket(s)->filter ? 1 : nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, pkt);
+    if (filt > 0)
     {
         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
 
@@ -734,7 +735,16 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
 
         *pkthdr  = &slot->pkthdr;
         *payload =  slot->packet;
-        // TODO: this will give 0 when head wraps around
+
+        return ++s->base.rx_ring.head;
+    } else if (unlikely(filt<0)) {
+        memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+        slot->packet = pkt;
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+        *pkthdr  = &slot->pkthdr;
+        *payload = NULL;
+
         return ++s->base.rx_ring.head;
     }
 

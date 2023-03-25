@@ -331,8 +331,8 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 
     ring->head = ring->cur = nm_ring_next(ring, i);
 
-    if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &slot->pkthdr, pkt))
-    {
+    int filt = !nethuns_socket(s)->filter ? 1 : nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &slot->pkthdr, pkt);
+    if (filt > 0) {
         bytes = MIN(caplen, slot->pkthdr.caplen);
 
         slot->pkthdr.caplen = bytes;
@@ -341,6 +341,15 @@ nethuns_recv_netmap(struct nethuns_socket_netmap *s, nethuns_pkthdr_t const **pk
 
         *pkthdr  = &slot->pkthdr;
         *payload =  pkt;
+
+        return ++s->base.rx_ring.head;
+    } else if (unlikely(filt<0)) {
+        bytes = MIN(caplen, slot->pkthdr.caplen);
+        slot->pkthdr.caplen = bytes;
+        __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+        *pkthdr  = &slot->pkthdr;
+        *payload = NULL;
 
         return ++s->base.rx_ring.head;
     }

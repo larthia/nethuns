@@ -219,16 +219,25 @@ nethuns_recv_libpcap(struct nethuns_socket_libpcap *s, nethuns_pkthdr_t const **
 
     if (ppayload)
     {
-        if (!nethuns_socket(s)->filter || nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload))
-        {
+        int filt = !nethuns_socket(s)->filter ? 1 : nethuns_socket(s)->filter(nethuns_socket(s)->filter_ctx, &header, ppayload);
+        if (filt > 0) {
             memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
             memcpy(slot->packet, ppayload, bytes);
             slot->pkthdr.caplen = bytes;
-
             __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
             *pkthdr  = &slot->pkthdr;
             *payload =  slot->packet;
+
+            return ++s->base.rx_ring.head;
+
+        } else if (unlikely(filt < 0)) {
+            memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
+            slot->pkthdr.caplen = bytes;
+            __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
+
+            *pkthdr  = &slot->pkthdr;
+            *payload = NULL;
 
             return ++s->base.rx_ring.head;
         }
