@@ -36,10 +36,19 @@ void dump_packet(nethuns_pkthdr_t const *hdr, const unsigned char *frame)
 
 int simple_filter(void *ctx, const nethuns_pkthdr_t *pkthdr, const uint8_t *pkt)
 {
+    static int run;
     auto header = (std::string *)ctx;
-    printf("filter context %s:\n", header->c_str());
-    dump_packet(pkthdr, pkt);
-    return 1;
+    printf("filter context (%s)\n", header->c_str());
+    run++;
+    if (run & 1) {
+        return 1; /* pass */
+    } else {
+        if (run & 3) { /* drop */
+            return 0;
+        } else {
+            return -1; /* virtual packet */
+        }
+    }
 }
 
 
@@ -109,24 +118,20 @@ try
 
     // set filter...
 
-    std::string ctx = "packet (C++)";
+    std::string ctx = "packet";
     nethuns_set_filter(s, &simple_filter, &ctx);
 
-
-    uint64_t total2 = 0;
     for(;;)
     {
         uint64_t pkt_id;
 
         if ((pkt_id = nethuns_recv(s, &pkthdr, &frame)))
         {
-            total++;
-            total2++;
-
-            if (total2 == 10000000)
-            {
-                total2 = 0;
-                nethuns_dump_rings(s);
+            if (frame) {
+                total++;
+                dump_packet(pkthdr, frame);
+            } else{
+                std::cout << "virtal packet!" << std::endl;
             }
 
             nethuns_rx_release(s, pkt_id);
