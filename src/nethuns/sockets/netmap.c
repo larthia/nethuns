@@ -384,7 +384,7 @@ nethuns_flush_netmap(struct nethuns_socket_netmap *s)
     for (i = s->p->first_tx_ring; i <= s->p->last_tx_ring; i++)
     {
         ring = NETMAP_TXRING(s->p->nifp, i);
-        prev_tails[i] = ring->tail;
+        prev_tails[i - s->p->first_tx_ring] = ring->tail;
 
         while (!nm_ring_empty(ring) && __atomic_load_n(&slot->inuse, __ATOMIC_ACQUIRE) == 1)
         {
@@ -416,7 +416,7 @@ nethuns_flush_netmap(struct nethuns_socket_netmap *s)
         ring = NETMAP_TXRING(s->p->nifp, i);
 
         stop = nm_ring_next(ring, ring->tail);
-        for (scan = nm_ring_next(ring, prev_tails[i]); scan != stop;
+        for (scan = nm_ring_next(ring, prev_tails[i - s->p->first_tx_ring]); scan != stop;
                 scan = nm_ring_next(ring, scan))
         {
             nslot = &ring->slot[scan];
