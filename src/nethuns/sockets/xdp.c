@@ -739,7 +739,7 @@ nethuns_recv_xdp(struct nethuns_socket_xdp *s, nethuns_pkthdr_t const **pkthdr, 
         return ++s->base.rx_ring.head;
     } else if (unlikely(filt<0)) {
         memcpy(&slot->pkthdr, &header, sizeof(slot->pkthdr));
-        slot->packet = pkt;
+        slot->pkthdr.packet = pkt;
         __atomic_store_n(&slot->inuse, 1, __ATOMIC_RELEASE);
 
         *pkthdr  = &slot->pkthdr;
