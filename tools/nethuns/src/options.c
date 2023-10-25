@@ -62,8 +62,10 @@ void help(const char* progname) {
 struct options
 parse_opt(int argc, char *argv[]) {
     struct options ret = {
+        .dev = {},
         .num_devs = 0,
         .count = UINT64_MAX,
+        .verbose = false,
         .meter = -1,
         .sopt = {
                     .numblocks       = 1

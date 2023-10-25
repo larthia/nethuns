@@ -21,12 +21,13 @@ struct targs {
 
 
 static void *
-run_capture_dev(void *_args) {
-    struct targs *args = (struct targs *)(_args);
-
+run_capture_dev(void *_args)
+{
     char errbuf[NETHUNS_ERRBUF_SIZE];
+    struct targs *args = (struct targs *)(_args);
     nethuns_socket_t *s;
     struct options *opt = args->opt;
+
     nethuns_init();
 
     s = nethuns_open(&opt->sopt, errbuf);
@@ -47,7 +48,7 @@ run_capture_dev(void *_args) {
 
     struct stats *st = &global_stats[args->id];
 
-    for(uint64_t i =0; i < opt->count;)
+    for(uint64_t i = 0; i < opt->count;)
     {
         uint64_t pkt_id;
 
@@ -78,7 +79,8 @@ run_capture_dev(void *_args) {
 }
 
 static void *
-run_capture_file(void *_args) {
+run_capture_file(void *_args)
+{
     struct targs *args = (struct targs *)(_args);
 
     char errbuf[NETHUNS_ERRBUF_SIZE];
@@ -180,7 +182,7 @@ run_meter_dev(void *_args) {
         if (nethuns_pkt_is_valid(pkt_id))
         {
             i++;
-            if (opt->meter > 0) {
+            if (opt->meter >= 0) {
                 pkt_count++;
                 byte_count += nethuns_len(pkthdr);
                 if ((pkt_count & ((1 << opt->meter)-1)) == 0) {
@@ -240,7 +242,7 @@ run_meter_file(void *_args) {
         if (nethuns_pkt_is_valid(pkt_id))
         {
             i++;
-            if (opt->meter > 0) {
+            if (opt->meter >= 0) {
                 pkt_count++;
                 byte_count += nethuns_len(pkthdr);
                 if ((pkt_count & ((1 << opt->meter)-1)) == 0) {
@@ -341,7 +343,8 @@ meter(void *opt)
 }
 
 int
-run(struct options *opt) {
+run(struct options *opt)
+{
     pthread_t threads[MAX_DEVICES];
 
     /* run the threads... */
@@ -350,22 +353,19 @@ run(struct options *opt) {
 
     for (int i = 0; i < opt->num_devs; i++)
     {
-        pthread_t thread;
         int err;
         struct targs *nargs = malloc(sizeof(struct targs));
 
         nargs->opt = opt;
         nargs->id = i;
 
-        err = pthread_create(&thread, NULL, callback, nargs);
+        err = pthread_create(&threads[i], NULL, callback, nargs);
         if (err != 0) {
             fprintf(stderr, "could not create a capture thread: %s\n", strerror(err));
         }
     }
 
     pthread_t mtr;
-
-    printf("meter: %d\n", opt->meter);
 
     if (opt->meter >= 0) {
         pthread_create(&mtr, NULL, meter, opt);
@@ -391,5 +391,6 @@ run(struct options *opt) {
     }
 
     printf("TOTAL packets: %" PRIu64 ", bytes: %" PRIu64 "\n", total_pkt_count, total_byte_count);
+    sleep(1);
     return 0;
 }
