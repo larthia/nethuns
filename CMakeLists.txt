@@ -30,12 +30,14 @@ option(NETHUNS_OPT_NETMAP               "Enable Netmap support" OFF)
 
 add_definitions(-D_GNU_SOURCE)
 
-if (APPLE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     find_library(LIBPCAP_LIBRARY NAMES libpcap.a PATHS "/usr/local/opt/libpcap/lib" "/opt/homebrew/opt/libpcap/lib" NO_DEFAULT_PATH)
     find_path(LIBPCAP_INCLUDE_DIR NAMES pcap/pcap.h PATHS "/usr/local/opt/libpcap/include/" "/opt/homebrew/opt/libpcap/include" NO_DEFAULT_PATH)
-elseif(LINUX)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
     find_library(LIBPCAP_LIBRARY NAMES libpcap.a PATHS "/usr/local/lib")
     find_path(LIBPCAP_INCLUDE_DIR NAMES pcap/pcap.h PATHS "/usr/local/include")
+else()
+    message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} platform not supported!")
 endif()
 
 include_directories(${LIBPCAP_INCLUDE_DIR})
@@ -143,6 +145,9 @@ install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/s
 if (NETHUNS_OPT_XDP)
     install(FILES     libbpf/src/libbpf.a   DESTINATION /usr/local/lib/)
 endif()
+
+#
+# build Nethuns.cmake script...
 
 configure_file(scripts/Nethuns.cmake Nethuns.cmake @ONLY)
 
