@@ -41,7 +41,7 @@ else()
 endif()
 
 include_directories(${LIBPCAP_INCLUDE_DIR})
-include_directories(/usr/local/opt/libpcap/include /usr/local/include/ src)
+include_directories(src)
 
 if (NETHUNS_OPT_XDP)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbpf/)
@@ -59,7 +59,7 @@ set(NETHUNS_SRC src/nethuns/nethuns.c
                 src/nethuns/global.c)
 
 if (NETHUNS_OPT_BUILTIN_PCAP_READER)
-    	message("Nethuns: using built-in pcap reader")
+    message("Nethuns: using built-in pcap reader")
 	add_definitions(-DNETHUNS_USE_BUILTIN_PCAP_READER)
 else()
     list(APPEND NETHUNS_LIBS ${LIBPCAP_LIBRARY})
@@ -82,7 +82,6 @@ if (NETHUNS_OPT_NETMAP)
 endif()
 
 if (NETHUNS_OPT_XDP)
-
     message("Nethuns: xdp ENABLED")
     add_definitions(-DNETHUNS_USE_XDP)
     find_package(ZLIB)
@@ -90,10 +89,11 @@ if (NETHUNS_OPT_XDP)
     set(LIBBPF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src/libbpf.a)
 
     add_custom_target(
-  	build_libbpf ALL
-  	COMMAND ${CMAKE_MAKE_PROGRAM}
-  	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src
-	COMMENT "Libbpf makefile target" )
+  	    build_libbpf ALL
+  	    COMMAND ${CMAKE_MAKE_PROGRAM}
+  	    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src
+	    COMMENT "Libbpf makefile target"
+    )
 
     add_library(libbpf STATIC IMPORTED)
 
@@ -112,7 +112,6 @@ if (NETHUNS_OPT_XDP)
 endif()
 
 if (NETHUNS_OPT_LIBPCAP)
-
     message("Nethuns: libpcap ENABLED")
     add_definitions(-DNETHUNS_USE_LIBPCAP)
     list(APPEND NETHUNS_SRC src/nethuns/sockets/libpcap.c)
@@ -136,19 +135,30 @@ target_link_libraries(nethuns PRIVATE ${NETHUS_LIBS})
 
 add_dependencies(nethuns revision)
 
-install(TARGETS nethuns DESTINATION /usr/local/lib)
-
-install(DIRECTORY src/nethuns/ 	   	    DESTINATION /usr/local/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
-install(DIRECTORY libbpf/src/      	    DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
-install(DIRECTORY libbpf/include/uapi/  DESTINATION /usr/local/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
-
-if (NETHUNS_OPT_XDP)
-    install(FILES     libbpf/src/libbpf.a   DESTINATION /usr/local/lib/)
-endif()
-
 #
 # build Nethuns.cmake script...
 
 configure_file(scripts/Nethuns.cmake Nethuns.cmake @ONLY)
 
-install(FILES ${CMAKE_BINARY_DIR}/Nethuns.cmake DESTINATION /usr/local/share/nethuns/)
+#
+# copy headers into build directory...
+
+file(COPY src/nethuns/ DESTINATION ${CMAKE_BINARY_DIR}/include/nethuns FILES_MATCHING PATTERN "*.h" PATTERN src/nethuns/sockets/xdp EXCLUDE)
+if (NETHUNS_OPT_XDP)
+    file(COPY libbpf/src/      	    DESTINATION ${CMAKE_BINARY_DIR}/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+    file(COPY libbpf/include/uapi/  DESTINATION ${CMAKE_BINARY_DIR}/include/nethuns/sockets/xdp FILES_MATCHING PATTERN "*.h" )
+endif()
+
+#
+# install headers and libraries...
+
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nethuns/ 	 DESTINATION ${CMAKE_INSTALL_PREFIX}/include/nethuns FILES_MATCHING PATTERN "*.h")
+
+if (NETHUNS_OPT_XDP)
+    install(FILES     libbpf/src/libbpf.a   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
+endif()
+
+install(TARGETS nethuns DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install(FILES ${CMAKE_BINARY_DIR}/Nethuns.cmake DESTINATION ${CMAKE_INSTALL_PREFIX}/share/nethuns/)
+
+

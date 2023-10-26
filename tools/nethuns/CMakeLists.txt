@@ -14,7 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Compiler options...
 #
 
-include_directories(${NETHUNS_INCLUDE_PATHS} . ../src)
+include_directories(${NETHUNS_INCLUDE_DIRS} . ../src)
 
 link_directories(/usr/local/lib)
 
@@ -23,4 +23,4 @@ add_executable(nethuns-dump src/main.c
                             src/dump.c
                             src/run.c)
 
-target_link_libraries(nethuns-dump ${NETHUNS_LIBRARIES} -pthread)
+target_link_libraries(nethuns-dump ${NETHUNS_LIBRARY_DIRS} -pthread)
