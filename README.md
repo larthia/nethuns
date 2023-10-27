@@ -92,6 +92,26 @@ make -j<#cores>
 sudo make install
 ```
 
+# Using Nethuns as a Submodule in CMake Projects
+
+You can utilize the Nethuns library without the need for system-wide installation by configuring it as a submodule within your CMake project. 
+To achieve this, you should include the following CMake commands in your project:
+
+```cmake
+add_subdirectory(libs/Nethuns)
+
+set(USE_LOCAL_NETHUNS on)
+include(${CMAKE_BINARY_DIR}/libs/Nethuns/Nethuns.cmake)
+
+include_directories(${NETHUNS_INCLUDE_DIRS})
+target_link_libraries(your_binary ${NETHUNS_LIBRARY_DIRS})
+```
+
+- The first command ensures that Nethuns is built alongside your project. You will need to select the desired sockets to enable during compilation and which ones your application will effectively use.
+- Setting the variable `USE_LOCAL_NETHUNS` to "on" instructs the Nethuns.cmake script to use the locally built version instead of the system-installed one.
+- The `include()` directive, which typically points to `/usr/local/share/nethuns/Nethuns.cmake`, should now be directed to the locally generated version during your project's configuration.
+
+- The last two directives are the same ones you would use even if you were to utilize the system-installed version, as they contain all the necessary paths for including the headers and linking the libraries.
 
 # Building the examples
 
