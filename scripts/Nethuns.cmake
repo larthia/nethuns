@@ -50,6 +50,7 @@ else()
     message ("Nethuns: using system installation")
     list(APPEND NETHUNS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include)
     list(APPEND NETHUNS_LIBRARY_DIRS ${CMAKE_INSTALL_PREFIX}/lib/libnethuns.a)
+    find_library(NETHUNS_LIBBPF_LIBRARY bpf)
 endif()
 
 #
@@ -73,7 +74,6 @@ list(APPEND NETHUNS_LIBRARY_DIRS ${NETHUNS_LIBPCAP_LIBRARY})
 # detecting other libraries...
 
 find_package(ZLIB)
-find_library(NETHUNS_LIBBPF_LIBRARY bpf)
 find_library(NETHUNS_LIBELF_LIBRARY elf)
 find_library(NETHUNS_NETMAP_LIBRARY netmap)
 
