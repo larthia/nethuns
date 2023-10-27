@@ -41,8 +41,16 @@ set(NETHUNS_INCLUDE_DIRS)
 #
 # Nethuns installation...
 
-list(APPEND NETHUNS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include)
-list(APPEND NETHUNS_LIBRARY_DIRS ${CMAKE_INSTALL_PREFIX}/lib/libnethuns.a)
+if (USE_LOCAL_NETHUNS)
+    message ("Nethuns: using local installation")
+    list(APPEND NETHUNS_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/include)
+    list(APPEND NETHUNS_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/libs/Nethuns/libnethuns.a)
+    list(APPEND NETHUNS_LIBBPF_LIBRARY libbpf/src/libbpf.a) 
+else()
+    message ("Nethuns: using system installation")
+    list(APPEND NETHUNS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include)
+    list(APPEND NETHUNS_LIBRARY_DIRS ${CMAKE_INSTALL_PREFIX}/lib/libnethuns.a)
+endif()
 
 #
 # detecting libpcap installation...
@@ -87,7 +95,7 @@ elseif (NETHUNS_CAPTURE_SOCKET STREQUAL "libpcap")
 endif()
 
 if (NETHUNS_OPT_XDP)
-    list(APPEND NETHUNS_INCLUDE_DIRS /usr/local/include/nethuns/sockets/xdp/)
+    list(APPEND NETHUNS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/nethuns/sockets/xdp/)
     list(APPEND NETHUNS_LIBRARY_DIRS ${NETHUNS_LIBBPF_LIBRARY})
     list(APPEND NETHUNS_LIBRARY_DIRS ${NETHUNS_LIBELF_LIBRARY})
     list(APPEND NETHUNS_LIBRARY_DIRS ZLIB::ZLIB)
