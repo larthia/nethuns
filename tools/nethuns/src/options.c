@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 #include <nethuns/nethuns.h>
 

@@ -5,14 +5,9 @@
  */
 
 #include <nethuns/nethuns.h>
-#include <stdio.h>
 #include <signal.h>
 
-#include "nethuns/define.h"
-#include "nethuns/types.h"
-
 #include "hdr/options.h"
-#include "hdr/dump.h"
 #include "hdr/run.h"
 
 int sig_shutdown;

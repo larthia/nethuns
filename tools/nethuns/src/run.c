@@ -2,13 +2,13 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include <stdio.h>
+#include <inttypes.h>
+
 #include "hdr/dump.h"
 #include "hdr/options.h"
 #include "hdr/stats.h"
 #include "nethuns/api.h"
-
-#include <stdio.h>
-#include <inttypes.h>
 
 extern int sig_shutdown;
 
