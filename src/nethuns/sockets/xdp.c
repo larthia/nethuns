@@ -796,8 +796,7 @@ nethuns_send_xdp(struct nethuns_socket_xdp *s, uint8_t const *packet, unsigned i
     memcpy(frame, packet, len);
     s->base.tx_ring.tail++;
     nethuns_send_slot(s, tail, len);
-    //printf("marking slot %d\n", tail);
-	return 1;
+	return len;
 }
 
 int

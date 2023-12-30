@@ -373,12 +373,13 @@ nethuns_send_netmap(struct nethuns_socket_netmap *s, uint8_t const *packet, unsi
     uint8_t *dst;
 
     if (__atomic_load_n(&slot->inuse, __ATOMIC_RELAXED))
-        return -1;
+        return 0;
+
     dst = nethuns_get_buf_addr_netmap(s, b->tx_ring.tail);
     nm_pkt_copy(packet, dst, len);
     nethuns_send_slot(s, b->tx_ring.tail, len);
     b->tx_ring.tail++;
-    return 1;
+    return len;
 }
 
 
