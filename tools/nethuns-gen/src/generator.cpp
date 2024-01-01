@@ -26,6 +26,7 @@
 #include "hdr/packet.hpp"
 #include "hdr/rate_limiter.hpp"
 #include "hdr/affinity.hpp"
+#include "hdr/pretty.hpp"
 
 extern std::atomic_bool sig_shutdown;
 
@@ -62,11 +63,11 @@ in_cksum(u_short *addr, int len)
 
 
 template <typename T, typename ...Ts>
-auto to_string(bool toggle, T const &x, Ts const &...xs) -> std::string {
+auto to_string_if(bool toggle, T const &x, Ts const &...xs) -> std::string {
     if (toggle) {
         std::stringstream ss;
         ss << x;
-        ((ss << " " << xs), ...);
+        ((ss << xs), ...);
         return ss.str();
     } else {
         return "off";
@@ -123,7 +124,7 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
     //
     // translate pcap file
 
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string(RATE_LIMITER, gen.pkt_rate, "pps") << " speed:" << to_string(RATE_LIMITER, gen.speed) << " preload:" << to_string(PRELOAD, "on") <<  ")" << std::endl;
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps") << " speed:" << to_string_if(RATE_LIMITER, gen.speed) << " preload:" << to_string_if(PRELOAD, "on") <<  ")" << std::endl;
 
     auto const period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
     rate_limiter<> limiter;
@@ -299,7 +300,7 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
         throw nethuns_exception(nh);
     }
 
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string(RATE_LIMITER, gen.pkt_rate, "pps") << ")" << std::endl;
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps") << ")" << std::endl;
 
     auto now = std::chrono::steady_clock::now();
     auto period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
@@ -511,7 +512,7 @@ int run(const options& opt) {
                 discarded += s->discarded.load(std::memory_order_relaxed);
             }
 
-            std::cout << "packets:" << packets << "   packets/sec:" << (packets-packets_prev)*1000000/period  << "   bytes:" << bytes << "   Mbps:" << (bytes-bytes_prev)*8.0/period <<"   discarded:" << discarded << "   errors:" << errors << std::endl;
+            std::cout << "packets:" << packets << "  packets/sec:" << pretty_number((packets-packets_prev)*1000000.0/period) << "  bps:" << pretty_number((bytes-bytes_prev)*8.0) <<"  discarded:" << discarded << "  errors:" << errors << std::endl;
 
             packets_prev = packets;
             bytes_prev = bytes;
