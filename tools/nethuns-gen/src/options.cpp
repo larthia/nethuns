@@ -8,25 +8,26 @@
 void help(const char *progname) {
     std::cout << "Usage: " << progname << " [options]" << std::endl;
     std::cout << "Options:" << std::endl;
-    std::cout << "  -G\t\t\tadd a generator" << std::endl;
-    std::cout << "  -c <cpu>\t\tset the cpu affinity" << std::endl;
-    std::cout << "  -I <interface>\tset the interface to use" << std::endl;
-    std::cout << "  -S <source>\t\tset the source of the packets" << std::endl;
-    std::cout << "  -R <mac>\t\tset the source mac address" << std::endl;
-    std::cout << "  -D <mac>\t\tset the destination mac address" << std::endl;
-    std::cout << "  -z\t\t\tcheck mac consistency" << std::endl;
-    std::cout << "  -m <packets>\t\tset the number of packets to send" << std::endl;
-    std::cout << "  -r <pps>\t\tset the packet rate" << std::endl;
-    std::cout << "  -b <bps>\t\tset the bit rate" << std::endl;
-    std::cout << "  -l <loops>\t\tset the number of loops" << std::endl;
-    std::cout << "  -L <length>\t\tset the packet length" << std::endl;
-    std::cout << "  -s <prefix>\t\trandomize the source ip address" << std::endl;
-    std::cout << "  -d <prefix>\t\trandomize the destination ip address" << std::endl;
-    std::cout << "  -p <prefix>\t\trandomize prefix" << std::endl;
-    std::cout << "  -a <amplification>\tset the amplification factor" << std::endl;
-    std::cout << "  -x\t\t\tfix checksums" << std::endl;
-    std::cout << "  -v\t\t\tverbose" << std::endl;
-    std::cout << "  -h\t\t\tshow this help" << std::endl;
+    std::cout << "  -G\t\t\t\tadd a generator" << std::endl;
+    std::cout << "  -c <cpu>\t\t\tset cpu to run on" << std::endl;
+    std::cout << "  -I <dev>\t\t\tset device to send packets on" << std::endl;
+    std::cout << "  -S <source>\t\t\tset the source of packets (e.g. template name or pcap)" << std::endl;
+    std::cout << "  -R <mac_source>\t\tset source mac address" << std::endl;
+    std::cout << "  -D <mac_dest>\t\t\tset destination mac address" << std::endl;
+    std::cout << "  -z\t\t\t\tcheck mac consistency" << std::endl;
+    std::cout << "  -m <max_packets>\t\tset maximum number of packets to send" << std::endl;
+    std::cout << "  -r <pkt_rate>\t\t\tset packet rate" << std::endl;
+    std::cout << "  -l <loops>\t\t\tset number of loops (pcap only)" << std::endl;
+    std::cout << "  -L <pktlen>\t\t\tset packet length" << std::endl;
+    std::cout << "  -s <randomize_src_ip>\t\trandomize source ip" << std::endl;
+    std::cout << "  -d <randomize_dst_ip>\t\trandomize destination ip" << std::endl;
+    std::cout << "  -p <randomize_prefix>\t\trandomize by prefix" << std::endl;
+    std::cout << "  -a <amp>\t\t\tset amplitude" << std::endl;
+    std::cout << "  -x\t\t\t\tfix checksums" << std::endl;
+    std::cout << "  -P\t\t\t\tpreload pcap files" << std::endl;
+    std::cout << "  -v\t\t\t\tverbose" << std::endl;
+    std::cout << "  -y <speed>\t\t\tset speed (for pcap, 0 means top-speed)" << std::endl;
+    std::cout << "  -h\t\t\t\tshow this help" << std::endl;
 }
 
 template <typename T>
