@@ -36,6 +36,7 @@ struct generator
     bool mac_consistency = false;
     bool fix_checksums = false;
     bool verbose = false;
+    bool pcap_preload = false;
 
     bool is_pcap_file() const {
         std::filesystem::path p(source);

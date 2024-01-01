@@ -45,7 +45,7 @@ parse_opt(int argc, char **argv)
     generator *gen = nullptr;
 
     int c;
-    while ((c = getopt(argc, argv, "GS:I:R:D:c:m:r:L:l:s:d:p:a:y:xzvh")) != -1) {
+    while ((c = getopt(argc, argv, "GS:I:R:D:c:m:r:L:l:s:d:p:a:y:Pxzvh")) != -1) {
         switch (c) {
             case 'G':
                 opt.generators.emplace_back();
@@ -95,6 +95,9 @@ parse_opt(int argc, char **argv)
                 break;
             case 'x':
                 deref(gen).fix_checksums = true;
+                break;
+            case 'P':
+                deref(gen).pcap_preload = true;
                 break;
             case 'v':
                 deref(gen).verbose = true;

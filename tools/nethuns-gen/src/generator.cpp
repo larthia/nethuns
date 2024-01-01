@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstdlib>
 #include <nethuns/network/ether.h>
 #include <nethuns/network/icmp.h>
@@ -13,6 +14,7 @@
 #include <chrono>
 #include <exception>
 #include <iostream>
+#include <optional>
 #include <random>
 #include <thread>
 #include <memory>
@@ -72,7 +74,7 @@ auto to_string(bool toggle, T const &x, Ts const &...xs) -> std::string {
 }
 
 
-template <bool PKT_LIMIT, bool RANDOMIZER, bool RATE_LIMITER, bool FIX_CHECKSUM>
+template <bool PKT_LIMIT, bool RANDOMIZER, bool RATE_LIMITER, bool FIX_CHECKSUM, bool PRELOAD>
 void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th_idx, int num_threads)
 {
     char errbuf[std::max(PCAP_ERRBUF_SIZE, NETHUNS_ERRBUF_SIZE)];
@@ -121,26 +123,54 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
     //
     // translate pcap file
 
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter: " << to_string(RATE_LIMITER, gen.pkt_rate, "pps") << " speed:" << to_string(RATE_LIMITER, gen.speed)  << ")" << std::endl;
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string(RATE_LIMITER, gen.pkt_rate, "pps") << " speed:" << to_string(RATE_LIMITER, gen.speed) << " preload:" << to_string(PRELOAD, "on") <<  ")" << std::endl;
 
-    auto now = std::chrono::steady_clock::now();
     auto const period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
     rate_limiter<> limiter;
 
-    std::optional<std::chrono::nanoseconds> prev_ts = std::nullopt;
+    std::optional<std::chrono::nanoseconds> prev_ts;
 
-    size_t i = 0;
+    size_t total = 0;
+
+    auto v = [&] {
+        if constexpr(PRELOAD) {
+            return packet::from_pcap(gen.source.c_str());
+        } else {
+            return std::vector<packet>{};
+        }
+    }();
+
     for (size_t l = 0; l < gen.loops; l++)
     {
-        auto p = pcap_open_offline(gen.source.c_str(), errbuf);
-        if (p == nullptr)
-            throw std::runtime_error("pcap_open_offline:" + std::string(errbuf));
+        auto now = std::chrono::steady_clock::now();
+        prev_ts = std::nullopt;
 
-        for(;;)
+        auto p = [&] {
+            if constexpr(PRELOAD) {
+                return std::nullptr_t{};
+            } else {
+                auto p = pcap_open_offline(gen.source.c_str(), errbuf);
+                if (p == nullptr)
+                    throw std::runtime_error("pcap_open_offline:" + std::string(errbuf));
+                return p;
+            }
+        }();
+
+        for(size_t i = 0;;++i)
         {
-            auto n = pcap_next_ex(p, &hdr, (u_char const **)&data);
-            if (unlikely(n == -2))
-                return;
+            if constexpr(PRELOAD) {
+                if (unlikely(i >= v.size())) {
+                    break;
+                }
+
+                hdr = &v[i].hdr_;
+                data = v[i].data_.get();
+
+            } else {
+                auto n = pcap_next_ex(p, &hdr, (u_char const **)&data);
+                if (unlikely(n == -2))
+                    break;
+            }
 
             auto ip = reinterpret_cast<iphdr *>(data + 14);
 
@@ -169,18 +199,14 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
 
                 if constexpr (RATE_LIMITER) {
                     auto ts = std::chrono::nanoseconds(hdr->ts.tv_sec * 1000000000 + hdr->ts.tv_usec * 1000);
-                    auto delta_ts = [&] {
-                        if (prev_ts) {
-                            return (ts - *prev_ts)/gen.speed;
-                        }
-                        return std::chrono::nanoseconds(0);
-                    }();
+                    if (likely(prev_ts != std::nullopt)) {
+                        auto delta_ts = (ts - *prev_ts)/gen.speed;
+                        auto delta = std::max(delta_ts, period);
+                        limiter.wait(now + delta, total + j);
+                        now = now + delta;
+                    }
 
-                    auto delta = std::max(delta_ts, period);
                     prev_ts = ts;
-
-                    limiter.wait(now + delta, i + j);
-                    now = now + delta;
                 }
 
                 // send packet...
@@ -198,26 +224,33 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
 
             nethuns_flush(nh);
 
-            i += gen.amp;
+            total += gen.amp;
 
             if constexpr (PKT_LIMIT) {
-                if (i >= gen.max_packets) {
-                    pcap_close(p);
+                if (unlikely(total >= gen.max_packets)) {
+                    if constexpr(!PRELOAD) {
+                        pcap_close(p);
+                    }
                     goto done;
                 }
             }
 
             if (unlikely(sig_shutdown.load(std::memory_order_relaxed))) {
-                pcap_close(p);
+                if constexpr(!PRELOAD) {
+                    pcap_close(p);
+                }
                 goto done;
             }
         }
 
-        pcap_close(p);
+        if constexpr(!PRELOAD) {
+            pcap_close(p);
+        }
     }
 
  done:
     nethuns_close(nh);
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' <- done" << std::endl;
 }
 
 
@@ -266,13 +299,13 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
         throw nethuns_exception(nh);
     }
 
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter: " << to_string(RATE_LIMITER, gen.pkt_rate, "pps") << ")" << std::endl;
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string(RATE_LIMITER, gen.pkt_rate, "pps") << ")" << std::endl;
 
     auto now = std::chrono::steady_clock::now();
     auto period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
     rate_limiter<> limiter;
 
-    for(size_t i = 0;;)
+    for(size_t total = 0;;)
     {
         auto ip = reinterpret_cast<iphdr *>(pkt.data_.get() + 14);
 
@@ -297,7 +330,7 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
             }
 
             if constexpr (RATE_LIMITER) {
-                limiter.wait(now + period, i + j);
+                limiter.wait(now + period, total + j);
                 now = now + period;
             }
 
@@ -316,10 +349,10 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
 
         nethuns_flush(nh);
 
-        i += gen.amp;
+        total += gen.amp;
 
         if constexpr (PKT_LIMIT) {
-            if (i >= gen.max_packets) {
+            if (unlikely(total >= gen.max_packets)) {
                 break;
             }
         }
@@ -331,11 +364,12 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
 
  done:
     nethuns_close(nh);
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' <- done" << std::endl;
 }
 
-#define CASE_PCAP_REPLAY(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM) \
-    case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM): \
-        pcap_replay<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM>(local_gen, local_stats, th_idx, opt.generators.size()); \
+#define CASE_PCAP_REPLAY(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, PRELOAD) \
+    case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, PRELOAD): \
+        pcap_replay<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, PRELOAD>(local_gen, local_stats, th_idx, opt.generators.size()); \
         break;
 
 #define CASE_PKT_GENERATOR(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM) \
@@ -374,24 +408,42 @@ int run(const options& opt) {
                     switch (bitfield(local_gen.max_packets != std::numeric_limits<size_t>::max(),
                                      local_gen.has_randomizer(),
                                      local_gen.has_rate_limiter() || local_gen.has_speed_control(),
-                                     local_gen.fix_checksums))
+                                     local_gen.fix_checksums,
+                                     local_gen.pcap_preload
+                                     ))
                     {
-                    CASE_PCAP_REPLAY(false, false, false, false);
-                    CASE_PCAP_REPLAY(true , false, false, false);
-                    CASE_PCAP_REPLAY(false, true , false, false);
-                    CASE_PCAP_REPLAY(true , true , false, false);
-                    CASE_PCAP_REPLAY(false, false, true , false);
-                    CASE_PCAP_REPLAY(true , false, true , false);
-                    CASE_PCAP_REPLAY(false, true , true , false);
-                    CASE_PCAP_REPLAY(true , true , true , false);
-                    CASE_PCAP_REPLAY(false, false, false, true );
-                    CASE_PCAP_REPLAY(true , false, false, true );
-                    CASE_PCAP_REPLAY(false, true , false, true );
-                    CASE_PCAP_REPLAY(true , true , false, true );
-                    CASE_PCAP_REPLAY(false, false, true , true );
-                    CASE_PCAP_REPLAY(true , false, true , true );
-                    CASE_PCAP_REPLAY(false, true , true , true );
-                    CASE_PCAP_REPLAY(true , true , true , true );
+                    CASE_PCAP_REPLAY(false, false, false, false, false);
+                    CASE_PCAP_REPLAY(true , false, false, false, false);
+                    CASE_PCAP_REPLAY(false, true , false, false, false);
+                    CASE_PCAP_REPLAY(true , true , false, false, false);
+                    CASE_PCAP_REPLAY(false, false, true , false, false);
+                    CASE_PCAP_REPLAY(true , false, true , false, false);
+                    CASE_PCAP_REPLAY(false, true , true , false, false);
+                    CASE_PCAP_REPLAY(true , true , true , false, false);
+                    CASE_PCAP_REPLAY(false, false, false, true , false);
+                    CASE_PCAP_REPLAY(true , false, false, true , false);
+                    CASE_PCAP_REPLAY(false, true , false, true , false);
+                    CASE_PCAP_REPLAY(true , true , false, true , false);
+                    CASE_PCAP_REPLAY(false, false, true , true , false);
+                    CASE_PCAP_REPLAY(true , false, true , true , false);
+                    CASE_PCAP_REPLAY(false, true , true , true , false);
+                    CASE_PCAP_REPLAY(true , true , true , true , false);
+                    CASE_PCAP_REPLAY(false, false, false, false, true );
+                    CASE_PCAP_REPLAY(true , false, false, false, true );
+                    CASE_PCAP_REPLAY(false, true , false, false, true );
+                    CASE_PCAP_REPLAY(true , true , false, false, true );
+                    CASE_PCAP_REPLAY(false, false, true , false, true );
+                    CASE_PCAP_REPLAY(true , false, true , false, true );
+                    CASE_PCAP_REPLAY(false, true , true , false, true );
+                    CASE_PCAP_REPLAY(true , true , true , false, true );
+                    CASE_PCAP_REPLAY(false, false, false, true , true );
+                    CASE_PCAP_REPLAY(true , false, false, true , true );
+                    CASE_PCAP_REPLAY(false, true , false, true , true );
+                    CASE_PCAP_REPLAY(true , true , false, true , true );
+                    CASE_PCAP_REPLAY(false, false, true , true , true );
+                    CASE_PCAP_REPLAY(true , false, true , true , true );
+                    CASE_PCAP_REPLAY(false, true , true , true , true );
+                    CASE_PCAP_REPLAY(true , true , true , true , true );
                     }
                 }
                 else {
