@@ -74,9 +74,8 @@ auto to_string_if(bool toggle, T const &x, Ts const &...xs) -> std::string {
     }
 }
 
-
-template <bool PKT_LIMIT, bool RANDOMIZER, bool RATE_LIMITER, bool FIX_CHECKSUM, bool PRELOAD>
-void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th_idx, int num_threads)
+template <bool PKT_LIMIT, bool RANDOMIZER, bool RATE_LIMITER, bool FIX_CHECKSUM, bool PCAP, bool PCAP_PRELOAD>
+void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, int th_idx, int num_threads)
 {
     char errbuf[std::max(PCAP_ERRBUF_SIZE, NETHUNS_ERRBUF_SIZE)];
 
@@ -124,7 +123,17 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
     //
     // translate pcap file
 
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps") << " speed:" << to_string_if(RATE_LIMITER, gen.speed) << " preload:" << to_string_if(PRELOAD, "on") <<  ")" << std::endl;
+    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev
+                << " (rate_limiter:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps")
+                << " speed:" << to_string_if(RATE_LIMITER, gen.speed)
+                << " pcap:"  << to_string_if(PCAP, [] {
+                    if constexpr (PCAP_PRELOAD) {
+                        return "in-memory-preload";
+                    } else {
+                        return "on-the-fly";
+                    }
+                }())
+                << std::endl;
 
     auto const period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
     rate_limiter<> limiter;
@@ -134,20 +143,30 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
     size_t total = 0;
 
     auto v = [&] {
-        if constexpr(PRELOAD) {
-            return packet::from_pcap(gen.source.c_str());
+        if constexpr(PCAP) {
+            if constexpr(PCAP_PRELOAD) {
+                return packet::from_pcap(gen.source.c_str());
+            } else {
+                return std::vector<packet>{};
+            }
         } else {
-            return std::vector<packet>{};
+            return packet::builder(gen.source, gen.pktlen);
         }
     }();
 
+    constexpr bool VECTORIZED = !PCAP || PCAP_PRELOAD;
+
+    auto now = std::chrono::steady_clock::now();
+
     for (size_t l = 0; l < gen.loops; l++)
     {
-        auto now = std::chrono::steady_clock::now();
-        prev_ts = std::nullopt;
+        if constexpr (!VECTORIZED) {
+            now = std::chrono::steady_clock::now();
+            prev_ts = std::nullopt;
+        };
 
         auto p = [&] {
-            if constexpr(PRELOAD) {
+            if constexpr(VECTORIZED) {
                 return std::nullptr_t{};
             } else {
                 auto p = pcap_open_offline(gen.source.c_str(), errbuf);
@@ -159,7 +178,7 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
 
         for(size_t i = 0;;++i)
         {
-            if constexpr(PRELOAD) {
+            if constexpr(VECTORIZED) {
                 if (unlikely(i >= v.size())) {
                     break;
                 }
@@ -199,15 +218,20 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
                 }
 
                 if constexpr (RATE_LIMITER) {
-                    auto ts = std::chrono::nanoseconds(hdr->ts.tv_sec * 1000000000 + hdr->ts.tv_usec * 1000);
-                    if (likely(prev_ts != std::nullopt)) {
-                        auto delta_ts = (ts - *prev_ts)/gen.speed;
-                        auto delta = std::max(delta_ts, period);
-                        limiter.wait(now + delta, total + j);
-                        now = now + delta;
-                    }
+                    if (PCAP) {
+                        auto ts = std::chrono::nanoseconds(hdr->ts.tv_sec * 1000000000 + hdr->ts.tv_usec * 1000);
+                        if (likely(prev_ts != std::nullopt)) {
+                            auto delta_ts = (ts - *prev_ts)/gen.speed;
+                            auto delta = std::max(delta_ts, period);
+                            limiter.wait(now + delta, total + j);
+                            now = now + delta;
+                        }
 
-                    prev_ts = ts;
+                        prev_ts = ts;
+                    } else {
+                        limiter.wait(now + period, total + j);
+                        now = now + period;
+                    }
                 }
 
                 // send packet...
@@ -229,7 +253,7 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
 
             if constexpr (PKT_LIMIT) {
                 if (unlikely(total >= gen.max_packets)) {
-                    if constexpr(!PRELOAD) {
+                    if constexpr(!VECTORIZED) {
                         pcap_close(p);
                     }
                     goto done;
@@ -237,14 +261,14 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
             }
 
             if (unlikely(sig_shutdown.load(std::memory_order_relaxed))) {
-                if constexpr(!PRELOAD) {
+                if constexpr(!VECTORIZED) {
                     pcap_close(p);
                 }
                 goto done;
             }
         }
 
-        if constexpr(!PRELOAD) {
+        if constexpr(!VECTORIZED) {
             pcap_close(p);
         }
     }
@@ -255,128 +279,11 @@ void pcap_replay(generator &gen, std::shared_ptr<generator_stats> &stats, int th
 }
 
 
-template <bool PKT_LIMIT, bool RANDOMIZER, bool RATE_LIMITER, bool FIX_CHECKSUM>
-void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, int th_idx, int num_threads)
-{
-    char errbuf[std::max(PCAP_ERRBUF_SIZE, NETHUNS_ERRBUF_SIZE)];
-
-    std::mt19937 rand_gen;
-
-    auto pkt = packet::builder(gen.source, gen.pktlen);
-
-    // nethuns options
-    //
-
-    auto netopt = nethuns_socket_options {
-        .numblocks       = 1
-    ,   .numpackets      = 2048
-    ,   .packetsize      = 2048
-    ,   .timeout_ms      = 0
-    ,   .dir             = nethuns_in_out
-    ,   .capture         = nethuns_cap_zero_copy
-    ,   .mode            = nethuns_socket_rx_tx
-    ,   .timestamp       = true
-    ,   .promisc         = false
-    ,   .rxhash          = false
-    ,   .tx_qdisc_bypass = true
-    ,   .xdp_prog        = nullptr
-    ,   .xdp_prog_sec    = nullptr
-    ,   .xsk_map_name    = nullptr
-    ,   .reuse_maps      = false
-    ,   .pin_dir         = nullptr
-    };
-
-    //
-    // open nethuns sockets
-
-    auto nh = nethuns_open(&netopt, errbuf);
-    if (nh == nullptr)
-        throw std::runtime_error("nethuns_open:" + std::string(errbuf));
-
-    //
-    // bind nethuns sockets to dev, queue
-
-    if (nethuns_bind(nh, gen.dev.c_str(), num_threads > 1 ? th_idx : NETHUNS_ANY_QUEUE) < 0) {
-        throw nethuns_exception(nh);
-    }
-
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev << " (rate_limiter:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps") << ")" << std::endl;
-
-    auto now = std::chrono::steady_clock::now();
-    auto period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
-    rate_limiter<> limiter;
-
-    for(size_t total = 0;;)
-    {
-        auto ip = reinterpret_cast<iphdr *>(pkt.data_.get() + 14);
-
-        for (auto j = 0; j < gen.amp; j++)
-        {
-            if constexpr (RANDOMIZER) {
-                if (gen.randomize_src_ip)
-                {
-                    ip->saddr = ip->saddr ^ htonl(static_cast<uint32_t>(rand_gen()) & gen.randomize_src_ip->mask);
-                }
-
-                if (gen.randomize_dst_ip)
-                {
-                    ip->daddr = ip->daddr ^ htonl(static_cast<uint32_t>(rand_gen()) & gen.randomize_dst_ip->mask);
-                }
-
-                if constexpr (FIX_CHECKSUM)
-                {
-                    ip->check = 0;
-                    ip->check = in_cksum(reinterpret_cast<u_short *>(ip), 20);
-                }
-            }
-
-            if constexpr (RATE_LIMITER) {
-                limiter.wait(now + period, total + j);
-                now = now + period;
-            }
-
-            // send packet...
-
-            auto res = nethuns_send(nh, pkt.data_.get(), pkt.len_);
-            if (likely(res > 0)) {
-                stats->packets.fetch_add(1, std::memory_order_relaxed);
-                stats->bytes.fetch_add(60, std::memory_order_relaxed);
-            } else if (res == 0) {
-                stats->discarded.fetch_add(1, std::memory_order_relaxed);
-            } else {
-                stats->errors.fetch_add(1, std::memory_order_relaxed);
-            }
-        }
-
-        nethuns_flush(nh);
-
-        total += gen.amp;
-
-        if constexpr (PKT_LIMIT) {
-            if (unlikely(total >= gen.max_packets)) {
-                break;
-            }
-        }
-
-        if (unlikely(sig_shutdown.load(std::memory_order_relaxed))) {
-            goto done;
-        }
-    }
-
- done:
-    nethuns_close(nh);
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' <- done" << std::endl;
-}
-
-#define CASE_PCAP_REPLAY(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, PRELOAD) \
-    case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, PRELOAD): \
-        pcap_replay<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, PRELOAD>(local_gen, local_stats, th_idx, opt.generators.size()); \
+#define CASE_PACKETS_GENERATOR(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP,PRELOAD) \
+    case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD): \
+        packets_generator<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD>(local_gen, local_stats, th_idx, opt.generators.size()); \
         break;
 
-#define CASE_PKT_GENERATOR(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM) \
-    case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM): \
-        packets_generator<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM>(local_gen, local_stats, th_idx, opt.generators.size()); \
-        break;
 
 int run(const options& opt) {
 
@@ -405,73 +312,80 @@ int run(const options& opt) {
                     this_thread::affinity(*local_gen.cpu);
                 }
 
-                if (local_gen.is_pcap_file()) {
-                    switch (bitfield(local_gen.max_packets != std::numeric_limits<size_t>::max(),
-                                     local_gen.has_randomizer(),
-                                     local_gen.has_rate_limiter() || local_gen.has_speed_control(),
-                                     local_gen.fix_checksums,
-                                     local_gen.pcap_preload
-                                     ))
-                    {
-                    CASE_PCAP_REPLAY(false, false, false, false, false);
-                    CASE_PCAP_REPLAY(true , false, false, false, false);
-                    CASE_PCAP_REPLAY(false, true , false, false, false);
-                    CASE_PCAP_REPLAY(true , true , false, false, false);
-                    CASE_PCAP_REPLAY(false, false, true , false, false);
-                    CASE_PCAP_REPLAY(true , false, true , false, false);
-                    CASE_PCAP_REPLAY(false, true , true , false, false);
-                    CASE_PCAP_REPLAY(true , true , true , false, false);
-                    CASE_PCAP_REPLAY(false, false, false, true , false);
-                    CASE_PCAP_REPLAY(true , false, false, true , false);
-                    CASE_PCAP_REPLAY(false, true , false, true , false);
-                    CASE_PCAP_REPLAY(true , true , false, true , false);
-                    CASE_PCAP_REPLAY(false, false, true , true , false);
-                    CASE_PCAP_REPLAY(true , false, true , true , false);
-                    CASE_PCAP_REPLAY(false, true , true , true , false);
-                    CASE_PCAP_REPLAY(true , true , true , true , false);
-                    CASE_PCAP_REPLAY(false, false, false, false, true );
-                    CASE_PCAP_REPLAY(true , false, false, false, true );
-                    CASE_PCAP_REPLAY(false, true , false, false, true );
-                    CASE_PCAP_REPLAY(true , true , false, false, true );
-                    CASE_PCAP_REPLAY(false, false, true , false, true );
-                    CASE_PCAP_REPLAY(true , false, true , false, true );
-                    CASE_PCAP_REPLAY(false, true , true , false, true );
-                    CASE_PCAP_REPLAY(true , true , true , false, true );
-                    CASE_PCAP_REPLAY(false, false, false, true , true );
-                    CASE_PCAP_REPLAY(true , false, false, true , true );
-                    CASE_PCAP_REPLAY(false, true , false, true , true );
-                    CASE_PCAP_REPLAY(true , true , false, true , true );
-                    CASE_PCAP_REPLAY(false, false, true , true , true );
-                    CASE_PCAP_REPLAY(true , false, true , true , true );
-                    CASE_PCAP_REPLAY(false, true , true , true , true );
-                    CASE_PCAP_REPLAY(true , true , true , true , true );
-                    }
+                switch (bitfield(local_gen.max_packets != std::numeric_limits<size_t>::max(),
+                                 local_gen.has_randomizer(),
+                                 local_gen.has_rate_limiter() || local_gen.has_speed_control(),
+                                 local_gen.fix_checksums,
+                                 local_gen.is_pcap_file(),
+                                 local_gen.pcap_preload
+                                 ))
+                {
+                CASE_PACKETS_GENERATOR(false, false, false, false, false, true );
+                CASE_PACKETS_GENERATOR(true , false, false, false, false, true );
+                CASE_PACKETS_GENERATOR(false, true , false, false, false, true );
+                CASE_PACKETS_GENERATOR(true , true , false, false, false, true );
+                CASE_PACKETS_GENERATOR(false, false, true , false, false, true );
+                CASE_PACKETS_GENERATOR(true , false, true , false, false, true );
+                CASE_PACKETS_GENERATOR(false, true , true , false, false, true );
+                CASE_PACKETS_GENERATOR(true , true , true , false, false, true );
+                CASE_PACKETS_GENERATOR(false, false, false, true , false, true );
+                CASE_PACKETS_GENERATOR(true , false, false, true , false, true );
+                CASE_PACKETS_GENERATOR(false, true , false, true , false, true );
+                CASE_PACKETS_GENERATOR(true , true , false, true , false, true );
+                CASE_PACKETS_GENERATOR(false, false, true , true , false, true );
+                CASE_PACKETS_GENERATOR(true , false, true , true , false, true );
+                CASE_PACKETS_GENERATOR(false, true , true , true , false, true );
+                CASE_PACKETS_GENERATOR(true , true , true , true , false, true );
+                CASE_PACKETS_GENERATOR(false, false, false, false, true , true );
+                CASE_PACKETS_GENERATOR(true , false, false, false, true , true );
+                CASE_PACKETS_GENERATOR(false, true , false, false, true , true );
+                CASE_PACKETS_GENERATOR(true , true , false, false, true , true );
+                CASE_PACKETS_GENERATOR(false, false, true , false, true , true );
+                CASE_PACKETS_GENERATOR(true , false, true , false, true , true );
+                CASE_PACKETS_GENERATOR(false, true , true , false, true , true );
+                CASE_PACKETS_GENERATOR(true , true , true , false, true , true );
+                CASE_PACKETS_GENERATOR(false, false, false, true , true , true );
+                CASE_PACKETS_GENERATOR(true , false, false, true , true , true );
+                CASE_PACKETS_GENERATOR(false, true , false, true , true , true );
+                CASE_PACKETS_GENERATOR(true , true , false, true , true , true );
+                CASE_PACKETS_GENERATOR(false, false, true , true , true , true );
+                CASE_PACKETS_GENERATOR(true , false, true , true , true , true );
+                CASE_PACKETS_GENERATOR(false, true , true , true , true , true );
+                CASE_PACKETS_GENERATOR(true , true , true , true , true , true );
+                CASE_PACKETS_GENERATOR(false, false, false, false, false, false );
+                CASE_PACKETS_GENERATOR(true , false, false, false, false, false );
+                CASE_PACKETS_GENERATOR(false, true , false, false, false, false );
+                CASE_PACKETS_GENERATOR(true , true , false, false, false, false );
+                CASE_PACKETS_GENERATOR(false, false, true , false, false, false );
+                CASE_PACKETS_GENERATOR(true , false, true , false, false, false );
+                CASE_PACKETS_GENERATOR(false, true , true , false, false, false );
+                CASE_PACKETS_GENERATOR(true , true , true , false, false, false );
+                CASE_PACKETS_GENERATOR(false, false, false, true , false, false );
+                CASE_PACKETS_GENERATOR(true , false, false, true , false, false );
+                CASE_PACKETS_GENERATOR(false, true , false, true , false, false );
+                CASE_PACKETS_GENERATOR(true , true , false, true , false, false );
+                CASE_PACKETS_GENERATOR(false, false, true , true , false, false );
+                CASE_PACKETS_GENERATOR(true , false, true , true , false, false );
+                CASE_PACKETS_GENERATOR(false, true , true , true , false, false );
+                CASE_PACKETS_GENERATOR(true , true , true , true , false, false );
+                CASE_PACKETS_GENERATOR(false, false, false, false, true , false );
+                CASE_PACKETS_GENERATOR(true , false, false, false, true , false );
+                CASE_PACKETS_GENERATOR(false, true , false, false, true , false );
+                CASE_PACKETS_GENERATOR(true , true , false, false, true , false );
+                CASE_PACKETS_GENERATOR(false, false, true , false, true , false );
+                CASE_PACKETS_GENERATOR(true , false, true , false, true , false );
+                CASE_PACKETS_GENERATOR(false, true , true , false, true , false );
+                CASE_PACKETS_GENERATOR(true , true , true , false, true , false );
+                CASE_PACKETS_GENERATOR(false, false, false, true , true , false );
+                CASE_PACKETS_GENERATOR(true , false, false, true , true , false );
+                CASE_PACKETS_GENERATOR(false, true , false, true , true , false );
+                CASE_PACKETS_GENERATOR(true , true , false, true , true , false );
+                CASE_PACKETS_GENERATOR(false, false, true , true , true , false );
+                CASE_PACKETS_GENERATOR(true , false, true , true , true , false );
+                CASE_PACKETS_GENERATOR(false, true , true , true , true , false );
+                CASE_PACKETS_GENERATOR(true , true , true , true , true , false );
                 }
-                else {
-                    switch (bitfield(local_gen.max_packets != std::numeric_limits<size_t>::max(),
-                                     local_gen.has_randomizer(),
-                                     local_gen.has_rate_limiter(),
-                                     local_gen.fix_checksums
-                                     ))
-                    {
-                    CASE_PKT_GENERATOR(false, false, false, false);
-                    CASE_PKT_GENERATOR(true , false, false, false);
-                    CASE_PKT_GENERATOR(false, true , false, false);
-                    CASE_PKT_GENERATOR(true , true , false, false);
-                    CASE_PKT_GENERATOR(false, false, true , false);
-                    CASE_PKT_GENERATOR(true , false, true , false);
-                    CASE_PKT_GENERATOR(false, true , true , false);
-                    CASE_PKT_GENERATOR(true , true , true , false);
-                    CASE_PKT_GENERATOR(false, false, false, true );
-                    CASE_PKT_GENERATOR(true , false, false, true );
-                    CASE_PKT_GENERATOR(false, true , false, true );
-                    CASE_PKT_GENERATOR(true , true , false, true );
-                    CASE_PKT_GENERATOR(false, false, true , true );
-                    CASE_PKT_GENERATOR(true , false, true , true );
-                    CASE_PKT_GENERATOR(false, true , true , true );
-                    CASE_PKT_GENERATOR(true , true , true , true );
-                    }
-                }
+
             } catch(std::exception &e) {
                 try {
                     throw std::runtime_error("nethuns-gen[" + std::to_string(th_idx) + "]: " + e.what());

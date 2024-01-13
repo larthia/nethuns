@@ -58,7 +58,7 @@ struct packet
         return packets;
     }
 
-    static auto builder(const std::string &name, std::optional<uint16_t> len) -> packet
+    static auto builder(const std::string &name, std::optional<uint16_t> len) -> std::vector<packet>
     {
         auto it = catalog_.find(name);
         if (it == catalog_.end()) {
@@ -87,5 +87,5 @@ struct packet
             return buf;
         }
 
-        static std::map<std::string, std::function<packet(std::optional<uint16_t>)>> catalog_;
+        static std::map<std::string, std::function<std::vector<packet>(std::optional<uint16_t>)>> catalog_;
 };
