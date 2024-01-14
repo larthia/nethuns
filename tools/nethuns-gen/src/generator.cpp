@@ -75,7 +75,7 @@ auto to_string_if(bool toggle, T const &x, Ts const &...xs) -> std::string {
 }
 
 template <bool PKT_LIMIT, bool RANDOMIZER, bool RATE_LIMITER, bool FIX_CHECKSUM, bool PCAP, bool PCAP_PRELOAD>
-void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, int th_idx, int num_threads)
+void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, int num_threads)
 {
     char errbuf[std::max(PCAP_ERRBUF_SIZE, NETHUNS_ERRBUF_SIZE)];
 
@@ -116,7 +116,7 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
     //
     // bind nethuns sockets to dev, queue
 
-    if (nethuns_bind(nh, gen.dev.c_str(), num_threads > 1 ? th_idx : NETHUNS_ANY_QUEUE) < 0) {
+    if (nethuns_bind(nh, gen.dev.c_str(), num_threads > 1 ? gen.id : NETHUNS_ANY_QUEUE) < 0) {
         throw nethuns_exception(nh);
     }
 
@@ -291,13 +291,13 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
 
  done:
     nethuns_close(nh);
-    std::cerr << "nethuns-gen[" << th_idx << "] " << gen.source << " <- done" << std::endl;
+    std::cerr << "nethuns-gen[" << gen.id << "] " << gen.source << " <- done" << std::endl;
 }
 
 
 #define CASE_PACKETS_GENERATOR(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP,PRELOAD) \
     case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD): \
-        packets_generator<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD>(local_gen, local_stats, local_gen.id, opt.generators.size()); \
+        packets_generator<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD>(local_gen, local_stats, opt.generators.size()); \
         break;
 
 
