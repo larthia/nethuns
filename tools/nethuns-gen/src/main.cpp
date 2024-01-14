@@ -3,11 +3,17 @@
 
 #include "hdr/options.hpp"
 
-std::atomic_bool sig_shutdown;
+std::atomic_int sig_shutdown;
 
 void sighandler(int)
 {
-    sig_shutdown.store(true, std::memory_order_relaxed);
+    auto v = sig_shutdown.fetch_add(1, std::memory_order_relaxed);
+    if (v < 2) {
+        std::cerr << " received, graceful down..." << std::endl;
+    } else  {
+        std::cerr << "EXIT!" << std::endl;
+        std::exit(1);
+    }
 }
 
 int main(int argc, char** argv)

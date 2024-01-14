@@ -28,7 +28,7 @@
 #include "hdr/affinity.hpp"
 #include "hdr/pretty.hpp"
 
-extern std::atomic_bool sig_shutdown;
+extern std::atomic_int sig_shutdown;
 
 static inline int
 in_cksum(u_short *addr, int len)
@@ -277,7 +277,7 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
             }
         }
 
-        if (unlikely(sig_shutdown.load(std::memory_order_relaxed))) {
+        if (unlikely(sig_shutdown.load(std::memory_order_relaxed) > 0)) {
             if constexpr(!VECTORIZED) {
                 pcap_close(p);
             }
@@ -421,7 +421,7 @@ int run(const options& opt) {
 
         auto prev = std::chrono::steady_clock::now();
 
-        while (!sig_shutdown.load(std::memory_order_relaxed)) {
+        while (sig_shutdown.load(std::memory_order_relaxed) == 0)  {
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
             auto now = std::chrono::steady_clock::now();
@@ -454,15 +454,14 @@ int run(const options& opt) {
 
     for (auto &e : *exceptions) {
         if (e) {
-            sig_shutdown.store(true, std::memory_order_relaxed);
+            sig_shutdown.fetch_add(1, std::memory_order_relaxed);
             meter.join();
             std::rethrow_exception(e);
             return 1;
         }
     }
 
-    sig_shutdown.store(true, std::memory_order_relaxed);
-
+    sig_shutdown.fetch_add(1, std::memory_order_relaxed);
     meter.join();
     return 0;
 }
