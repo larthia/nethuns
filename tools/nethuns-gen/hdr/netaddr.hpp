@@ -6,13 +6,8 @@
 
 struct netaddr
 {
-    uint32_t addr;
-    uint32_t mask;
-
-    netaddr()
-    : addr(0)
-    , mask(0)
-    {}
+    uint32_t addr = 0;
+    uint32_t mask = 0;
 
     netaddr(const char *str) {
         auto pos = std::string{str}.find('/');
@@ -22,8 +17,8 @@ struct netaddr
         auto addr_str = std::string{str}.substr(0, pos);
         auto prefix_str = std::string{str}.substr(pos + 1);
 
-        addr = inet_addr(addr_str.c_str());
         mask = htonl(~((1ul << (32 - std::stoi(prefix_str))) - 1));
+        addr = inet_addr(addr_str.c_str()) & mask;
     }
 
     auto to_string() const -> std::string {

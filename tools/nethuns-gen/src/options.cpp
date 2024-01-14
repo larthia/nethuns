@@ -14,15 +14,13 @@ void help(const char *progname) {
     std::cout << "  -S <source>\t\t\tset the source of packets (e.g. template name or pcap)" << std::endl;
     std::cout << "  -R <mac_source>\t\tset source mac address" << std::endl;
     std::cout << "  -D <mac_dest>\t\t\tset destination mac address" << std::endl;
-    std::cout << "  -z\t\t\t\tcheck mac consistency" << std::endl;
     std::cout << "  -m <max_packets>\t\tset maximum number of packets to send" << std::endl;
     std::cout << "  -r <pkt_rate>\t\t\tset packet rate" << std::endl;
-    std::cout << "  -l <loops>\t\t\tset number of loops (pcap only)" << std::endl;
+    std::cout << "  -l <loops>\t\t\tset number of loops" << std::endl;
     std::cout << "  -L <pktlen>\t\t\tset packet length" << std::endl;
-    std::cout << "  -s <randomize_src_ip>\t\trandomize source ip" << std::endl;
-    std::cout << "  -d <randomize_dst_ip>\t\trandomize destination ip" << std::endl;
     std::cout << "  -p <randomize_prefix>\t\trandomize by prefix" << std::endl;
     std::cout << "  -a <amp>\t\t\tset amplitude" << std::endl;
+    std::cout << "  -X <seed>\t\t\tset the random seed for then generator" << std::endl;
     std::cout << "  -x\t\t\t\tfix checksums" << std::endl;
     std::cout << "  -P\t\t\t\tpreload pcap files" << std::endl;
     std::cout << "  -v\t\t\t\tverbose" << std::endl;
@@ -45,12 +43,19 @@ parse_opt(int argc, char **argv)
     options opt;
     generator *gen = nullptr;
 
+    uint32_t gen_id = 0;
+
     int c;
-    while ((c = getopt(argc, argv, "GS:I:R:D:c:m:r:L:l:s:d:p:a:y:Pxzvh")) != -1) {
+    while ((c = getopt(argc, argv, "GS:I:R:D:c:m:r:L:l:s:d:p:a:y:X:Pxvh")) != -1) {
         switch (c) {
             case 'G':
                 opt.generators.emplace_back();
                 gen = &opt.generators.back();
+                gen->id = gen_id++;
+                gen->seed = gen->id;
+                break;
+            case 'X':
+                deref(gen).seed = std::stoi(optarg);
                 break;
             case 'c':
                 deref(gen).cpu = std::stoi(optarg);
@@ -67,9 +72,6 @@ parse_opt(int argc, char **argv)
             case 'D':
                 deref(gen).mac_dest = std::string{optarg};
                 break;
-            case 'z':
-                deref(gen).mac_consistency = true;
-                break;
             case 'm':
                 deref(gen).max_packets = std::stoul(optarg);
                 break;
@@ -81,12 +83,6 @@ parse_opt(int argc, char **argv)
                 break;
             case 'L':
                 deref(gen).pktlen = std::stoi(optarg);
-                break;
-            case 's':
-                deref(gen).randomize_src_ip = netaddr(optarg);
-                break;
-            case 'd':
-                deref(gen).randomize_dst_ip = netaddr(optarg);
                 break;
             case 'p':
                 deref(gen).randomize_prefix.push_back(netaddr(optarg));

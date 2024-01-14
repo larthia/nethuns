@@ -82,7 +82,7 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
     struct pcap_pkthdr *hdr;
     u_char *data;
 
-    std::mt19937 rand_gen;
+    constexpr bool VECTORIZED = !PCAP || PCAP_PRELOAD;
 
     // nethuns options
     //
@@ -123,24 +123,10 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
     //
     // translate pcap file
 
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' -> " << gen.dev
-                << " (rate_limiter:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps")
-                << " speed:" << to_string_if(RATE_LIMITER, gen.speed)
-                << " pcap:"  << to_string_if(PCAP, [] {
-                    if constexpr (PCAP_PRELOAD) {
-                        return "in-memory-preload";
-                    } else {
-                        return "on-the-fly";
-                    }
-                }())
-                << std::endl;
-
     auto const period = std::chrono::nanoseconds(1000000000 / gen.pkt_rate);
+
     rate_limiter<> limiter;
-
     std::optional<std::chrono::nanoseconds> prev_ts;
-
-    size_t total = 0;
 
     auto v = [&] {
         if constexpr(PCAP) {
@@ -154,8 +140,38 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
         }
     }();
 
-    constexpr bool VECTORIZED = !PCAP || PCAP_PRELOAD;
+    auto randoms = [&] {
+        std::mt19937 rand_gen(gen.seed);
 
+        if constexpr (RANDOMIZER) {
+            std::vector<uint32_t> randoms;
+            randoms.reserve(gen.amp);
+            for (auto i = 0; i < gen.amp; i++) {
+                randoms.push_back(rand_gen());
+            }
+            return randoms;
+       } else {
+            return std::nullopt;
+        }
+    }();
+
+    std::cerr << "nethuns-gen[" << th_idx << "] " << gen.source << " -> " << gen.dev << " |"
+                << " seed:" << gen.seed
+                << " rate:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps")
+                << " speed:" << to_string_if(RATE_LIMITER, gen.speed)
+                << " period:" << period.count() << "_ns"
+                << " max_packets:" << to_string_if(PKT_LIMIT, gen.max_packets)
+                << " amp:" << to_string_if(gen.amp > 1, gen.amp)
+                << " pcap:"  << to_string_if(PCAP, [] {
+                    if constexpr (PCAP_PRELOAD) {
+                        return "in-memory-preload";
+                    } else {
+                        return "on-the-fly";
+                    }
+                }())
+                << std::endl;
+
+    size_t total = 0;
     auto now = std::chrono::steady_clock::now();
 
     for (size_t l = 0; l < gen.loops; l++)
@@ -199,14 +215,14 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
                 if constexpr (RANDOMIZER) {
                     for (auto &p : gen.randomize_prefix)
                     {
-                        if ((ip->saddr & p.mask) == (p.addr & p.mask))
+                        if ((ip->saddr & p.mask) == p.addr)
                         {
-                            ip->saddr = p.addr ^ htonl(static_cast<uint32_t>(rand_gen()) & p.mask);
+                            ip->saddr = p.addr ^ htonl(static_cast<uint32_t>(randoms[j]) & p.mask);
                         }
 
-                        if ((ip->daddr & p.mask) == (p.addr & p.mask))
+                        if ((ip->daddr & p.mask) == p.addr)
                         {
-                            ip->daddr = p.addr ^ htonl(static_cast<uint32_t>(rand_gen()) & p.mask);
+                            ip->daddr = p.addr ^ htonl(static_cast<uint32_t>(randoms[j]) & p.mask);
                         }
                     }
 
@@ -259,13 +275,13 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
                     goto done;
                 }
             }
+        }
 
-            if (unlikely(sig_shutdown.load(std::memory_order_relaxed))) {
-                if constexpr(!VECTORIZED) {
-                    pcap_close(p);
-                }
-                goto done;
+        if (unlikely(sig_shutdown.load(std::memory_order_relaxed))) {
+            if constexpr(!VECTORIZED) {
+                pcap_close(p);
             }
+            goto done;
         }
 
         if constexpr(!VECTORIZED) {
@@ -275,13 +291,13 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
 
  done:
     nethuns_close(nh);
-    std::cerr << "nethuns-gen[" << th_idx << "] '" << gen.source << "' <- done" << std::endl;
+    std::cerr << "nethuns-gen[" << th_idx << "] " << gen.source << " <- done" << std::endl;
 }
 
 
 #define CASE_PACKETS_GENERATOR(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP,PRELOAD) \
     case bitfield(PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD): \
-        packets_generator<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD>(local_gen, local_stats, th_idx, opt.generators.size()); \
+        packets_generator<PKT_LIMIT, RANDOMIZER, RATE_LIMITER, FIX_CHECKSUM, IS_PCAP, PRELOAD>(local_gen, local_stats, local_gen.id, opt.generators.size()); \
         break;
 
 
@@ -297,16 +313,16 @@ int run(const options& opt) {
 
     nethuns_init();
 
-    int th_idx = 0;
     for (auto &gen : opt.generators) {
 
         auto stat = std::make_shared<generator_stats>();
 
         auto t = std::thread([=, &exceptions] {
-            try {
 
-                auto local_gen = std::move(gen);
-                auto local_stats = std::move(stat);
+            auto local_gen = std::move(gen);
+            auto local_stats = std::move(stat);
+
+            try {
 
                 if (local_gen.cpu) {
                     this_thread::affinity(*local_gen.cpu);
@@ -388,17 +404,15 @@ int run(const options& opt) {
 
             } catch(std::exception &e) {
                 try {
-                    throw std::runtime_error("nethuns-gen[" + std::to_string(th_idx) + "]: " + e.what());
+                    throw std::runtime_error("nethuns-gen[" + std::to_string(local_gen.id) + "]: " + e.what());
                 } catch (...) {
-                    exceptions->operator[](th_idx) = std::current_exception();
+                    exceptions->operator[](local_gen.id) = std::current_exception();
                 }
             }
         });
 
         workers.emplace_back(std::move(t));
         stats.emplace_back(std::move(stat));
-
-        th_idx++;
     }
 
     auto meter = std::thread([&] {
@@ -434,7 +448,6 @@ int run(const options& opt) {
         }
     });
 
-
     for (auto &t : workers) {
         t.join();
     }
@@ -447,6 +460,8 @@ int run(const options& opt) {
             return 1;
         }
     }
+
+    sig_shutdown.store(true, std::memory_order_relaxed);
 
     meter.join();
     return 0;

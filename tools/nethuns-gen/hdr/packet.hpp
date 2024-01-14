@@ -10,9 +10,9 @@
 
 struct packet
 {
-    pcap_pkthdr hdr_;
+    pcap_pkthdr hdr_ = {};
     std::shared_ptr<uint8_t[]> data_;
-    std::size_t len_;
+    std::size_t len_ = 0;
 
     template <std::size_t N>
     static inline auto from_hex_stream(const char (&str)[N]) -> packet {
