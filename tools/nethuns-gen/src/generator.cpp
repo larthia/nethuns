@@ -155,7 +155,27 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
         }
     }();
 
-    std::cerr << "nethuns-gen[" << th_idx << "] " << gen.source << " -> " << gen.dev << " |"
+    // update mac source or destination
+    if constexpr (VECTORIZED) {
+        for (auto &p : v) {
+            if (!gen.mac_source.empty()) {
+                p.set_mac_source(gen.mac_source);
+            }
+
+            if (!gen.mac_dest.empty()) {
+                p.set_mac_dest(gen.mac_dest);
+            }
+        }
+    } else {
+        if (!gen.mac_source.empty()) {
+            std::cerr << "nethuns-gen[" << gen.id << "] ignoring source MAC setting to " << gen.mac_source << std::endl;
+        }
+        if (!gen.mac_dest.empty()) {
+            std::cerr << "nethuns-gen[" << gen.id << "] ignoring destination MAC setting to " << gen.mac_dest << std::endl;
+        }
+    }
+
+    std::cerr << "nethuns-gen[" << gen.id << "] " << gen.source << " -> " << gen.dev << " |"
                 << " seed:" << gen.seed
                 << " rate:" << to_string_if(RATE_LIMITER, gen.pkt_rate, "_pps")
                 << " speed:" << to_string_if(RATE_LIMITER, gen.speed)
@@ -218,11 +238,17 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
                         if ((ip->saddr & p.mask) == p.addr)
                         {
                             ip->saddr = p.addr ^ htonl(static_cast<uint32_t>(randoms[j]) & p.mask);
+                            uint16_t *r = reinterpret_cast<uint16_t *>(data);
+                            r[4] ^= static_cast<uint16_t>(randoms[j] >> 16);
+                            r[5] ^= static_cast<uint16_t>(randoms[j]);
                         }
 
                         if ((ip->daddr & p.mask) == p.addr)
                         {
                             ip->daddr = p.addr ^ htonl(static_cast<uint32_t>(randoms[j]) & p.mask);
+                            uint16_t *r = reinterpret_cast<uint16_t *>(data);
+                            r[1] ^= static_cast<uint16_t>(randoms[j] >> 16);
+                            r[2] ^= static_cast<uint16_t>(randoms[j]);
                         }
                     }
 

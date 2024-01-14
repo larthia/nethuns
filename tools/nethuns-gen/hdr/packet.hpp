@@ -68,6 +68,18 @@ struct packet
         return it->second(len);
     }
 
+    void set_mac_source(const std::string &text) {
+        if (!ether_aton(text, data_.get() + 6)) {
+            throw std::runtime_error("invalid mac address: " + text);
+        }
+    }
+
+    void set_mac_dest(const std::string &text) {
+        if (!ether_aton(text, data_.get())) {
+            throw std::runtime_error("invalid mac address: " + text);
+        }
+    }
+
     void resize(uint16_t size) {
         if (size < len_) {
             len_ = size;
@@ -81,6 +93,21 @@ struct packet
     }
 
     private:
+
+        static inline bool
+        ether_aton(std::string const & macString, unsigned char *bytes)
+        {
+            unsigned char mac[6];
+
+            if (sscanf(macString.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) != 6)
+            {
+                return false;
+            }
+
+            memcpy(bytes, mac, 6);
+            return true;
+        }
+
         static inline auto make_buf(uint8_t *data, size_t len) -> std::shared_ptr<uint8_t[]> {
             auto buf = std::make_shared<uint8_t[]>(len);
             memcpy(buf.get(), data, len);
