@@ -13,21 +13,21 @@
 struct packet
 {
     pcap_pkthdr hdr_ = {};
-    std::shared_ptr<uint8_t[]> data_;
+    std::shared_ptr<uint8_t> data_;
     std::size_t len_ = 0;
 
     template <std::size_t N>
     static inline auto from_hex_stream(const char (&str)[N]) -> packet {
-        auto pkt = std::make_shared<uint8_t[]>(N/2);
+	auto pkt = std::shared_ptr<uint8_t>(new uint8_t[N/2], std::default_delete<uint8_t[]>());
         for (std::size_t i = 0; i < N/2; ++i) {
-            pkt[i] = std::stoi(std::string(str + i*2, 2), nullptr, 16);
+            pkt.get()[i] = std::stoi(std::string(str + i*2, 2), nullptr, 16);
         }
-        return { .hdr_ = {}, .data_ = pkt, .len_ = N/2 };
+        return packet{ .hdr_ = {}, .data_ = pkt, .len_ = N/2 };
     }
 
     template <std::size_t N>
     static inline auto from_c_string(const char (&str)[N]) -> packet {
-        auto pkt = std::make_shared<uint8_t[]>(N);
+	auto pkt = std::shared_ptr<uint8_t>(new uint8_t[N], std::default_delete<uint8_t[]>());
         memcpy(pkt.get(), str, N);
         return { .hdr_ ={}, .data_ = pkt, .len_ = N };
     }
@@ -86,7 +86,7 @@ struct packet
         if (size < len_) {
             len_ = size;
         } else {
-            auto new_data = std::make_shared<uint8_t[]>(size);
+	    auto new_data = std::shared_ptr<uint8_t>(new uint8_t[size], std::default_delete<uint8_t[]>());
             memcpy(new_data.get(), data_.get(), len_);
             bzero(new_data.get() + len_, size - len_);
             data_ = new_data;
@@ -110,8 +110,8 @@ struct packet
             return true;
         }
 
-        static inline auto make_buf(uint8_t *data, size_t len) -> std::shared_ptr<uint8_t[]> {
-            auto buf = std::make_shared<uint8_t[]>(len);
+        static inline auto make_buf(uint8_t *data, size_t len) -> std::shared_ptr<uint8_t> {
+	    auto buf = std::shared_ptr<uint8_t>(new uint8_t[len], std::default_delete<uint8_t[]>());
             memcpy(buf.get(), data, len);
             return buf;
         }
