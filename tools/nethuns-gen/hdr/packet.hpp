@@ -4,9 +4,11 @@
 #include <memory>
 #include <cstdint>
 #include <string>
+#include <cstring>
 #include <optional>
-#include <map>
 #include <iostream>
+#include <functional>
+#include <map>
 
 struct packet
 {

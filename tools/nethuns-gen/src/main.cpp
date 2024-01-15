@@ -1,5 +1,6 @@
 #include <atomic>
 #include <iostream>
+#include <signal.h>
 
 #include "hdr/options.hpp"
 
