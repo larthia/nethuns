@@ -59,7 +59,7 @@ enum icmp_code_time_exceed
 };
 
 
-struct icmphdr
+struct icmp_hdr
 {
     icmp_type   type;		/* message type */
     uint8_t     code;		/* type sub-code */
@@ -79,4 +79,4 @@ struct icmphdr
             uint16_t	mtu;
         } frag;			/* path mtu discovery */
     } un;
-};
+} __attribute__((packed,aligned(4)));

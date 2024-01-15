@@ -9,7 +9,7 @@
 #define NETHUNS_IP_MF           0x2000			/* Flag: "More Fragments"       */
 #define NETHUNS_IP_FRAG_OFFSET  0x1FFF			/* "Fragment Offset" part       */
 
-struct iphdr
+struct ip_hdr
 {
 #if defined(NETHUNS_LITTLE_ENDIAN)
     unsigned int ihl:4;
@@ -29,7 +29,7 @@ struct iphdr
     uint16_t check;
     uint32_t saddr;
     uint32_t daddr;
-} __attribute__((packed));
+} __attribute__((packed, aligned(4)));
 
 struct ipopt
 {

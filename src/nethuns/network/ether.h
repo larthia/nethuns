@@ -10,12 +10,12 @@ const int ETH_HLEN      = 14;               /* Total octets in header.   */
 const int ETH_DATA_LEN  = 1500;             /* Max. octets in payload    */
 const int ETH_FRAME_LEN = 1514;             /* Max. octets in frame sans FCS */
 
-struct ethhdr
+struct eth_hdr
 {
     unsigned char   dest[ETH_ALEN];     /* destination eth addr */
     unsigned char   source[ETH_ALEN];   /* source ether addr    */
     uint16_t        proto;              /* packet type ID field */
-} __attribute__((packed));
+} __attribute__((packed, aligned(2)));
 
 
 static inline

@@ -69,7 +69,7 @@ enum icmp6_param_prob
     ICMP6_PARAMPROB_OPTION                              = 2 /* unrecognized IPv6 option */
 };
 
-struct icmphdr6
+struct icmp6_hdr
 {
     icmp6_type  type;		/* message type */
     uint8_t     code;		/* type sub-code */
@@ -82,4 +82,4 @@ struct icmphdr6
         uint8_t   data8[4];  /* type-specific field */
     } un;
 
-} __attribute__((packed));
+} __attribute__((packed,aligned(4)));

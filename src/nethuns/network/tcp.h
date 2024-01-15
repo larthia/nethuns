@@ -14,7 +14,7 @@
 #define NETHUNS_TCP_ECE     (1 << 6)
 #define NETHUNS_TCP_CWR     (1 << 7)
 
-struct tcphdr
+struct tcp_hdr
 {
     uint16_t source;
     uint16_t dest;
@@ -49,4 +49,4 @@ struct tcphdr
 	uint16_t check;
 	uint16_t urg_ptr;
 
-} __attribute__((packed));
+} __attribute__((packed, aligned(4)));

@@ -228,7 +228,7 @@ void packets_generator(generator &gen, std::shared_ptr<generator_stats> &stats, 
                     break;
             }
 
-            auto ip = reinterpret_cast<iphdr *>(data + 14);
+            auto ip = reinterpret_cast<ip_hdr *>(data + 14);
 
             for (auto j = 0; j < gen.amp; j++)
             {

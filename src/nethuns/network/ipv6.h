@@ -3,7 +3,7 @@
 #include <nethuns/network/endian.h>
 #include <stdint.h>
 
-struct iphdr6
+struct ip6_hdr
 {
 #if defined(NETHUNS_LITTLE_ENDIAN)
     uint8_t     priority:4,
@@ -24,4 +24,4 @@ struct iphdr6
     uint8_t     saddr[16];          /* source address */
     uint8_t     daddr[16];          /* destination address */
 
-} __attribute__((packed));
+} __attribute__((packed, aligned(2)));
